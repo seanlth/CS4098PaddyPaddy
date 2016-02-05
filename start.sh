@@ -1,2 +1,2 @@
 #!/bin/bash
-python3 srv/test.py
+python3 src/test.py
