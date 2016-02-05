@@ -14,7 +14,7 @@ def my_form_post():
     f = open("temp.pml", "w")
     f.write(request.form["text"])
     f.close()
-    output = check_output(["./../pmlcheck", "temp.pml"])
+    output = check_output(["./pmlcheck", "temp.pml"])
     return output
 
 if __name__ == "__main__":
