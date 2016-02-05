@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import request
 from flask import render_template
+from subprocess import check_output
 
 app = Flask(__name__)
 
@@ -10,10 +11,11 @@ def my_form():
 
 @app.route("/", methods=["POST"])
 def my_form_post():
-
-    text = request.form["text"]
-    processed_text = text.upper()
-    return processed_text
+    f = open("temp.pml", "w")
+    f.write(request.form["text"])
+    f.close()
+    output = check_output(["./../pmlcheck", "temp.pml"])
+    return ouput
 
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", port="8000")  
+	app.run(host="0.0.0.0", port="8000")
