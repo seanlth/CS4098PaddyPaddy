@@ -6,7 +6,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def my_form():
-    return render_template("my-form.html")
+    return render_template("form.html")
 
 @app.route('/', methods=['POST'])
 def my_form_post():
@@ -16,5 +16,5 @@ def my_form_post():
     return processed_text
 
 if __name__ == '__main__':
-	app.debug = True
+	# app.debug = True
     app.run(host="0.0.0.0", port="8000")
