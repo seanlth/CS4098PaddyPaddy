@@ -15,7 +15,7 @@ def my_form_post():
     f.write(request.form["text"])
     f.close()
     output = check_output(["./../pmlcheck", "temp.pml"])
-    return asd
+    return output
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0", port="8000")
