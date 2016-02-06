@@ -7,4 +7,4 @@ process simple {
     requires { foo }
     provides { bar } 
   }
-} 
+}

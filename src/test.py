@@ -12,9 +12,10 @@ def my_form():
 @app.route("/", methods=["POST"])
 def my_form_post():
     f = open("temp.pml", "w")
-    f.write(request.form["text"])
+    f.write(request.form["program"])
     f.close()
     output = check_output(["./pmlcheck", "temp.pml"])
+    output = str.replace(output.decode(), "\n", "<br/>")
     return output
 
 if __name__ == "__main__":
