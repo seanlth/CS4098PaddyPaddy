@@ -1,7 +1,7 @@
 .PHONY: all build test install verify clean distclean
 
 all:
-	# ./start.sh
+# ./start.sh
 
 build: buildDeps
 
