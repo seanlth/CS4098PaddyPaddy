@@ -13,11 +13,17 @@
 * Ubuntu 14.04
 
 ## Installation
-* sudo apt-get install git
-* sudo apt-get install make
-* git clone https://github.com/seanlth/CS4098.git
-* cd CS4098
-* make install
-* make
+```
+git clone https://github.com/seanlth/CS4098.git
+cd CS4098
+make install
+make
+chmod u+x start.sh
+```
+## Starting
 
-* then open 0.0.0.0:8000  in a browser
+```
+./start.sh
+```
+
+Open ```0.0.0.0:8000``` in a browser
