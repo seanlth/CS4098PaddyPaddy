@@ -1,7 +1,6 @@
-.PHONY: all build test install verify clean distclean
+.PHONY: build test install verify clean distclean buildDeps run
 
-all:
-# ./start.sh
+all: run
 
 build: buildDeps
 
@@ -10,7 +9,7 @@ test: #TODO
 
 install: buildDeps
 	virtualenv env
-	sudo pip3 install Flask
+	env/bin/pip3 install Flask
 	# stack install purescript
 
 verify: #TODO
@@ -22,6 +21,9 @@ clean:
 distclean: clean
 
 buildDeps:
-	hash pip 2>/dev/null || sudo apt-get install python3-pip
+	hash pip3 2>/dev/null || sudo apt-get install python3-pip
 	# hash stack 2>/dev/null || sudo apt-get install stack
-	sudo pip3 install virtualenv
+	hash virtualenv 2>/dev/null || sudo pip3 install virtualenv
+
+run:
+	./start.sh
