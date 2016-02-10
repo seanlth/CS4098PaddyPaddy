@@ -10,7 +10,7 @@ test: #TODO
 
 install: buildDeps
 	virtualenv env
-	sudo pip3 install Flask
+	sudo pip install Flask
 	# stack install purescript
 
 verify: #TODO
@@ -22,6 +22,6 @@ clean:
 distclean: clean
 
 buildDeps:
-	hash pip3 2>/dev/null || sudo apt-get install python3-pip
+	hash pip 2>/dev/null || sudo apt-get install python3-pip
 	# hash stack 2>/dev/null || sudo apt-get install stack
-	sudo pip3 install virtualenv
+	sudo pip install virtualenv
