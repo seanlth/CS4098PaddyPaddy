@@ -1,6 +1,6 @@
 # Web-based IDE for Process Modeling Language
 
-[![Build Status](https://travis-ci.org/seanlth/CS4098PaddyPaddy.svg?branch=master)]
+![Build Status](https://travis-ci.org/seanlth/CS4098PaddyPaddy.svg?branch=master)
 
 
 ## Group
