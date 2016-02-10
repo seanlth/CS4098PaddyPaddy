@@ -1,7 +1,4 @@
-.PHONY: all build test install verify clean distclean
-
-all:
-# ./start.sh
+.PHONY: build test install verify clean distclean buildDeps run
 
 build: buildDeps
 
@@ -25,3 +22,6 @@ buildDeps:
 	hash pip3 2>/dev/null || sudo apt-get install python3-pip
 	# hash stack 2>/dev/null || sudo apt-get install stack
 	hash virtualenv 2>/dev/null || sudo pip3 install virtualenv
+
+run:
+	./start.sh
