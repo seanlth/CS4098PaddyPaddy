@@ -1,4 +1,4 @@
-.PHONY: run build test install verify clean distclean buildDeps run
+.PHONY: build test install verify clean distclean buildDeps run
 
 all: run
 
