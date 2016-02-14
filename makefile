@@ -24,6 +24,8 @@ buildDeps:
 	hash pip3 2>/dev/null || sudo apt-get install python3-pip
 	# hash stack 2>/dev/null || sudo apt-get install stack
 	hash virtualenv 2>/dev/null || sudo pip3 install virtualenv
+	hash mysql 2>/dev/null || sudo apt-get install mysql-server
+
 
 run:
 	./start.sh
