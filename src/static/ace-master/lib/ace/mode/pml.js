@@ -22,7 +22,7 @@ var Mode = function() {
 oop.inherits(Mode, TextMode);
 
 (function() {
-    // configure comment start/end characters
+
     this.lineCommentStart = "//";
     this.blockComment = {start: "/*", end: "*/"};
 
