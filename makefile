@@ -18,6 +18,7 @@ install: buildDeps
 	cd peos/pml/
 	make
 	mv check/pmlcheck ../../../
+	cd ../../
 	rm -rf peos
 	# stack install purescript
 
