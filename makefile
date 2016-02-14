@@ -10,6 +10,14 @@ test: #TODO
 install: buildDeps
 	virtualenv env
 	env/bin/pip3 install Flask
+	sudo apt-get install bison
+	sudo apt-get install check
+	sudo apt-get install flex
+	sudo apt-get install libncurses5-dev
+	git clone https://github.com/jnoll/peos.git
+	cd peos/pml/
+	make
+	mv check/pmlcheck ../../../
 	# stack install purescript
 
 verify: #TODO
