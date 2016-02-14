@@ -17,7 +17,7 @@ install: buildDeps
 	git clone https://github.com/jnoll/peos.git
 	cd peos/pml/
 	make
-	mv check/pmlcheck ../../../
+	mv check/pmlcheck ../../
 	cd ../../
 	rm -rf peos
 	# stack install purescript
