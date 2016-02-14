@@ -14,11 +14,9 @@ install: buildDeps
 	sudo apt-get install flex
 	sudo apt-get install libncurses5-dev
 	git clone https://github.com/jnoll/peos.git
-	cd peos/pml/
-	make
-	mv check/pmlcheck ../../
-	cd ../../
-	rm -rf peos
+	cd peos/pml/ && make && \
+	mv check/pmlcheck ../../ && \
+	cd ../../ && rm -rf peos
 	# stack install purescript
 
 verify: #TODO
