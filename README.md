@@ -13,9 +13,16 @@
 * Flask 0.10.1
 * Ubuntu 14.04
 
-## Installation
+## Installation - from Git repository
 ```
 git clone https://github.com/seanlth/CS4098.git
+cd CS4098
+make install
+```
+## Installation - from zip repository
+```
+download zip from https://github.com/seanlth/CS4098.git
+edit makefile to remove lines "git submodule init" and "git submodule update" and replace with "git clone https://github.com/jnoll/peos.git"
 cd CS4098
 make install
 ```
