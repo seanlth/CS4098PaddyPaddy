@@ -15,6 +15,7 @@ install: buildDeps
 	sudo apt-get install libncurses5-dev	
 	cd peos/pml/ && make && \
 	mv check/pmlcheck ../../ 
+	chmod u+x start.sh
 	# stack install purescript
 
 verify: #TODO
