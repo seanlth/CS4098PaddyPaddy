@@ -23,5 +23,9 @@ def my_form_post():
     output = str.replace(output.decode(), "\n", "<br/>")
     return output
 
+@app.route("/ace")
+def ace():
+    return render_template("form2.html")
+
 if __name__ == "__main__":
 	app.run(host="0.0.0.0", port="8000")
