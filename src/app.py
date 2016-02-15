@@ -6,7 +6,7 @@ from werkzeug import secure_filename
 app = Flask(__name__)
 
 app.config['UPLOAD_FOLDER'] = 'uploads/'
-app.config['ALLOWED_EXTENSIONS'] = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'pml'])
+app.config['ALLOWED_EXTENSIONS'] = set(['pml'])
 
 def allowed_file(filename):
     return '.' in filename and \
