@@ -9,12 +9,12 @@ test: #TODO
 
 install: buildDeps
 	git submodule init
-	git submodule update 
+	git submodule update
 	virtualenv env
 	env/bin/pip3 install Flask
-	sudo apt-get install libncurses5-dev	
+	sudo apt-get install libncurses5-dev
 	cd peos/pml/ && make && \
-	mv check/pmlcheck ../../ 
+	mv check/pmlcheck ../../
 	chmod u+x start.sh
 	# stack install purescript
 
@@ -33,6 +33,7 @@ buildDeps:
 	hash bison 2>/dev/null || sudo apt-get install bison
 	hash check 2>/dev/null || sudo apt-get install check
 	hash flex 2>/dev/null || sudo apt-get install flex
+	hash mysql 2>/dev/null || sudo apt-get install mysql-server
 
 run:
 	./start.sh
