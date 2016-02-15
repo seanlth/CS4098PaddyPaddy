@@ -1,0 +1,3 @@
+[submodule "peos"]
+	path = peos
+	url = https://github.com/jnoll/peos.git

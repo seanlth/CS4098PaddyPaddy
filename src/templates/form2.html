@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Editor</title>
+<style type=text/css>{{ get_resource_as_string('static/style2.css') }}</style>
+
+</head>
+<body>
+
+<nav class="navbar navbar-default" role="navigation">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+            <span class="sr-only">Toggle navigation</span>
+        </button>
+    </div>
+
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <ul class="nav navbar-nav">
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">File </a>
+                <ul class="dropdown-menu">
+                    <li><a href="javascript:new_hook()">New</a></li>
+                    <li><a href="javascript:save_hook()">Save</a></li>
+                    <!-- <li class="divider"></li> -->
+                    <!-- <li><a href="#">Separated link</a></li> -->
+                </ul>
+            </li>
+
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Edit </a>
+                <ul class="dropdown-menu">
+                    <li><a href="javascript:undo_hook()">Undo</a></li>
+                    <li><a href="javascript:redo_hook()">Redo</a></li>
+                </ul>
+            </li>
+
+            <li>
+                <a href="javascript:run_hook()">Run </a>
+            </li>
+        </ul>
+    </div><!-- /.navbar-collapse -->
+</nav>
+
+<div class="container" id="editor">process Diabetes_assessment {
+        action Assess_patient_symptoms {
+                requires {patient_symptoms}
+                provides {assessment.suspect_diabetes}
+        }
+        branch {
+                action Glucose_test {
+                        requires {assessment.suspect_diabetes}
+                        provides {blood_test.glucose_test}
+                }
+                action Cholesterol_test {
+                        requires {assessment.suspect_diabetes}
+                        provides {blood_test.cholesterol_test}
+                }
+        }
+        action Assess_diabetes {
+                requires {blood_test.glucose_test && (optional) blood_test.cholesterol_test}
+                provides {diagnosis.diabetes}
+        }
+}</div>
+
+<input id="output" type="text" placeholder="console"></input>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.22/require.js" type="text/javascript" charset="utf-8"></script>
+
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+
+<!-- Bootstrap -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+
+<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+  <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+  <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+<![endif]-->
+
+<script>
+	function new_hook() { console.log("new pressed"); }
+	function save_hook(){ console.log("save pressed"); }
+	function undo_hook(){ console.log("undo pressed"); }
+	function redo_hook(){ console.log("redo pressed"); }
+	function run_hook() { console.log("run pressed"); }
+
+	function resizeAce(){
+	  var aceHeight = $(window).height() - ($('nav').height()+$('#output').outerHeight(true));
+	  return $('#editor').height(aceHeight);
+	}
+
+    $(function(){
+      require(['static/ace-master/lib/ace/ace'], function(ace){
+          var editor = ace.edit("editor");
+          editor.setTheme("static/ace-master/lib/ace/theme/monokai");
+          editor.getSession().setMode("static/ace-master/lib/ace/mode/pml");
+          editor.resize();
+      });
+
+      $(window).resize(resizeAce);
+      resizeAce();
+    });
+</script>
+
+</body>
+</html>
