@@ -24,7 +24,10 @@ $align:center;
 /*site container*/
 .wrapper{
   width:420px;
-  margin:$auto;
+  margin: 0 auto;
+  padding: 20px 20px 150px 20px;
+  position: relative;
+  /*text-align: center;*/
 }
 
 h1{
@@ -44,8 +47,9 @@ p{
   margin-bottom:30px;
 }
 
-.form{
+form{
   width:$full;
+  text-align: center;
 }
 
 input[type="text"],input[type="email"]{
