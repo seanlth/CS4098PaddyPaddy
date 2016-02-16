@@ -1,31 +1,30 @@
 <link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
 <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
 <link rel="stylesheet" href="registerStyle.css">
-<style type=text/css>{{ get_resource_as_string('static/style3.css') }}</style>
-
+<link rel="stylesheet" href="{{ url_for('static', filename='style3.css') }}">
 <div class="wrapper">
-  <!-- <center> -->
   <body>
-    <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="{{url_for('static', filename='jquery.js') }}">\x3C/script>')</script> -->
-    <script>
-    $(".name").focus(function(){
-      $(".name-help").slideDown(500);
-    }).blur(function(){
-      $(".name-help").slideUp(500);
-    });
-
-    $(".email").focus(function(){
-      $(".email-help").slideDown(500);
-    }).blur(function(){
-      $(".email-help").slideUp(500);
-    });
-
-    </script>
-  <h1>Register For An Account</h1>
-  <p>To sign-up for a free basic account please provide us with some basic information using
+    <!-- <script>
+        function compile() {
+            var program = document.getElementById("programArea").value;
+            $.ajax({
+                url: '/signUp',
+                data: { program: program }
+                // type: 'POST',
+                // success: function(response) {
+                //     document.getElementById("output").innerHTML = response;
+                //     console.log(response);
+                // },
+                // error: function(error) {
+                //     console.log(error);
+                // }
+            })
+        }
+    </script> -->
+  <h1 align="center">Register For An Account</h1>
+  <p>To sign-up, please provide us with some basic information using
   the contact form below. Please use valid credentials.</p>
-  <form class="form" method="post" action="/signUp">
+  <form class="form" method="post">
     <input type="text" class="name" placeholder="Username">
     <div>
       <p class="name-help">Please enter your first and last name.</p>
@@ -35,10 +34,7 @@
       <p class="email-help">Please enter your current email address.</p>
     </div>
     <input type="submit" class="submit" value="Register">
+    <!-- <button type="submit" class="button" onclick="compile()"> Register </button> -->
   </form>
-<!-- </center> -->
 </div>
-<p class="optimize">
-  Optimized for Chrome & Firefox!
-</p>
 </body>
