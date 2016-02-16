@@ -26,9 +26,11 @@ def my_form_post():
 @app.route("/ace")
 def ace():
     return render_template("form2.html")
+
 @app.route("/signUp")
-def ace():
-    return render_template("registration.html")
+def signUp():
+    return render_template("register.html")
+    # do something
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0", port="8000")
