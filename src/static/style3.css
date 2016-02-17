@@ -52,7 +52,7 @@ form{
   text-align: center;
 }
 
-input[type="text"],input[type="email"]{
+input[type="text"],input[type="email"], input[type="password"]{
   width:98%;
   padding:15px 0px 15px 8px;
   border-radius:5px;
@@ -109,4 +109,12 @@ input[type="submit"]:hover{
   position:fixed;
   right:3%;
   top:0px;
+}
+.forgot-password{
+  width:90%;
+  padding-top:50px;
+  /*text-align: left;*/
+  text-decoration: underline;
+  color: #888;
+  font-size: 1rem;
 }
