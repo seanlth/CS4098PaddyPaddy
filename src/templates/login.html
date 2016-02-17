@@ -2,24 +2,24 @@
 <html>
   <link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
   <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
-  <link rel="stylesheet" href="registerStyle.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='style3.css') }}">
   <div class="wrapper">
-    <body>
-    <h1 align="center">Register For An Account</h1>
-    <p>To sign-up, please provide us with some basic information using
-    the contact form below. Please use valid credentials.</p>
+    <h1 align="center">LOGIN</h1>
+    <br>
     <form class="form" method="post">
-      <input type="email" class="email" placeholder="Email">
+      <input type="text" class="name" placeholder="Username">
+      <input type="email" class="email" placeholder="Email Address">
       <input type="password" class="password" placeholder="Password">
-      <input type="password" class="verify" placeholder="Confirm Password">
-      <input type="submit" class="submit" value="Register">
-      <!-- <button type="submit" class="button" onclick="compile()"> Register </button> -->
-      <br><br><br>
+      <input type="submit" class="submit" value="LOGIN">
+      <div class="u-form-group">
+        <br>
+        <a href="#" class="forgot-password">Forgot password?</a>
+      </div>
+      <br><br>
       <hr>
       <br>
+      <p>Login with...</p>
       <div class ="social">
-        <p>Register with...</p>
         <a href="#">
           <img src= {{ url_for('static', filename = 'images/facebook.png') }} width="50" height="50" alt="previous" title="Previous" border="0"/>
         </a>
@@ -31,6 +31,10 @@
         </a>
       </div>
       <br><br><hr>
+      <div class = "login-box">
+        Need an account?
+        <a href="/signUp" id="_login" style="color:#4863A0">Sign up now!</a>
+      </div>
     </form>
   </div>
   </body>
