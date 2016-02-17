@@ -12,6 +12,7 @@
 * Python 3.0
 * Flask 0.10.1
 * Ubuntu 14.04
+* Ace editor (https://github.com/ajaxorg/ace, included)
 
 ## Installation - from Git repository
 ```
