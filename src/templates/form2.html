@@ -89,10 +89,11 @@
 <![endif]-->
 
 <script>
-	function new_hook() { console.log("new pressed"); }
+    var editor;
+    function new_hook() { console.log("new pressed"); editor && editor.setValue(""); }
 	function save_hook(){ console.log("save pressed"); }
-	function undo_hook(){ console.log("undo pressed"); }
-	function redo_hook(){ console.log("redo pressed"); }
+	function undo_hook(){ console.log("undo pressed"); editor && editor.undo();}
+	function redo_hook(){ console.log("redo pressed"); editor && editor.redo();}
 	function run_hook() { console.log("run pressed"); }
 
 	function resizeAce(){
@@ -102,7 +103,7 @@
 
     $(function(){
       require(['static/ace-master/lib/ace/ace'], function(ace){
-          var editor = ace.edit("editor");
+          editor = ace.edit("editor");
           editor.setTheme("static/ace-master/lib/ace/theme/monokai");
           editor.getSession().setMode("static/ace-master/lib/ace/mode/pml");
           editor.resize();
