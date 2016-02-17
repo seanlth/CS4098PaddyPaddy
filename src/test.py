@@ -28,9 +28,18 @@ def ace():
     return render_template("form2.html")
 
 @app.route("/signUp")
-def signUp():
+def renderSignUp():
     return render_template("register.html")
-    # do something
+
+@app.route("/signUp", methods=["POST"])
+def signUpButton():
+    email = request.form["email"]
+    password = request.form["password"]
+    password = request.form["password"]
+
+    return "asd"
+
+
 
 @app.route("/login")
 def login():
