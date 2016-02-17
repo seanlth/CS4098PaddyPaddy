@@ -101,13 +101,12 @@
 	}
 
     $(function(){
-      require(['static/ace-master/lib/ace/ace', 'static/ace-master/lib/ace/ext/language_tools'], function(ace){
+      require(['static/ace-master/lib/ace/ace', 'static/ace-master/lib/ace/ext/language_tools', 'static/ace-master/lib/ace/snippets/text'], function(ace){
           var editor = ace.edit("editor");
           editor.setTheme("static/ace-master/lib/ace/theme/monokai");
           editor.getSession().setMode("static/ace-master/lib/ace/mode/pml");
           editor.setOptions({
               enableBasicAutocompletion: true,
-              enableSnippets: true,
               enableLiveAutocompletion: true
           });
           editor.resize();
