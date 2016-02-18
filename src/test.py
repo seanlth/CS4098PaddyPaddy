@@ -2,8 +2,12 @@ from flask import Flask
 from flask import request
 from flask import render_template
 from subprocess import check_output
+from werkzeug import generate_password_hash, check_password_hash
 
 import MySQLdb
+
+database = MySQLdb.connect(host="localhost", user="testuser", passwd = "password", db = "PdyPdy")
+cursor = database.cursor()
 
 app = Flask(__name__)
 def get_resource_as_string(name, charset='utf-8'):
@@ -40,7 +44,8 @@ def signUpButton():
     password = request.form["verify"]
 
 
-    return "asd"
+
+    return "Welcome screen"
 
 
 

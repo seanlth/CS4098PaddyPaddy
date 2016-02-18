@@ -1,10 +1,11 @@
-create database PML_IDE;
+create database PdyPdy;
 
-create table PML_IDE.Users
+create table PdyPdy.Users
 	(
 		id integer null auto_increment,
 		name VARCHAR(30),
 		username VARCHAR(30),
 		email VARCHAR(30),
-		password VARCHAR(30) -- lol
+		password VARCHAR(30), -- lol
+		primary key(id)
 	);
