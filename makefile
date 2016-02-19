@@ -12,6 +12,7 @@ install: buildDeps
 	git submodule update
 	virtualenv env
 	env/bin/pip3 install Flask
+	env/bin/pip3 install SQLAlchemy  
 	sudo apt-get install libncurses5-dev
 	cd peos/pml/ && make && \
 	mv check/pmlcheck ../../
