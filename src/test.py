@@ -26,11 +26,9 @@ def my_form_post():
         f.flush()
 
         try:
-            return check_output(["./pmlcheck", fname], stderr=STDOUT).decode() \
-                                                                    .replace("\n", "<br/>") \
-                                                                    .replace(fname+':', "Line ")
+            return check_output(["./pmlcheck", fname], stderr=STDOUT).decode().replace(fname+':', "Line ")
         except CalledProcessError as e:
-            return e.output.decode("utf-8").replace("\n", "<br/>").replace(fname+':', "Line "), 400
+            return e.output.decode().replace(fname+':', "Line "), 400
 
 @app.route("/ace")
 def ace():
