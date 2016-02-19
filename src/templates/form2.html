@@ -163,6 +163,7 @@
         require(['static/ace-master/lib/ace/ace'], function(ace){
             editor = ace.edit("editor");
             program = editor.getValue();
+            document.getElementById("output").innerHTML = "Output";
 
             $.ajax({
                 url: '/',
@@ -174,7 +175,7 @@
                     highlight_error(response);
                 },
                 error: function(error) {
-                    document.getElementById("output").innerHTML = response;
+                    document.getElementById("output").innerHTML = error.responseText;
                     console.log(error);
                     highlight_error(response);
                 }
