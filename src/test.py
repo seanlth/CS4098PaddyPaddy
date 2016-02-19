@@ -2,6 +2,8 @@ from flask import Flask
 from flask import request
 from flask import render_template
 from subprocess import check_output
+from subprocess import STDOUT
+from subprocess import CalledProcessError
 import tempfile
 
 app = Flask(__name__)
@@ -23,9 +25,12 @@ def my_form_post():
         f.write(request.form["program"])
         f.flush()
 
-        return check_output(["./pmlcheck", fname]).decode() \
-                                                  .replace("\n", "<br/>") \
-                                                  .replace(fname+':', "Line ")
+        try:
+            return check_output(["./pmlcheck", fname], stderr=STDOUT).decode() \
+                                                                    .replace("\n", "<br/>") \
+                                                                    .replace(fname+':', "Line ")
+        except CalledProcessError as e:
+            return e.output.decode("utf-8").replace("\n", "<br/>").replace(fname+':', "Line "), 400
 
 @app.route("/ace")
 def ace():
