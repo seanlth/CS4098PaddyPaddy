@@ -114,6 +114,50 @@
       editor.setKeyboardHandler(keyBindings[binding]);
     }
 
+
+    function parse_reponse(pmlcheck_response) {
+        let line_number_message = pmlcheck_response.slice(5, pmlcheck_response.length).split(":");
+
+        console.log(pmlcheck_response[5]);
+
+        return line_number_message;
+    }
+
+
+    function highlight_error(pmlcheck_response) {
+
+        let line_number_message = parse_reponse(pmlcheck_response);
+        let line_number = line_number_message[0];
+        let error_message = line_number_message[1];
+        //console.log(line_number);
+        //console.log(error_message);
+
+        //
+        // // console.log(response[1]);
+        // // console.log(response[2]);
+        //
+        let line_length = editor.session.getLine(parseInt(line_number)).length;
+        //let error_message = line
+        //console.log(line_length);
+
+        var Range = require("static/ace-master/lib/ace/range").Range;
+        var range = new Range(line_number, 0, line_number, line_length);
+        var marker = editor.session.addMarker(range, "errorHighlight", "fullLine");
+
+
+        editor.getSession().setAnnotations([{
+            row: line_number,
+            column: 0,
+            text: error_message,
+            type: "error" // also warning and information
+        }]);
+
+
+        console.log("highlighting");
+        //editor.session.addMarker(range,"ace_active_line","background");
+
+    }
+
     function run_hook() {
         var program;
         require(['static/ace-master/lib/ace/ace'], function(ace){
@@ -127,10 +171,12 @@
                 success: function(response) {
                     document.getElementById("output").innerHTML = response;
                     console.log(response);
+                    highlight_error(response);
                 },
                 error: function(error) {
                     document.getElementById("output").innerHTML = response;
                     console.log(error);
+                    highlight_error(response);
                 }
             });
         });
