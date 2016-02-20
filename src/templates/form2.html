@@ -118,7 +118,7 @@
 
     function parse_reponse(pmlcheck_response) {
         "use strict";
-        line_number_message = pmlcheck_response.slice(5, pmlcheck_response.length).split(":");
+        let line_number_message = pmlcheck_response.slice(5, pmlcheck_response.length).split(":");
 
         return line_number_message;
     }
