@@ -15,7 +15,7 @@ app.jinja_env.globals['get_resource_as_string'] = get_resource_as_string
 
 @app.route("/")
 def my_form():
-    return render_template("form.html")
+    return render_template("form2.html")
 
 @app.route("/", methods=["POST"])
 def my_form_post():
@@ -35,4 +35,4 @@ def ace():
     return render_template("form2.html")
 
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", port=int(8000), debug=True)
+	app.run(host="0.0.0.0", port=8000)#, debug=True)

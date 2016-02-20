@@ -117,20 +117,18 @@
 
 
     function parse_reponse(pmlcheck_response) {
-        "use strict";
-        let line_number_message = pmlcheck_response.slice(5, pmlcheck_response.length).split(":");
+        var line_number_message = pmlcheck_response.slice(5, pmlcheck_response.length).split(":");
 
         return line_number_message;
     }
 
 
     function highlight_error(pmlcheck_response) {
-        "use strict";
-        let line_number_message = parse_reponse(pmlcheck_response);
-        let line_number = line_number_message[0];
-        let error_message = line_number_message[1];
+        var line_number_message = parse_reponse(pmlcheck_response);
+        var line_number = line_number_message[0];
+        var error_message = line_number_message[1];
 
-        let line_length = editor.session.getLine(parseInt(line_number)).length;
+        var line_length = editor.session.getLine(parseInt(line_number)).length;
 
         var Range = require("static/ace-master/lib/ace/range").Range;
         var range = new Range(line_number-1, 0, line_number-1, line_length);
