@@ -5,6 +5,13 @@
     font-size: 125%;
 }
 
+.errorHighlight{
+    position:absolute;
+    z-index:20;
+    background-color:#ff1a1a;
+    opacity: 0.4;
+}
+
 .navbar-nav > li > a, .navbar-brand {
     padding-top:4px !important;
     padding-bottom:0 !important;
