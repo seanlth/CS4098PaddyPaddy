@@ -28,5 +28,7 @@ make install
 make run
 ```
 
-Open ```0.0.0.0:8000``` in a browser for PML roundtrip
-Open ```0.0.0.0:8000/ace``` in a browser for code editor prototype
+Open ```0.0.0.0:8000``` in a browser for editor
+Open ```0.0.0.0:8000/login``` in a browser for login page
+Open ```0.0.0.0:8000/signUp``` in a browser for sign up page
+
