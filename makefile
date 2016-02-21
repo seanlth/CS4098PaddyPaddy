@@ -12,7 +12,7 @@ install: buildDeps
 	git submodule update
 	virtualenv env
 	env/bin/pip3 install Flask
-	env/bin/pip3 install SQLAlchemy  
+	env/bin/pip3 install SQLAlchemy
 	sudo apt-get install libncurses5-dev
 	cd peos/pml/ && make && \
 	mv check/pmlcheck ../../
@@ -34,7 +34,6 @@ buildDeps:
 	hash bison 2>/dev/null || sudo apt-get install bison
 	hash check 2>/dev/null || sudo apt-get install check
 	hash flex 2>/dev/null || sudo apt-get install flex
-	hash mysql 2>/dev/null || sudo apt-get install mysql-server
 
 run:
 	./start.sh

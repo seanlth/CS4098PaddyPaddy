@@ -44,9 +44,6 @@ def signUpButton():
 
     password_hash = generate_password_hash(password)
     insert_user(email, password_hash)
-    user = query_user(33)
-    print(number_of_users())
-    print(user.password)
 
     return "Welcome screen"
 
@@ -70,4 +67,4 @@ def loginButton():
 
 
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", port=int("8000"), debug=True)
+	app.run(host="0.0.0.0", port=int("8000"))#, debug=True)
