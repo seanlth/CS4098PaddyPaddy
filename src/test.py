@@ -38,30 +38,32 @@ def my_form_post():
             return e.output.decode().replace(fname+':', "Line "), 400
 
 @app.route("/ace")
-def ace():
-    return render_template("form2.html")
+def ace(filename = ""):
+    editor_content = ""
+
+    if 'filename' in request.args or filename != "":
+        filename = filename if filename else request.args['filename']
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        try:
+            with open(filepath) as f:
+                editor_content = f.read()
+        except FileNotFoundError:
+            editor_content = "" #TODO: some kind of message here
+
+    return render_template("form2.html", editor_content=editor_content)
 
 @app.route('/upload', methods=['POST'])
 def upload():
     file = request.files['file']
+    filename = ""
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    return redirect('/ace?filename=%s'%filename)
 
-# @app.route('/uploads/<filename>')
-# def uploaded_file(filename):
-#     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-#TODO: remove this
-@app.route('/<path:p>')
-def rem(p):
-    print("rem")
-    return render_template(p+'.html')
-
-
-@app.route('/index')
-def index():
-    return render_template('index.html')
+@app.route('/fileUpload')
+def fileUpload():
+    return render_template('fileUpload.html')
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0", port=8000, debug=DEBUG)
