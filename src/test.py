@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import request
 from flask import render_template
+
 from subprocess import check_output
 from werkzeug import generate_password_hash, check_password_hash
 from database.database_create import Base, User
@@ -40,7 +41,6 @@ def renderSignUp():
 def signUpButton():
     email = request.form["email"]
     password = request.form["password"]
-    password = request.form["verify"]
 
     password_hash = generate_password_hash(password)
     insert_user(email, password_hash)
@@ -51,10 +51,23 @@ def signUpButton():
     return "Welcome screen"
 
 
-
 @app.route("/login")
 def login():
     return render_template("login.html")
+
+@app.route("/login", methods=["POST"])
+def loginButton():
+    email = request.form["email"]
+    password = request.form["password"]
+    user = query_user(email);
+    if user != None:
+        print(user.password);
+        if check_password_hash(user.password, password):
+            return "Login"
+
+    return "incorrect email or password<br/>"
+
+
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0", port=int("8000"), debug=True)

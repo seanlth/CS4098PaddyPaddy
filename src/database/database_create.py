@@ -9,8 +9,7 @@ Base = declarative_base()
 
 class User(Base):
     __tablename__ = 'User'
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    email = Column(String(250), nullable=False)
+    email = Column(String(250), primary_key=True, nullable=False)
     password = Column(String(250), nullable=False)
 
 engine = create_engine('sqlite:///pml.db')
