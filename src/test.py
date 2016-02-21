@@ -4,6 +4,7 @@ from subprocess import check_output, STDOUT, CalledProcessError
 import tempfile
 import os
 
+
 DEBUG = True
 app = Flask(__name__)
 
@@ -16,9 +17,11 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
 app.jinja_env.globals['get_resource_as_string'] = get_resource_as_string
-app.config['UPLOAD_FOLDER'] = 'uploads/'
+app.config['UPLOAD_FOLDER'] = 'userFiles/'
 app.config['ALLOWED_EXTENSIONS'] = set(['pml'])
 
+def userIsAuthenticated():
+    return False #TODO: fill in actual authentication
 
 @app.route("/")
 def my_form():

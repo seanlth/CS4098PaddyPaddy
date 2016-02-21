@@ -56,26 +56,7 @@
     </div><!-- /.navbar-collapse -->
 </nav>
 
-<div class="container" id="editor">process Diabetes_assessment {
-        action Assess_patient_symptoms {
-                requires {patient_symptoms}
-                provides {assessment.suspect_diabetes}
-        }
-        branch {
-                action Glucose_test {
-                        requires {assessment.suspect_diabetes}
-                        provides {blood_test.glucose_test}
-                }
-                action Cholesterol_test {
-                        requires {assessment.suspect_diabetes}
-                        provides {blood_test.cholesterol_test}
-                }
-        }
-        action Assess_diabetes {
-                requires {blood_test.glucose_test && (optional) blood_test.cholesterol_test}
-                provides {diagnosis.diabetes}
-        }
-}</div>
+<div class="container" id="editor"> {{editor_content}} </div>
 
 <textarea id="output" disabled="disabled">Output</textarea>
 
@@ -102,7 +83,6 @@
 <script>
     var editor;
     function new_hook() { console.log("new pressed"); editor && editor.setValue(""); }
-	function save_hook(){ console.log("save pressed"); }
 	function undo_hook(){ console.log("undo pressed"); editor && editor.undo();}
 	function redo_hook(){ console.log("redo pressed"); editor && editor.redo();}
 
