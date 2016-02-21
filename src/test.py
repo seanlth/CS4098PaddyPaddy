@@ -41,11 +41,9 @@ def renderSignUp():
 def signUpButton():
     email = request.form["email"]
     password = request.form["password"]
-    password = request.form["verify"]
 
-    if password == password:
-        password_hash = generate_password_hash(password)
-        insert_user(email, password_hash)
+    password_hash = generate_password_hash(password)
+    insert_user(email, password_hash)
 
     return "Welcome screen"
 
@@ -69,4 +67,4 @@ def loginButton():
 
 
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", port=int("8000"), debug=True)
+	app.run(host="0.0.0.0", port=int("8000"))#, debug=True)
