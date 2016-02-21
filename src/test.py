@@ -42,12 +42,11 @@ def signUpButton():
     password = request.form["password"]
     password = request.form["verify"]
 
-    if password == password:
-        password_hash = generate_password_hash(password)
-        insert_user(email, password_hash)
-        user = query_user(33)
-        print(number_of_users())
-        print(user.password)
+    password_hash = generate_password_hash(password)
+    insert_user(email, password_hash)
+    user = query_user(33)
+    print(number_of_users())
+    print(user.password)
 
     return "Welcome screen"
 
