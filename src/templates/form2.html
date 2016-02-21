@@ -38,6 +38,15 @@
                 </ul>
             </li>
 
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Bindings </a>
+                <ul class="dropdown-menu">
+                    <li><a href="javascript:changeBindings('ace')">Ace</a></li>
+                    <li><a href="javascript:changeBindings('vim')">Vim</a></li>
+                    <li><a href="javascript:changeBindings('emacs')">Emacs</a></li>
+                </ul>
+            </li>
+
             <li>
                 <a href="javascript:run_hook()">Run </a>
             </li>
@@ -66,7 +75,7 @@
         }
 }</div>
 
-<input id="output" type="text" placeholder="console"></input>
+<textarea id="output" disabled="disabled">Output</textarea>
 
 </div>
 
@@ -89,11 +98,78 @@
 <![endif]-->
 
 <script>
-	function new_hook() { console.log("new pressed"); }
+    var editor;
+    var error_marker;
+    function new_hook() { console.log("new pressed"); editor && editor.setValue(""); }
 	function save_hook(){ console.log("save pressed"); }
-	function undo_hook(){ console.log("undo pressed"); }
-	function redo_hook(){ console.log("redo pressed"); }
-	function run_hook() { console.log("run pressed"); }
+	function undo_hook(){ console.log("undo pressed"); editor && editor.undo();}
+	function redo_hook(){ console.log("redo pressed"); editor && editor.redo();}
+
+
+    function changeBindings(binding){
+      var keyBindings = {
+        ace: null,
+        vim: "static/ace-master/lib/ace/keyboard/vim",
+        emacs: "static/ace-master/lib/ace/keyboard/emacs"
+      };
+      editor.setKeyboardHandler(keyBindings[binding]);
+    }
+
+
+    function parse_reponse(pmlcheck_response) {
+        var line_number_message = pmlcheck_response.slice(5, pmlcheck_response.length).split(":");
+
+        return line_number_message;
+    }
+
+
+    function highlight_error(pmlcheck_response) {
+        var line_number_message = parse_reponse(pmlcheck_response);
+        var line_number = line_number_message[0];
+        var error_message = line_number_message[1];
+
+        var line_length = editor.session.getLine(parseInt(line_number)).length;
+
+        var Range = require("static/ace-master/lib/ace/range").Range;
+        var range = new Range(line_number-1, 0, line_number-1, line_length);
+        error_marker = editor.session.addMarker(range, "errorHighlight", "fullLine");
+
+        editor.getSession().setAnnotations([{
+            row: line_number-1,
+            column: 0,
+            text: error_message,
+            type: "error" // also warning and information
+        }]);
+
+        console.log("highlighting");
+    }
+
+    function run_hook() {
+        var program;
+        require(['static/ace-master/lib/ace/ace'], function(ace){
+            editor = ace.edit("editor");
+            program = editor.getValue();
+            document.getElementById("output").innerHTML = "Output";
+
+            editor.session.removeMarker(error_marker);
+            editor.session.clearAnnotations()
+
+            $.ajax({
+                url: '/',
+                data: { program: program },
+                type: 'POST',
+                success: function(response) {
+                    document.getElementById("output").innerHTML = response;
+                    console.log(response);
+                },
+                error: function(error) {
+                    document.getElementById("output").innerHTML = error.responseText;
+                    console.log(error);
+                    highlight_error(error.responseText);
+                }
+            });
+        });
+    }
 
 	function resizeAce(){
 	  var aceHeight = $(window).height() - ($('nav').height()+$('#output').outerHeight(true));
@@ -101,10 +177,14 @@
 	}
 
     $(function(){
-      require(['static/ace-master/lib/ace/ace'], function(ace){
-          var editor = ace.edit("editor");
+      require(['static/ace-master/lib/ace/ace', 'static/ace-master/lib/ace/ext/language_tools'], function(ace){
+          editor = ace.edit("editor");
           editor.setTheme("static/ace-master/lib/ace/theme/monokai");
           editor.getSession().setMode("static/ace-master/lib/ace/mode/pml");
+          editor.setOptions({
+              enableBasicAutocompletion: true,
+              enableLiveAutocompletion: true
+          });
           editor.resize();
       });
 

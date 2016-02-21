@@ -4,3 +4,4 @@ env/
 __pycache__/
 src/database/__pycache__/
 pml.db
+pmlcheck
