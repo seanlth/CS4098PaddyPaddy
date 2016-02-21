@@ -2,8 +2,11 @@ from flask import Flask
 from flask import request
 from flask import render_template
 from subprocess import check_output
+from werkzeug import generate_password_hash, check_password_hash
+from database.database_create import Base, User
+from database.database_insert import insert_user
+from database.database_query import query_user, number_of_users
 
-import MySQLdb
 
 app = Flask(__name__)
 def get_resource_as_string(name, charset='utf-8'):
@@ -39,8 +42,13 @@ def signUpButton():
     password = request.form["password"]
     password = request.form["verify"]
 
+    password_hash = generate_password_hash(password)
+    insert_user(email, password_hash)
+    user = query_user(33)
+    print(number_of_users())
+    print(user.password)
 
-    return "asd"
+    return "Welcome screen"
 
 
 
@@ -49,4 +57,4 @@ def login():
     return render_template("login.html")
 
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", port="8000")
+	app.run(host="0.0.0.0", port=int("8000"), debug=True)
