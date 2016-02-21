@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+<link rel="stylesheet" href="{{ url_for('static', filename='style3.css') }}">
+<body>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="{{url_for('static', filename='jquery.js') }}">\x3C/script>')</script>
+    <script>
+    function check() {
+        $.ajax({
+            url: '/login',
+            type: 'POST',
+            success: function(response) {
+                console.log(response);
+                document.getElementById("mismatch").innerHTML = response;
+            },
+            error: function(error) {
+                console.log(error);
+            }
+        })
+    }
+    </script>
+
+    <div class="wrapper">
+        <h1 align="center">LOGIN</h1>
+        <br>
+        <form class="form" method="POST">
+            <input type="email" name="email" class="email" id="email" placeholder="Email Address">
+            <input type="password" name="password" class="password" placeholder="Password">
+            <input type="submit" name="submit" class="submit" value="LOGIN" onclick="check()">
+            <div class="u-form-group">
+                <br>
+                <a href="#" class="forgot-password">Forgot password?</a>
+                <p id="mismatch"> </p>
+            </div>
+            <br><br>
+            <hr>
+            <br>
+            <p>Login with...</p>
+            <div class ="social">
+                <a href="#">
+                    <img src= {{ url_for('static', filename = 'images/facebook.png') }} width="50" height="50" alt="previous" title="Previous" border="0"/>
+                </a>
+                <a href="#">
+                    <img src= {{ url_for('static', filename = 'images/google.png') }} width="50" height="50" alt="previous" title="Previous" border="0"/>
+                </a>
+                <a href="#">
+                    <img src= {{ url_for('static', filename = 'images/twitter.png') }} width="50" height="50" alt="previous" title="Previous" border="0"/>
+                </a>
+            </div>
+            <br><br><hr>
+            <div class = "login-box">
+                Need an account?
+                <a href="/signUp" id="_login" style="color:#4863A0">Sign up now!</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
