@@ -52,6 +52,13 @@ def upload():
 # def uploaded_file(filename):
 #     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+#TODO: remove this
+@app.route('/<path:p>')
+def rem(p):
+    print("rem")
+    return render_template(p+'.html')
+
+
 @app.route('/index')
 def index():
     return render_template('index.html')

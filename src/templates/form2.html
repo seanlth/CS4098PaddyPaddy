@@ -98,6 +98,8 @@
 <![endif]-->
 
 <script>
+    var loggedIn = false; //TODO: remove
+
     var editor;
     function new_hook() { console.log("new pressed"); editor && editor.setValue(""); }
 	function save_hook(){ console.log("save pressed"); }
