@@ -1,0 +1,9 @@
+<html>
+  <h1> open file </h1>
+  <!-- <a href='ace?filename=test.pml'> open 'test.pml'</a> -->
+  <ul>
+  {% for file in files %}
+  <li><a href='ace?filename={{ file }}'> open '{{file}}'</a></li>
+  {% endfor %}
+  </ul>
+</html>

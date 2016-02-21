@@ -61,9 +61,19 @@ def upload():
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
     return redirect('/ace?filename=%s'%filename)
 
+@app.route('/saveFile')
+def saveFile():
+    return render_template('saveFile.html')
+
+@app.route('/openFile')
+def openFile():
+    files = os.listdir(app.config['UPLOAD_FOLDER'])
+    return render_template('openFile.html', files=files)
+
 @app.route('/fileUpload')
 def fileUpload():
     return render_template('fileUpload.html')
+
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0", port=8000, debug=DEBUG)

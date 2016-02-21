@@ -106,6 +106,15 @@
 	function undo_hook(){ console.log("undo pressed"); editor && editor.undo();}
 	function redo_hook(){ console.log("redo pressed"); editor && editor.redo();}
 
+	function save_hook(){
+      console.log("save pressed");
+      window.location.href = 'saveFile'
+    }
+
+    function open_hook() {
+      console.log("open pressed");
+      window.location.href = 'openFile';
+    }
 
     function upload_hook() {
       console.log("upload pressed");
