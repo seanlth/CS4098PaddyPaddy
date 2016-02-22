@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>Editor</title>
-<style type=text/css>{{ get_resource_as_string('static/style2.css') }}</style>
+<style type=text/css>{{ get_resource_as_string('static/editor.css') }}</style>
 
 </head>
 <body>
@@ -82,6 +82,7 @@
 
 <script>
     var editor;
+    var error_marker;
     function new_hook() { console.log("new pressed"); editor && editor.setValue(""); }
 	function undo_hook(){ console.log("undo pressed"); editor && editor.undo();}
 	function redo_hook(){ console.log("redo pressed"); editor && editor.redo();}
@@ -110,12 +111,44 @@
       editor.setKeyboardHandler(keyBindings[binding]);
     }
 
+
+    function parse_reponse(pmlcheck_response) {
+        var line_number_message = pmlcheck_response.slice(5, pmlcheck_response.length).split(":");
+
+        return line_number_message;
+    }
+
+
+    function highlight_error(pmlcheck_response) {
+        var line_number_message = parse_reponse(pmlcheck_response);
+        var line_number = line_number_message[0];
+        var error_message = line_number_message[1];
+
+        var line_length = editor.session.getLine(parseInt(line_number)).length;
+
+        var Range = require("static/ace-master/lib/ace/range").Range;
+        var range = new Range(line_number-1, 0, line_number-1, line_length);
+        error_marker = editor.session.addMarker(range, "errorHighlight", "fullLine");
+
+        editor.getSession().setAnnotations([{
+            row: line_number-1,
+            column: 0,
+            text: error_message,
+            type: "error" // also warning and information
+        }]);
+
+        console.log("highlighting");
+    }
+
     function run_hook() {
         var program;
         require(['static/ace-master/lib/ace/ace'], function(ace){
             editor = ace.edit("editor");
             program = editor.getValue();
             document.getElementById("output").innerHTML = "Output";
+
+            editor.session.removeMarker(error_marker);
+            editor.session.clearAnnotations()
 
             $.ajax({
                 url: '/',
@@ -128,6 +161,7 @@
                 error: function(error) {
                     document.getElementById("output").innerHTML = error.responseText;
                     console.log(error);
+                    highlight_error(error.responseText);
                 }
             });
         });

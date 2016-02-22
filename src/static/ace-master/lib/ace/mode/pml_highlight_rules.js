@@ -8,8 +8,7 @@ var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var PMLHighlightRules = function() {
     var keywordMapper = this.createKeywordMapper({
         "variable.language": "this",
-        "keyword": "process|branch|selection|iteration|sequence|task|action|manual|executable|provides|requires|agent|script|tool",
-        "constant.language": "null|true|false"
+        "keyword": "process|branch|selection|iteration|sequence|task|action|manual|executable|provides|requires|agent|script|tool"
     }, "identifier");
 
     // regexp must not have capturing parentheses. Use (?:) instead.
@@ -50,8 +49,9 @@ var PMLHighlightRules = function() {
                 token : "constant.numeric", // float
                 regex : "[+-]?\\d+(?:(?:\\.\\d*)?(?:[eE][+-]?\\d+)?)?\\b"
             }, {
-                token : "constant.language.boolean",
-                regex : "(?:true|false)\\b"
+                token : "text",
+                regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\.",
+                next : "additional_identifier"
             }, {
                 token : keywordMapper,
                 regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
@@ -80,6 +80,16 @@ var PMLHighlightRules = function() {
             }, {
                 token : "comment", // comment spanning whole line
                 regex : ".+"
+            }
+        ],
+        "additional_identifier" : [
+            {
+                token : ["support.function", "text"],
+                regex : "([a-zA-Z_$][a-zA-Z0-9_$]*)(\\.)"
+            }, {
+                token : "support.function",
+                regex : "[a-zA-Z_$][a-zA-Z0-9_$]*",
+                next : "start"
             }
         ]
     };
