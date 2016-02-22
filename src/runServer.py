@@ -17,10 +17,6 @@ def get_resource_as_string(name, charset='utf-8'):
 
 app.jinja_env.globals['get_resource_as_string'] = get_resource_as_string
 
-@app.route("/")
-def my_form():
-    return render_template("form2.html")
-
 @app.route("/", methods=["POST"])
 def my_form_post():
     with tempfile.NamedTemporaryFile(mode='w+t', suffix='.pml') as f:
@@ -34,15 +30,15 @@ def my_form_post():
         except CalledProcessError as e:
             return e.output.decode().replace(fname+':', "Line "), 400
 
-@app.route("/ace")
-def ace():
-    return render_template("form2.html")
+@app.route("/")
+def editor():
+    return render_template("editor.html")
 
-@app.route("/signUp")
+@app.route("/signup")
 def renderSignUp():
     return render_template("register.html")
 
-@app.route("/signUp", methods=["POST"])
+@app.route("/signup", methods=["POST"])
 def signUpButton():
     email = request.form["email"]
     password = request.form["password"]
@@ -72,4 +68,4 @@ def loginButton():
 
 
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", port=int(8000))#, debug=True)
+	app.run(host="0.0.0.0", port=8000, debug=True)
