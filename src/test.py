@@ -44,8 +44,13 @@ def renderSignUp():
 
 @app.route("/signUp", methods=["POST"])
 def signUpButton():
+
+
     email = request.form["email"]
     password = request.form["password"]
+
+    print(email);
+    print(password);
 
     password_hash = generate_password_hash(password)
     insert_user(email, password_hash)
@@ -72,4 +77,4 @@ def loginButton():
 
 
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", port=int(8000))#, debug=True)
+	app.run(host="0.0.0.0", port=int(8000), debug=True)

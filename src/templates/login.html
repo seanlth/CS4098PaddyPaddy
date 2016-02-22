@@ -8,14 +8,20 @@
     <script>window.jQuery || document.write('<script src="{{url_for('static', filename='jquery.js') }}">\x3C/script>')</script>
     <script>
     function check() {
+        var email = document.getElementById("email").value;
+        var password = document.getElementById("password").value;
+
         $.ajax({
             url: '/login',
+            data: { email: email, password: password  },
             type: 'POST',
             success: function(response) {
                 console.log(response);
+                console.log("asd");
                 document.getElementById("mismatch").innerHTML = response;
             },
             error: function(error) {
+                console.log("asd2");
                 console.log(error);
             }
         })
@@ -25,10 +31,10 @@
     <div class="wrapper">
         <h1 align="center">LOGIN</h1>
         <br>
-        <form class="form" method="POST">
+        <form class="form">
             <input type="email" name="email" class="email" id="email" placeholder="Email Address">
-            <input type="password" name="password" class="password" placeholder="Password">
-            <input type="submit" name="submit" class="submit" value="LOGIN" onclick="check()">
+            <input type="password" name="password" class="password" id="password" placeholder="Password">
+            <input type="submit" name="submit" class="submit" value="LOGIN" onclick="return check()">
             <div class="u-form-group">
                 <br>
                 <a href="#" class="forgot-password">Forgot password?</a>
