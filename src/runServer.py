@@ -58,7 +58,7 @@ def editor(filename = ""):
         except FileNotFoundError:
             editor_content = "" #TODO: some kind of message here
 
-    return render_template("form2.html", editor_content=editor_content)
+    return render_template("editor.html", editor_content=editor_content)
 
 
 @app.route('/upload', methods=['POST'])
@@ -68,7 +68,7 @@ def upload():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-    return redirect('/ace?filename=%s'%filename)
+    return redirect('/?filename=%s'%filename)
 
 @app.route('/saveFile')
 def saveFile():
