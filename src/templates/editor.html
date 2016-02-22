@@ -128,10 +128,8 @@
         var line_number = line_number_message[0];
         var error_message = line_number_message[1];
 
-        var line_length = editor.session.getLine(parseInt(line_number)).length;
-
         var Range = require("static/ace-master/lib/ace/range").Range;
-        var range = new Range(line_number-1, 0, line_number-1, line_length);
+        var range = new Range(line_number-1, 0, line_number-1, 1);
         error_marker = editor.session.addMarker(range, "errorHighlight", "fullLine");
 
         editor.getSession().setAnnotations([{
