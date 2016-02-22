@@ -40,8 +40,13 @@ def renderSignUp():
 
 @app.route("/signup", methods=["POST"])
 def signUpButton():
+
+
     email = request.form["email"]
     password = request.form["password"]
+
+    print(email);
+    print(password);
 
     password_hash = generate_password_hash(password)
     insert_user(email, password_hash)
