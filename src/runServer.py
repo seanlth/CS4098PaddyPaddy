@@ -10,6 +10,8 @@ from database.database_query import query_user, number_of_users
 
 import tempfile
 
+from flask import session
+
 app = Flask(__name__)
 def get_resource_as_string(name, charset='utf-8'):
     with app.open_resource(name) as f:
@@ -40,8 +42,6 @@ def renderSignUp():
 
 @app.route("/signup", methods=["POST"])
 def signUpButton():
-
-
     email = request.form["email"]
     password = request.form["password"]
 
@@ -50,9 +50,9 @@ def signUpButton():
 
     password_hash = generate_password_hash(password)
     insert_user(email, password_hash)
+    session['email'] = email
 
     return "Welcome screen"
-
 
 @app.route("/login")
 def login():
@@ -66,10 +66,15 @@ def loginButton():
     if user != None:
         print(user.password);
         if check_password_hash(user.password, password):
+            session['email'] = email
             return "Login"
 
     return "incorrect email or password<br/>"
 
+@app.route("/logout")
+def logout():
+    sesssion.pop('email', None)
+    return redirect(url_for('index'))
 
 
 if __name__ == "__main__":
