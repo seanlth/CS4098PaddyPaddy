@@ -1,9 +1,31 @@
-<html>
-  <h1> open file </h1>
-  <!-- <a href='ace?filename=test.pml'> open 'test.pml'</a> -->
-  <ul>
-  {% for file in files %}
-  <li><a href='/?filename={{ file }}'> open '{{file}}'</a></li>
-  {% endfor %}
-  </ul>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"
+          rel="stylesheet">
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+      </div>
+      <hr/>
+      <div>
+
+      <ul>
+      {% for file in files %}
+      <li><a href='/?filename={{ file }}'> open '{{file}}'</a></li>
+      {% else %}
+      <li><em>no files found</em></li>
+      {% endfor %}
+
+      </ul>
+      <hr/>
+
+      <form action="upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file"><br /><br />
+        <input type="submit" value="Upload">
+      </form>
+      </div>
+    </div>
+  </body>
 </html>

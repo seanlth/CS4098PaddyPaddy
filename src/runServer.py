@@ -18,18 +18,18 @@ import base64
 DEBUG = True
 app = Flask(__name__)
 app.secret_key = 'fe2917b485cc985c47071f3e38273348' # echo team paddy paddy | md5sum
+app.config['UPLOAD_FOLDER'] = 'userFiles/'
+app.config['ALLOWED_EXTENSIONS'] = set(['pml'])
 
 def get_resource_as_string(name, charset='utf-8'):
     with app.open_resource(name) as f:
         return f.read().decode(charset)
+app.jinja_env.globals['get_resource_as_string'] = get_resource_as_string
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
-app.jinja_env.globals['get_resource_as_string'] = get_resource_as_string
-app.config['UPLOAD_FOLDER'] = 'userFiles/'
-app.config['ALLOWED_EXTENSIONS'] = set(['pml'])
 
 
 @app.route("/", methods=["POST"])
@@ -44,6 +44,7 @@ def my_form_post():
             return check_output(["./pmlcheck", fname], stderr=STDOUT).decode().replace(fname+':', "Line ")
         except CalledProcessError as e:
             return e.output.decode().replace(fname+':', "Line "), 400
+
 
 @app.route("/")
 def editor(filename = ""):
@@ -61,49 +62,64 @@ def editor(filename = ""):
     return render_template("editor.html", editor_content=editor_content)
 
 
+
+@app.route('/openFile')
+def openFile():
+    if not 'email' in session:
+        return redirect('/signup?return_url=openFile')
+
+    files = []
+    email = session['email']
+    userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+    try:
+        files = os.listdir(userpath)
+    except: # userpath doesn't exist yet; create it and assume empty
+        os.makedirs(userpath, exist_ok=True)
+    return render_template('openFile.html', files=files)
+
+
 @app.route('/upload', methods=['POST'])
 def upload():
+    if not 'email' in session:
+        return "", 401 # not authorised
+
+    email = session['email']
     file = request.files['file']
     filename = ""
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+        file.save(os.path.join(userpath, filename))
     return redirect('/?filename=%s'%filename)
+
+
 
 @app.route('/saveFile')
 def renderSaveFile():
-    c = request.cookies.get("editor_content")
-    session['editor_content'] = base64.b64decode(c).decode()
+    content = request.cookies.get("editor_content")
+    session['editor_content'] = base64.b64decode(content).decode()
     if not 'email' in session:
         return redirect('/signup?return_url=saveFile')
     else:
         return render_template('saveFile.html')
 
+
 @app.route('/saveFile', methods=['POST'])
 def saveFile():
+    if not 'email' in session:
+        return "", 401 # not authorised
+
     name = request.form['filename']
-    if 'email' in session:
-        email = session['email']
-        content = session['editor_content']
-        savepath = os.path.join(app.config['UPLOAD_FOLDER'], email)
-        os.makedirs(savepath, exist_ok=True) # make the users save dir if it doesn't already exist
-        with open(os.path.join(savepath, name), mode="w") as file:
-            file.write(content)
-    else:
-        # user somehow got to save as screen without auth; error?
-        pass
+    email = session['email']
+    content = session['editor_content']
+    savepath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+    os.makedirs(savepath, exist_ok=True) # make the users save dir if it doesn't already exist
+    with open(os.path.join(savepath, name), mode="w") as file:
+        file.write(content)
 
     return redirect('/')
 
 
-@app.route('/openFile')
-def openFile():
-    files = os.listdir(app.config['UPLOAD_FOLDER'])
-    return render_template('openFile.html', files=files)
-
-@app.route('/fileUpload')
-def fileUpload():
-    return render_template('fileUpload.html')
 
 @app.route("/signup")
 def renderSignUp():
@@ -111,6 +127,7 @@ def renderSignUp():
         session['return_url'] = request.args['return_url']
 
     return render_template("register.html")
+
 
 @app.route("/signup", methods=["POST"])
 def signUpButton():
@@ -130,9 +147,12 @@ def signUpButton():
     else:
         return "Welcome screen"
 
+
+
 @app.route("/login")
 def login():
     return render_template("login.html")
+
 
 @app.route("/login", methods=["POST"])
 def loginButton():
@@ -140,12 +160,14 @@ def loginButton():
     password = request.form["password"]
     user = query_user(email);
     if user != None:
-        print(user.password);
+        #print(user.password);
         if check_password_hash(user.password, password):
             session['email'] = email
             return "Login"
 
     return "incorrect email or password<br/>"
+
+
 
 @app.route("/logout")
 def logout():

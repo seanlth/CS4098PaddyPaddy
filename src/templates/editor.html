@@ -25,7 +25,6 @@
                 <ul class="dropdown-menu">
                     <li><a href="javascript:new_hook()">New</a></li>
                     <li><a href="javascript:open_hook()">Open</a></li>
-                    <li><a href="javascript:upload_hook()">Upload</a></li>
                     <li><a href="javascript:save_hook()">Save</a></li>
                     <!-- <li class="divider"></li> -->
                     <!-- <li><a href="#">Separated link</a></li> -->
@@ -109,11 +108,6 @@
     function open_hook() {
       console.log("open pressed");
       window.location.href = 'openFile';
-    }
-
-    function upload_hook() {
-      console.log("upload pressed");
-      window.location.href = 'fileUpload';
     }
 
     function changeBindings(binding){
