@@ -12,10 +12,13 @@ from database.database_query import query_user, number_of_users
 
 import tempfile
 import os
+import base64
 
 
 DEBUG = True
 app = Flask(__name__)
+app.secret_key = 'fe2917b485cc985c47071f3e38273348' # echo team paddy paddy | md5sum
+
 def get_resource_as_string(name, charset='utf-8'):
     with app.open_resource(name) as f:
         return f.read().decode(charset)
@@ -23,9 +26,6 @@ def get_resource_as_string(name, charset='utf-8'):
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
-
-def userIsAuthenticated():
-    return False #TODO: fill in actual authentication
 
 app.jinja_env.globals['get_resource_as_string'] = get_resource_as_string
 app.config['UPLOAD_FOLDER'] = 'userFiles/'
@@ -71,8 +71,30 @@ def upload():
     return redirect('/?filename=%s'%filename)
 
 @app.route('/saveFile')
+def renderSaveFile():
+    c = request.cookies.get("editor_content")
+    session['editor_content'] = base64.b64decode(c).decode()
+    if not 'email' in session:
+        return redirect('/signup?return_url=saveFile')
+    else:
+        return render_template('saveFile.html')
+
+@app.route('/saveFile', methods=['POST'])
 def saveFile():
-    return render_template('saveFile.html')
+    name = request.form['filename']
+    if 'email' in session:
+        email = session['email']
+        content = session['editor_content']
+        savepath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+        os.makedirs(savepath, exist_ok=True) # make the users save dir if it doesn't already exist
+        with open(os.path.join(savepath, name), mode="w") as file:
+            file.write(content)
+    else:
+        # user somehow got to save as screen without auth; error?
+        pass
+
+    return redirect('/')
+
 
 @app.route('/openFile')
 def openFile():
@@ -85,6 +107,9 @@ def fileUpload():
 
 @app.route("/signup")
 def renderSignUp():
+    if 'return_url' in request.args:
+        session['return_url'] = request.args['return_url']
+
     return render_template("register.html")
 
 @app.route("/signup", methods=["POST"])
@@ -92,14 +117,18 @@ def signUpButton():
     email = request.form["email"]
     password = request.form["password"]
 
-    print(email);
-    print(password);
+    #print(email);
+    #print(password); #wat
 
     password_hash = generate_password_hash(password)
     insert_user(email, password_hash)
     session['email'] = email
 
-    return "Welcome screen"
+    returnUrl = session.pop('return_url', None)
+    if returnUrl:
+        return redirect(returnUrl)
+    else:
+        return "Welcome screen"
 
 @app.route("/login")
 def login():
@@ -120,8 +149,8 @@ def loginButton():
 
 @app.route("/logout")
 def logout():
-    sesssion.pop('email', None)
-    return redirect(url_for('index'))
+    session.pop('email', None)
+    return redirect('/')
 
 
 if __name__ == "__main__":
