@@ -52,12 +52,15 @@ def editor(filename = ""):
 
     if 'filename' in request.args or filename != "":
         filename = filename if filename else request.args['filename']
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        try:
-            with open(filepath) as f:
-                editor_content = f.read()
-        except FileNotFoundError:
-            editor_content = "" #TODO: some kind of message here
+        if 'email' in session:
+            email = session['email']
+            userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+            filepath = os.path.join(userpath, filename)
+            try:
+                with open(filepath) as f:
+                    editor_content = f.read()
+            except FileNotFoundError:
+                editor_content = "" #TODO: some kind of message here
 
     return render_template("editor.html", editor_content=editor_content)
 
