@@ -15,7 +15,7 @@ import os
 import base64
 
 
-DEBUG = True
+DEBUG = False
 app = Flask(__name__)
 app.secret_key = 'fe2917b485cc985c47071f3e38273348' # echo team paddy paddy | md5sum
 app.config['UPLOAD_FOLDER'] = 'userFiles/'
