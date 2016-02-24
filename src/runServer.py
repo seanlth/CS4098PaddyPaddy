@@ -1,6 +1,6 @@
 from flask import Flask, request, render_template
 from flask import redirect, url_for, send_from_directory
-from flask import session
+from flask import session, flash
 
 from subprocess import check_output, STDOUT, CalledProcessError
 
@@ -93,7 +93,9 @@ def upload():
         filename = secure_filename(file.filename)
         userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
         file.save(os.path.join(userpath, filename))
-    return redirect('/?filename=%s'%filename)
+        return redirect('/?filename=%s'%filename)
+    flash("Invalid file")
+    return redirect('/openFile')
 
 
 
