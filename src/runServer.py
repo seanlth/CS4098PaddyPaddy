@@ -115,14 +115,16 @@ def saveFile():
         return "", 401 # not authorised
 
     name = request.form['filename']
-    email = session['email']
-    content = session['editor_content']
-    savepath = os.path.join(app.config['UPLOAD_FOLDER'], email)
-    os.makedirs(savepath, exist_ok=True) # make the users save dir if it doesn't already exist
-    with open(os.path.join(savepath, name), mode="w") as file:
-        file.write(content)
-
-    return redirect('/')
+    if name and allowed_file(name):
+        email = session['email']
+        content = session['editor_content']
+        savepath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+        os.makedirs(savepath, exist_ok=True) # make the users save dir if it doesn't already exist
+        with open(os.path.join(savepath, name), mode="w") as file:
+            file.write(content)
+        return redirect('/')
+    flash("Invalid File")
+    return redirect('/saveFile')
 
 
 
