@@ -34,6 +34,10 @@ def my_form_post():
 def editor():
     return render_template("editor.html")
 
+@app.route("/diagram")
+def diagram():
+    return render_template("diagramEditor.html")
+
 @app.route("/signup")
 def renderSignUp():
     return render_template("register.html")
