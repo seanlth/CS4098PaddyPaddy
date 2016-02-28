@@ -100,7 +100,7 @@
 
 	function save_hook(){
       console.log("save pressed");
-      var content = btoa(editor.getValue()) // encode editor content
+      var content = btoa(editor.getValue()); // encode editor content
       createCookie("editor_content", content, 1);
       window.location.href = 'saveFile'
     }
