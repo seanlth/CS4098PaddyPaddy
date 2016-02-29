@@ -1,4 +1,4 @@
-var startX, endX, middle, program, nodes, state;
+var startX, endX, middle, program, nodes, state, selectedAction;
 
 var StateEnum = {
     normal: 0,
@@ -72,7 +72,7 @@ function drawActions(actions) {
     }
 }
 
-function validIterations(actions) {
+function validIterations(actions) {//TODO: fix
     var iterations = new Array();
     if(state != StateEnum.iteration) return iterations;
 
@@ -167,6 +167,7 @@ function Action(x, y) {
     this.type = "";
     this.agent = "";
     this.script = "";
+    this.tool = "";
     this.requirements = new Array();
     this.provisions = new Array();
     this.selected = false;
@@ -181,17 +182,16 @@ function Action(x, y) {
 
         if(mouseX >= this.x && mouseX <= this.x + 20 && mouseY >= this.y && mouseY <= this.y + 20) {
             this.selected = true;
+            selectedAction = this;
             openActionEditor(this);
-            return true;
         }
-
-        if(dist(mouseX, mouseY, this.x + this.width / 2, this.y) <= 20) {
+        else if(dist(mouseX, mouseY, this.x + this.width / 2, this.y) <= 20) {
             this.selected = true;
+            selectedAction = this;
             state = StateEnum.iteration;
-            return true;
         }
 
-        return false;
+        return this.selected;
     }
 
     this.draw = function(r, g, b) {
@@ -293,24 +293,15 @@ function openActionEditor(action) {
 }
 
 function editAction() {
-    for(var i = 0;  i < program.length; i++) {
-        if(program[i].selected) {
-            program[i].name = document.getElementById('name').value;
-            program[i].type = document.getElementById('type').value;
-            program[i].agent = document.getElementById('agent').value;
-            program[i].script = document.getElementById('script').value;
-            program[i].tool = document.getElementById('tool').value;
-            program[i].selected = false;
-            break;
-        }
-    }
+    selectedAction.name = document.getElementById('name').value;
+    selectedAction.type = document.getElementById('type').value;
+    selectedAction.agent = document.getElementById('agent').value;
+    selectedAction.script = document.getElementById('script').value;
+    selectedAction.tool = document.getElementById('tool').value;
+    selectedAction.selected = false;
 
     $("#actionEditor").hide();
     state = StateEnum.normal;
-}
-
-function findSelected(actions) {
-    for(var = 0; i < )
 }
 
 function toggleFields() {
