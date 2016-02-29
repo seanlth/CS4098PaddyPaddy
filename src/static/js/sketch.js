@@ -1,23 +1,29 @@
-var startX, endX, middle, program, nodes, formDisplayed;
+var startX, endX, middle, program, nodes, state;
 
-var TypeEnum = {
-    none: 0,
-    manual: 1,
-    executable: 2
+var StateEnum = {
+    normal: 0,
+    form: 1,
+    iteration: 2
+};
+
+var FlowControlEnum = {
+    i: "iteration",
+    b: "branch",
+    s: "selection"
 };
 
 function setup() {
-    formDisplayed = false;
+    state = StateEnum.normal;
     createCanvas(windowWidth, windowHeight);
-    startX = 20;
-    endX = width - 40;
+    startX = 40;
+    endX = width - 80;
     middle = height / 2;
 
     program = new Array();
     nodes = new Array();
     addNodes();
 
-    textAlign(CENTER);
+    textAlign(CENTER, CENTER);
 }
 
 function draw() {
@@ -25,25 +31,90 @@ function draw() {
 
     fill(0);
     line(startX, middle, endX, middle);
-    ellipse(startX, middle, 20, 20);
+    ellipse(startX, middle, 30, 30);
     fill(255);
-    ellipse(endX, middle, 20, 20);
+    ellipse(endX, middle, 30, 30);
     fill(0);
-    ellipse(endX, middle, 14, 14);
+    ellipse(endX, middle, 20, 20);
 
-    for(var i = 0; i < program.length; i++) {
-        program[i].draw();
-    }
+    drawActions(program);
 
     for(var i = 0; i < nodes.length; i++) {
         nodes[i].draw();
     }
 }
 
+function drawActions(actions) {
+    var validI = validIterations(actions);
+
+    for(var i = 0; i < actions.length; i++) {
+        if(actions[i].constructor == Action){
+            if(state != StateEnum.iteration) {
+                actions[i].draw(255, 255, 255);
+            }
+            else {
+                if(actions[i].selected) {
+                    actions[i].draw(0, 120, 0);
+                }
+                else {
+                    if(validI.validIterations.indexOf(i) >= 0) {
+                        actions[i].draw(0, 255, 0);
+                    }
+                    else {
+                        actions[i].draw(255, 0, 0);
+                    }
+                }
+            }
+        }
+        else {
+            drawActions(actions[i].actions);
+        }
+    }
+}
+
+function validIterations(actions) {
+    var iterations = new Array();
+    if(state != StateEnum.iteration) return iterations;
+
+    var found = false;
+    var selectedIndex = -1;
+
+    for(var i = 0; i < actions.length; i++) {
+        if(found && actions[i].constructor == Action) {
+            iterations.push(i);
+        }
+        else if(found) {
+            break;
+        }
+        if(actions[i].selected) {
+            selectedIndex = i;
+            found = true;
+        }
+    }
+
+    for(var i = selectedIndex; i >= 0; i--) {
+        if(actions[i].constructor == Action) {
+            iterations.push(i);
+        }
+        else {
+            break;
+        }
+    }
+
+    return {selected: selectedIndex, validIterations: iterations};
+}
+
+function sequenceLength(actions) {
+    //TODO
+}
+
 function addAction(x, y) {
     program.push(new Action(x, y));
     program.sort(compare);
     var diagramWidth = endX - startX;
+
+    var length = 0;
+
     for(var i = 0; i < program.length; i++) {
         program[i].x = diagramWidth * ((i + 1) / (program.length + 1)) - program[i].width / 4;
     }
@@ -88,12 +159,12 @@ function Node(x, y) {
 }
 
 function Action(x, y) {
-    this.width = 100;
-    this.height = 100;
+    this.width = 120;
+    this.height = 80;
     this.x = x - this.width / 2;
     this.y = y - this.height / 2;
-    this.name = "Action " + program.length;
-    this.type = TypeEnum.none;
+    this.name = "New Action";
+    this.type = "";
     this.agent = "";
     this.script = "";
     this.requirements = new Array();
@@ -106,24 +177,35 @@ function Action(x, y) {
     }
 
     this.press = function() {
-        if(mouseX >= this.x && mouseX <= this.x + 20 &&
-            mouseY >= this.y && mouseY <= this.y + 20) {
-                this.selected = true;
-                openActionEditor(this);
-            }
-        // if(mouseX >= this.x && mouseX <= this.x + this.width &&
-        //     mouseY >= this.y && mouseY <= this.y + this.height) {
-        //         this.selected = true;
-        //     }
+        this.selected = false;
+
+        if(mouseX >= this.x && mouseX <= this.x + 20 && mouseY >= this.y && mouseY <= this.y + 20) {
+            this.selected = true;
+            openActionEditor(this);
+            return true;
+        }
+
+        if(dist(mouseX, mouseY, this.x + this.width / 2, this.y) <= 20) {
+            this.selected = true;
+            state = StateEnum.iteration;
+            return true;
+        }
+
+        return false;
     }
 
-    this.draw = function() {
+    this.draw = function(r, g, b) {
         fill(255);
         rect(this.x, this.y, this.width, this.height);
         fill(255);
         rect(this.x, this.y, 20, 20);
         fill(0);
         text('...', this.x + 10, this.y + 10);
+        text(this.name, this.x + this.width / 2, this.y + this.height / 2);
+        fill(r, g, b);
+        ellipse(this.x + this.width / 2, this.y, 20, 20);
+        fill(0);
+        text('I', this.x + this.width / 2, this.y);
         text(this.name, this.x + this.width / 2, this.y + this.height / 2);
     }
 }
@@ -137,17 +219,59 @@ function compare(a,b) {
     return 0;
 }
 
+function Iterate(first, second, array){
+    console.log("Iterate");
+    var start, end;
+    if(first < second){
+        start = first;
+        end = second;
+    }
+    else {
+        start = second;
+        end = first;
+    }
+
+    //adds an iteration to program
+    array.splice(start, end - start + 1, {control: FlowControlEnum.i, actions: array.slice(start, end + 1)});
+    console.log("here");
+}
 
 function mousePressed() {
-    if (formDisplayed) return;
+    if (state == StateEnum.form) return;
 
-    for(var i = 0; i < program.length; i++) {
-        program[i].press();
-    }
+    if(!pressActions(program)) state = StateEnum.normal;
 
     for(var i = 0; i < nodes.length; i++) {
         nodes[i].press();
     }
+}
+
+function pressActions(actions) {
+    var pressed = false;
+    var selectedIndex = -1;
+
+    var lastStateEnum = state;
+    var validIteration = validIterations(actions);
+
+    for(var i = 0; i < actions.length && !pressed; i++) {
+        if(actions[i].constructor == Action) {
+            pressed = actions[i].press();
+            if(lastStateEnum == StateEnum.iteration && state == StateEnum.iteration && pressed){
+                if(validIteration.validIterations.indexOf(i) >= 0) {
+                    state = StateEnum.normal;
+                    actions[i].selected = false;
+                    actions[validIteration.selected].selected = false;
+                    Iterate(validIteration.selected, i, actions);
+                }
+            }
+        }
+        else {
+            pressed = pressActions(actions[i].actions);
+            if(selectedIndex < i) selectedIndex = -1;
+        }
+    }
+
+    return pressed;
 }
 
 $(document).ready(function () {
@@ -159,7 +283,7 @@ $(document).ready(function () {
 });
 
 function openActionEditor(action) {
-    formDisplayed = true;
+    state = StateEnum.form;
     $("#actionEditor").show();
     document.getElementById('name').value = action.name;
     document.getElementById('type').value = action.type;
@@ -180,8 +304,13 @@ function editAction() {
             break;
         }
     }
+
     $("#actionEditor").hide();
-    formDisplayed = false;
+    state = StateEnum.normal;
+}
+
+function findSelected(actions) {
+    for(var = 0; i < )
 }
 
 function toggleFields() {
