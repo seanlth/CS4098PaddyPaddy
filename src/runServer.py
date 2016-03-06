@@ -128,6 +128,10 @@ def saveFile():
 
 
 
+@app.route("/diagram")
+def diagram():
+    return render_template("diagramEditor.html")
+
 @app.route("/signup")
 def renderSignUp():
     if 'return_url' in request.args:
