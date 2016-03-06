@@ -1,42 +1,31 @@
 <!DOCTYPE html>
 <html>
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/p5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/p5.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/addons/p5.dom.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/addons/p5.sound.min.js"></script>
   <script src="{{url_for('static', filename='js/sketch.js')}}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='diagramEditor.css') }}">
   <body>
   <form id="actionEditor">
     <table>
-      <select id="flow">
-        <option value="action">Action</option>
-        <option value="branch">Branch</option>
-        <option value="selection">Selection</option>
-      </select>
       <p>Name: <Input type="text" name="name" id="name"/></p>
-      <div id="actionFields">
-        <p> Type:
-          <select id="type" name="type">
-            <option value="none">None</option>
-            <option value="manual">Manual</option>
-            <option value="provides">Provides</option>
-          </select>
-        </p>
-        <p> Agent:
-          <input type="text" id="agent" name="agent"/>
-        </p>
-        <p> Script: </p>
-        <textarea id="script" name="script"></textarea>
-        <p> Tool:
-          <input type="text" id="tool" name="tool"/>
-        </p>
-        <!-- TODO requirements/provisions -->
-      </div>
-      <div id="otherFields">
-          <p>Number of actions:
-              <input type="number" name="quantity" min="1">
-          </p>
-      </div>
+      <p> Type:
+        <select id="type" name="type">
+          <option value="none">None</option>
+          <option value="manual">Manual</option>
+          <option value="provides">Provides</option>
+        </select>
+      </p>
+      <p> Agent:
+        <input type="text" id="agent" name="agent"/>
+      </p>
+      <p> Script: </p>
+      <textarea id="script" name="script"></textarea>
+      <p> Tool:
+        <input type="text" id="tool" name="tool"/>
+      </p>
+      <!-- TODO requirements/provisions -->
       <p align="center">
         <button type="button" value="enter" onClick="editAction()">Edit</button>
       </p>
