@@ -1,6 +1,6 @@
 var canvas, startX, endX, middle, program, nodes, state, selectedAction, selectAdd, iterationIndex;
 
-var ACTION_HEIGHT = 80;
+var ACTION_HEIGHT = 50;
 var ACTION_WIDTH = 120;
 var numActions = 0;
 
@@ -25,7 +25,7 @@ function setup() {
     endX = width - 40;
     middle = height / 2;
 
-    program = new Array();
+    program = {name: "new_process", actions: new Array()};
     nodes = new Array();
     // addNodes();
 
@@ -71,9 +71,9 @@ function draw() {
     fill(0);
     ellipse(endX, middle, 20, 20);
 
-    var progWidth = program.length + sequenceLength(program);
+    var progWidth = program.actions.length + sequenceLength(program.actions);
     nodes = [];
-    drawSequenceOrIteration(program, progWidth, 0, 0, []);
+    drawSequenceOrIteration(program.actions, progWidth, 0, 0, []);
 
     for(var i = 0; i < nodes.length; i++) {
         nodes[i].draw(progWidth);
@@ -118,10 +118,15 @@ function drawSequenceOrIteration(actions, progWidth, x, y, index) {
             }
             else if(actions[i].control == FlowControlEnum.branch) {
                 nodes.push(new Node(nodeXInPixels, yInPixels + (ACTION_HEIGHT / 2), index.concat([i])));
-                rect(xInPixels - 10 + ACTION_WIDTH / 2, yInPixels - (ACTION_HEIGHT * 0.25), 20, ACTION_HEIGHT * 1.5);
                 iteration_length += sequenceLength(actions[i].actions) + 2;
                 var finish = (((x + 1 + iteration_length)  / (progWidth + 1)) * (endX - startX)) + startX + (ACTION_WIDTH / 2);
-                rect(finish - 10, yInPixels - (ACTION_HEIGHT * 0.25), 20, ACTION_HEIGHT * 1.5);
+                var height = sequenceHeight(actions[i].actions) + actions[i].actions.length;
+                var heightInPixels;
+                if(y == 0) {
+                    heightInPixels = yInPixels - ACTION_HEIGHT * 1.5 * ((height - (height % 2)) / 2);
+                }
+                rect(xInPixels - 10 + ACTION_WIDTH / 2, heightInPixels, 20, ACTION_HEIGHT * 1.5 * height);
+                rect(finish - 10, heightInPixels, 20, ACTION_HEIGHT * 1.5 * height);
                 drawBranchOrSelection(actions[i].actions, progWidth, x + xChange, y, index.concat([i]));
             }
             else {
@@ -183,38 +188,6 @@ function drawBranchOrSelection(actions, progWidth, x, y, index) {
     }
 }
 
-function validIterations(actions) { // TODO: fix
-    var iterations = new Array();
-    if(state != StateEnum.iteration) return iterations;
-
-    var found = false;
-    var selectedIndex = -1;
-
-    for(var i = 0; i < actions.length; i++) {
-        if(found && actions[i].constructor == Action) {
-            iterations.push(i);
-            break;
-        }
-        else if(found) {
-        }
-        if(actions[i].selected) {
-            selectedIndex = i;
-            found = true;
-        }
-    }
-
-    for(var i = selectedIndex; i >= 0; i--) {
-        if(actions[i].constructor == Action) {
-            iterations.push(i);
-        }
-        else {
-            break;
-        }
-    }
-
-    return {selected: selectedIndex, validIterations: iterations};
-}
-
 function sequenceLength(actions) {
     var length = 0;
     for(var i = 0; i < actions.length; i++) {
@@ -251,7 +224,7 @@ function addAction(index) {
         return;
     }
 
-    var actions = program;
+    var actions = program.actions;
     for(var i = 0; i < index.length - 1; i++) {
         actions = actions[index[i]].actions;
     }
@@ -261,12 +234,12 @@ function addAction(index) {
 
 function addNodes() {
     nodes = [];
-    if(program.length == 0) {
+    if(program.actions.length == 0) {
         nodes.push(new Node([0], 0));
     }
     else{
-        var progWidth = sequenceLength(program) + program.length;
-        addNodesRec(program, [], progWidth);
+        var progWidth = sequenceLength(program.actions) + program.actions.length;
+        addNodesRec(program.actions, [], progWidth);
     }
 }
 
@@ -333,14 +306,17 @@ function Node(x, y, index) {
 }
 
 function validIteration(node) {
-    var valid = true;
-    for(var i = 0; i < iterationIndex.length - 1; i++) {
-        if(iterationIndex[i] != node.index) {
-            return false;
+    if(iterationIndex.length != node.index.length) return false;
+
+    var exactlyTheSame = true;
+    for(var i = 0; i < iterationIndex.length && exactlyTheSame; i++) {
+        exactlyTheSame = iterationIndex[i] == node.index[i];
+        if(i == iterationIndex.length - 1) {
+            return true;
         }
     }
 
-    return valid;
+    return !exactlyTheSame;
 }
 
 function Action() {
@@ -374,7 +350,7 @@ Action.prototype.openActionEditor = function(event) {
         var tag = this.id();
         var array = splitTokens(tag, '-');
         var id = array[0];
-        if(!selectAction(program, id)) return;
+        if(!selectAction(program.actions, id)) return;
 
         $("#actionEditor").show();
         document.getElementById('name').value = selectedAction.name;
@@ -427,12 +403,12 @@ function Iterate(firstIndex, secondIndex){
         end = firstIndex;
     }
 
-    var array = program;
+    var array = program.actions;
     for(var i = 0; i < length - 1; i++) {
         array = array[start[i]].actions;
     }
 
-    //adds an iteration to program
+    //adds an iteration to program.actions
     array.splice(start[length - 1], end[length - 1] - start[length - 1],
         {name: "New_Iteration", control: FlowControlEnum.iteration, actions: array.slice(start[length - 1], end[length - 1])});
 
@@ -440,13 +416,13 @@ function Iterate(firstIndex, secondIndex){
 }
 
 function Sequence(index){
-    var array = program;
+    var array = program.actions;
     for(var i = 0; i < index.length - 2; i++) {
         array = array[index[i]].actions;
     }
 
     var sequenceArray = [array[index[index.length - 2]], new Action()];
-    //adds an sequence to program
+    //adds an sequence to program.actions
     array.splice(index[index.length - 2], 1,
         {name: "New_Sequence", control: FlowControlEnum.sequence, actions: sequenceArray});
 
@@ -454,11 +430,11 @@ function Sequence(index){
 }
 
 function Branch(index){
-    var array = program;
+    var array = program.actions;
     for(var i = 0; i < index.length - 1; i++) {
         array = array[index[i]].actions;
     }
-    //adds an branch to program
+    //adds an branch to program.actions
     array.splice(index[index.length - 1], 0,
         {name: "New_Branch", control: FlowControlEnum.branch, actions: [new Action()]});
 

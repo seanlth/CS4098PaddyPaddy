@@ -23,6 +23,9 @@
 * File Save (Sign in using email and click file in editor, currently there is a bug on large files)
 * File Open (Sign in using email and click open in editor)
 
+* Boxes and Arrows (in-progress, very buggy at ```0.0.0.0:8000/diagram```)
+* Scripts (in editor, needs styling, click on an action after clicking (+))
+
 ## Dependencies
 * Ubuntu 14.04
 
@@ -43,6 +46,7 @@ make install
 make run
 ```
 
-Open ```0.0.0.0:8000``` in a browser for editor
-Open ```0.0.0.0:8000/login``` in a browser for login page
-Open ```0.0.0.0:8000/signUp``` in a browser for sign up page
+* Open ```0.0.0.0:8000``` in a browser for editor
+* Open ```0.0.0.0:8000/login``` in a browser for login page
+* Open ```0.0.0.0:8000/signUp``` in a browser for sign up page
+* Open ```0.0.0.0:8000/diagram``` in a browser for the in-progress diagram page
