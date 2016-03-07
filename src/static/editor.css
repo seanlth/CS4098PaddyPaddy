@@ -19,7 +19,15 @@
 }
 
 .navbar-default .navbar-nav>li>a {
-    color: #B7B7B7 !important;
+    color: #FFFFFF !important;
+}
+
+a:hover {
+    color: #FFFFFF !important;
+}
+
+a:focus {
+    color: #777 !important;
 }
 
 .nav > li > a {
@@ -42,6 +50,7 @@
     background-color: #272822 !important;
     margin-bottom:0 !important;
     min-height:28px !important;
+    background:url(http://subtlepatterns2015.subtlepatterns.netdna-cdn.com/patterns/dark_wall.png);
 }
 
 #output {

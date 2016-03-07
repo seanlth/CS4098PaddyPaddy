@@ -24,6 +24,7 @@
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">File </a>
                 <ul class="dropdown-menu">
                     <li><a href="javascript:new_hook()">New</a></li>
+                    <li><a href="javascript:open_hook()">Open</a></li>
                     <li><a href="javascript:save_hook()">Save</a></li>
                     <!-- <li class="divider"></li> -->
                     <!-- <li><a href="#">Separated link</a></li> -->
@@ -54,26 +55,7 @@
     </div><!-- /.navbar-collapse -->
 </nav>
 
-<div class="container" id="editor">process Diabetes_assessment {
-        action Assess_patient_symptoms {
-                requires {patient_symptoms}
-                provides {assessment.suspect_diabetes}
-        }
-        branch {
-                action Glucose_test {
-                        requires {assessment.suspect_diabetes}
-                        provides {blood_test.glucose_test}
-                }
-                action Cholesterol_test {
-                        requires {assessment.suspect_diabetes}
-                        provides {blood_test.cholesterol_test}
-                }
-        }
-        action Assess_diabetes {
-                requires {blood_test.glucose_test && (optional) blood_test.cholesterol_test}
-                provides {diagnosis.diabetes}
-        }
-}</div>
+<div class="container" id="editor">{{editor_content}}</div>
 
 <textarea id="output" disabled="disabled">Output</textarea>
 
@@ -100,11 +82,33 @@
 <script>
     var editor;
     var error_marker;
+
+	function createCookie(name,value,days) {
+		if (days) {
+			var date = new Date();
+			date.setTime(date.getTime()+(days*24*60*60*1000));
+			var expires = "; expires="+date.toGMTString();
+		}
+		else var expires = "";
+		document.cookie = name+"="+value+expires+"; path=/";
+	}
+
+
     function new_hook() { console.log("new pressed"); editor && editor.setValue(""); }
-	function save_hook(){ console.log("save pressed"); }
 	function undo_hook(){ console.log("undo pressed"); editor && editor.undo();}
 	function redo_hook(){ console.log("redo pressed"); editor && editor.redo();}
 
+	function save_hook(){
+      console.log("save pressed");
+      var content = btoa(editor.getValue()) // encode editor content
+      createCookie("editor_content", content, 1);
+      window.location.href = 'saveFile'
+    }
+
+    function open_hook() {
+      console.log("open pressed");
+      window.location.href = 'openFile';
+    }
 
     function changeBindings(binding){
       var keyBindings = {

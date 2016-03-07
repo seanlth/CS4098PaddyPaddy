@@ -1,0 +1,19 @@
+<html>
+  <h1> save as </h1>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <ul class=flashes>
+        {% for message in messages %}
+        <li><h1>{{ message }}</h1></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  {% endwith %}
+
+  <form class="form" method="post">
+    <input type="text" name="filename" placeholder="file name">
+    <input type="submit" value="submit">
+  </form>
+</html>
+
