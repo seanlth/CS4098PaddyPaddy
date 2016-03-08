@@ -156,7 +156,7 @@ def signUpButton():
     if returnUrl:
         return redirect(returnUrl)
     else:
-        return "Welcome screen"
+        return redirect('/')
 
 
 
@@ -174,7 +174,7 @@ def loginButton():
         #print(user.password);
         if check_password_hash(user.password, password):
             session['email'] = email
-            return "Login"
+            return redirect('/')
 
     return "incorrect email or password<br/>"
 

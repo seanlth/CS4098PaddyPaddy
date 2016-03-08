@@ -58,6 +58,13 @@ p2{
   text-shadow:#000 0px 1px 5px;
   margin-bottom:30px;
 }
+p3{
+  font:13px Open Sans;
+  color:#6E6E6E;
+  float: left;
+  text-shadow:#000 0px 1px 5px;
+  margin-top:30px;
+}
 form{
   width:$full;
   text-align: center;
