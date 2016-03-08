@@ -46,7 +46,18 @@ p{
   text-shadow:#000 0px 1px 5px;
   margin-bottom:30px;
 }
-
+p1{
+  /*font:13px Open Sans;*/
+  color:#fff;
+  text-shadow:#000 0px 1px 5px;
+  margin-bottom:30px;
+}
+p2{
+  /*font:13px Open Sans;*/
+  color:#fff;
+  text-shadow:#000 0px 1px 5px;
+  margin-bottom:30px;
+}
 form{
   width:$full;
   text-align: center;
@@ -88,6 +99,65 @@ input[type="submit"]{
   -webkit-box-reflect: below 0px -webkit-gradient(linear, left top, left bottom, from(transparent), color-stop(50%, transparent), to(rgba(255,255,255,0.2)));
 }
 
+.left {
+float: left;
+}
+.both {
+clear: both;
+}
+.right {
+float: right;
+}
+.file-upload-container {
+width:400px;
+padding:10px;
+border-radius: 6px;
+-webkit-border-radius: 6px;
+-moz-border-radius: 6px;
+}
+.file-upload-override-button {
+margin-top: 10px;
+position: relative;
+overflow: hidden;
+cursor: pointer;
+padding:5px;
+border-radius:5px;
+background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#28D2DE), to(#1A878F));
+background-image: -webkit-linear-gradient(#28D2DE 0%, #1A878F 100%);
+background-image: -moz-linear-gradient(#28D2DE 0%, #1A878F 100%);
+background-image: -o-linear-gradient(#28D2DE 0%, #1A878F 100%);
+background-image: linear-gradient(#28D2DE 0%, #1A878F 100%);
+font:14px Oswald;
+color:#FFF;
+background-color:#79bbff;
+}
+/*.file-upload-override-button:hover {
+background-color:#378de5;
+}*/
+.file-upload-override-button:active {
+position:relative; top:1px;
+}
+.file-upload-button {
+position: absolute;
+height: 60px;
+top: -10px;
+left: -10px;
+cursor: pointer;
+opacity: 0;
+filter:alpha(opacity=0);
+}
+.file-upload-filename {
+width:400px;
+border: 1px solid #efefef;
+padding:10px;
+border-radius: 6px;
+-webkit-border-radius: 6px;
+-moz-border-radius: 6px;
+background: #fbfbfa;
+margin-left: 0px;
+height: auto;
+padding: 0px;
+}
 input:focus{
   box-shadow:inset 4px 6px 10px -4px rgba(0,0,0,0.7), 0 1px 1px -1px rgba(255,255,255,0.3);
   background:rgba(0,0,0,0.3);
@@ -98,7 +168,10 @@ input[type="submit"]:hover{
   opacity:1;
   cursor:pointer;
 }
-
+input[type="upload"]:hover{
+  opacity:1;
+  cursor:pointer;
+}
 .name-help,.email-help{
   display:none;
   padding:0px;

@@ -1,6 +1,12 @@
+<!DOCTYPE html>
 <html>
-  <h1> save as </h1>
-
+  <head>
+    <link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='registerLogin.css') }}">
+  </head>
+  <div class="wrapper">
+  <h1> save as... </h1>
   {% with messages = get_flashed_messages() %}
     {% if messages %}
       <ul class=flashes>
@@ -15,5 +21,5 @@
     <input type="text" name="filename" placeholder="file name">
     <input type="submit" value="submit">
   </form>
+</div>
 </html>
-

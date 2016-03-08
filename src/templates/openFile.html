@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"
-          rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='registerLogin.css') }}">
   </head>
   <body>
-    <div class="container">
+    <div class="wrapper">
       <div class="header">
         {% with messages = get_flashed_messages() %}
           {% if messages %}
             <ul class=flashes>
               {% for message in messages %}
-              <li><h1>{{ message }}</h1></li>
+              <li><p2>{{ message }}</p2></li>
               {% endfor %}
             </ul>
           {% endif %}
@@ -22,9 +23,9 @@
 
       <ul>
       {% for file in files %}
-      <li><a href='/?filename={{ file }}'> open '{{file}}'</a></li>
+      <li><a href='/?filename={{ file }}'><p1> open '{{file}}'<p1></a></li>
       {% else %}
-      <li><em>no files found</em></li>
+      <li><em><p1>no files found</p1></em></li>
       {% endfor %}
 
       </ul>
@@ -33,6 +34,26 @@
       <form action="upload" method="post" enctype="multipart/form-data">
         <input type="file" name="file"><br /><br />
         <input type="submit" value="Upload">
+      </form>
+        <!-- <form action="upload" method="post" enctype="multipart/form-data">
+          <div class="file-upload-container">
+            <div class="file-upload-filename left" id="file-upload-filename">No file selected</div>
+              <div class="file-upload-override-button right">
+                Choose file
+                <input type="file" class="file-upload-button" id="file-upload-button"/>
+              </div>
+            <div class="both"></div>
+          </div>
+
+          <input type="submit" value="Upload">
+        </form> -->
+        <!-- <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+        <script>
+        $("#file-upload-button").change(function () {
+        var fileName = $(this).val().replace('C:\\fakepath\\', '');
+        $("#file-upload-filename").html(fileName);
+        });
+        </script> -->
       </form>
       </div>
     </div>
