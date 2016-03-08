@@ -334,8 +334,8 @@ function Action() {
     this.agent = "";
     this.script = "";
     this.tool = "";
-    this.requirements = new Array();
-    this.provisions = new Array();
+    this.requires = "";
+    this.provides = "";
     this.selected = false;
 
     this.draw = function(x, y) {
@@ -358,6 +358,8 @@ Action.prototype.openActionEditor = function(event) {
         document.getElementById('agent').value = selectedAction.agent;
         document.getElementById('script').value = selectedAction.script;
         document.getElementById('tool').value = selectedAction.tool;
+        document.getElementById('requires').value = selectedAction.requires;
+        document.getElementById('provides').value = selectedAction.provides;
     }
 }
 
@@ -467,6 +469,8 @@ function editAction() {
     selectedAction.agent = document.getElementById('agent').value;
     selectedAction.script = document.getElementById('script').value;
     selectedAction.tool = document.getElementById('tool').value;
+    selectedAction.requires = document.getElementById('requires').value;
+    selectedAction.provides = document.getElementById('provides').value;
     selectedAction.selected = false;
 
     selectedAction.element.html(selectedAction.name);
