@@ -68,7 +68,7 @@ def editor(filename = ""):
 @app.route('/openFile')
 def openFile():
     if not 'email' in session:
-        return redirect('/signup?return_url=openFile')
+        return redirect('/login?return_url=openFile')
 
     files = []
     email = session['email']
@@ -103,7 +103,7 @@ def renderSaveFile():
     content = request.cookies.get("editor_content")
     session['editor_content'] = base64.b64decode(content).decode()
     if not 'email' in session:
-        return redirect('/signup?return_url=saveFile')
+        return redirect('/login?return_url=saveFile')
     else:
         return render_template('saveFile.html')
 
@@ -162,6 +162,9 @@ def signUpButton():
 
 @app.route("/login")
 def login():
+    if 'return_url' in request.args:
+        session['return_url'] = request.args['return_url']
+
     return render_template("login.html")
 
 
@@ -170,12 +173,17 @@ def loginButton():
     email = request.form["email"]
     password = request.form["password"]
     user = query_user(email)
+    
     if user != None:
         if check_password_hash(user.password, password):
             session['email'] = email
-            return redirect('/')
+            returnUrl = session.pop('return_url', None)
+            if returnUrl:
+                return redirect(returnUrl)
+            else:
+                return redirect('/')
 
-    return "incorrect email or password<br/>"
+    return "incorrect email or password<br/>", 401
 
 
 

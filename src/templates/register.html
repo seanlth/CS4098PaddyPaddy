@@ -35,13 +35,13 @@
   <script>
     function validate(){
         var email = document.forms["registration"]["email"] 
-		var password1 = document.forms["registration"]["password"].value;
+	    var password1 = document.forms["registration"]["password"].value;
         var password2 = document.forms["registration"]["verify"].value;
 		
-		if ( email == "" || password1 == "" ) {
-			alert("Not all fields are filled");
-			return false;
-		}		
+	    if ( email == "" || password1 == "" ) {
+	        alert("Not all fields are filled");
+	        return false;
+	    }		
 
         if (password1 != password2){
             alert("Passwords must match");
