@@ -3,7 +3,6 @@ from flask import redirect, url_for, send_from_directory
 from flask import session, flash
 
 from subprocess import check_output, STDOUT, CalledProcessError
-
 from werkzeug import generate_password_hash, check_password_hash, secure_filename
 
 from database.database_create import Base, User
