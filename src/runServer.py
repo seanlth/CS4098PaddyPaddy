@@ -141,21 +141,22 @@ def renderSignUp():
 
 @app.route("/signup", methods=["POST"])
 def signUpButton():
+    
     email = request.form["email"]
-    password = request.form["password"]
+    user = query_user(email)
+    if user == None:
+        password = request.form["password"]
+        password_hash = generate_password_hash(password)
+        insert_user(email, password_hash)
+        session['email'] = email
 
-    #print(email);
-    #print(password); #wat
-
-    password_hash = generate_password_hash(password)
-    insert_user(email, password_hash)
-    session['email'] = email
-
-    returnUrl = session.pop('return_url', None)
-    if returnUrl:
-        return redirect(returnUrl)
-    else:
-        return redirect('/')
+        returnUrl = session.pop('return_url', None)
+        if returnUrl:
+            return redirect(returnUrl)
+        else:
+            return redirect('/')
+    # email has been used
+    return redirect('/signup')
 
 
 
@@ -168,9 +169,8 @@ def login():
 def loginButton():
     email = request.form["email"]
     password = request.form["password"]
-    user = query_user(email);
+    user = query_user(email)
     if user != None:
-        #print(user.password);
         if check_password_hash(user.password, password):
             session['email'] = email
             return redirect('/')

@@ -34,13 +34,20 @@
   </div>
   <script>
     function validate(){
-        var password1 = document.forms["registration"]["password"].value;
+        var email = document.forms["registration"]["email"] 
+		var password1 = document.forms["registration"]["password"].value;
         var password2 = document.forms["registration"]["verify"].value;
+		
+		if ( email == "" || password1 == "" ) {
+			alert("Not all fields are filled");
+			return false;
+		}		
 
-        if(password1 != password2){
+        if (password1 != password2){
             alert("Passwords must match");
             return false;
         }
+	
 
         return true;
     }
