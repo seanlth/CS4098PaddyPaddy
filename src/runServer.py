@@ -64,11 +64,10 @@ def editor(filename = ""):
     return render_template("editor.html", editor_content=editor_content)
 
 
-
 @app.route('/openFile')
 def openFile():
     if not 'email' in session:
-        return redirect('/signup?return_url=openFile')
+        return redirect('/login?return_url=openFile')
 
     files = []
     email = session['email']
@@ -79,6 +78,9 @@ def openFile():
         os.makedirs(userpath, exist_ok=True)
     return render_template('openFile.html', files=files)
 
+def uploadFile():
+    if not 'email' in session:
+        return redirect('/login?return_url=openFile')
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -124,7 +126,6 @@ def saveFile():
         return redirect('/')
     flash("Invalid File")
     return redirect('/saveFile')
-
 
 
 @app.route("/diagram")

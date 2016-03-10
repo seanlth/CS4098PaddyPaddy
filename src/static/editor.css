@@ -30,6 +30,24 @@ a:focus {
     color: #777 !important;
 }
 
+a1:hover {
+    color: #FFFFFF !important;
+}
+
+a1:focus {
+    color: #777 !important;
+}
+form:hover{
+  background-color: #f2f2f2;
+  color: #FFFFFF !important;
+  cursor: pointer;
+}
+form{
+  width: 100%;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  padding-left: 20px !important;
+}
 .nav > li > a {
   padding-left: 7px !important;
   padding-right: 7px !important;
