@@ -1,4 +1,7 @@
-var canvas, startX, endX, middle, program, nodes, state, selectedAction, selectAdd, iterationIndex;
+var canvas, startX, endX, middle;// variables for drawing
+var program, nodes; // variables for storing actions in the program and nodes to add them
+var state, selectedAction, selectAdd, iterationIndex; // variables for handling input
+var offsetX, offsetY;
 
 var ACTION_HEIGHT = 50;
 var ACTION_WIDTH = 120;
@@ -24,6 +27,8 @@ function setup() {
     startX = 40;
     endX = windowWidth - 40;
     middle = windowHeight / 2;
+    offsetX = 0;
+    offsetY = 0;
 
     program = {name: "new_process", actions: new Array()};
     nodes = new Array();
@@ -80,6 +85,12 @@ function draw() {
         nodes.push(new Node(width / 2, height / 2, [0]));
     }
     else {
+        // check program isn't too crowded and resize if needed
+        var prefferedSize = progWidth * ACTION_WIDTH * 2;
+        if(prefferedSize > endX - startX) {
+            endX = prefferedSize + startX;
+        }
+
         drawActions(program.actions, progWidth, []);
     }
 
@@ -195,7 +206,7 @@ function indexToXY(index) {
 }
 
 function addAction(index) {
-    if(index[index.length - 1] == -1) {
+    if(index[index.length - 1] < 0) {
         Sequence(index);
         return;
     }
@@ -242,9 +253,10 @@ function Node(x, y, index) {
         var d = dist(x, y, this.x, this.y);
         if(d < this.radius){
             if(state == StateEnum.normal) {
-                selectAdd.position(this.x, this.y);
-                selectAdd.index = this.index;
-                selectAdd.show();
+                addAction(index);
+                // selectAdd.position(this.x, this.y);
+                // selectAdd.index = this.index;
+                // selectAdd.show();
             }
             else if(state == StateEnum.iteration) {
                 state = StateEnum.normal;
@@ -320,6 +332,7 @@ function Action() {
             prog = prog.actions[index[i]];
         }
 
+        // draw the lines connecting "simultaneous" flow actions to the graph
         if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
             drawLine(prog, x - 1, y, programWidth);
         }
@@ -327,14 +340,17 @@ function Action() {
         var yPixels = (y * ACTION_HEIGHT * 2) + middle;
         var xPixels = (endX - startX) * ((x + 1) / (programWidth + 1)) + startX;
 
+        // if action isn't the first action in a horixaontal control structure, add a node between this and the last action
         if(index[index.length - 1] != 0 && prog.control != FlowControlEnum.branch && prog.control != FlowControlEnum.selection) {
             var nodeX = (endX - startX) * ((x * 2 + 1) / (programWidth * 2 + 2)) + startX;
             nodes.push(new Node(nodeX, yPixels, index));
         }
 
+        // if this is in a branch or sequence, add nodes capable of changing it to a sequence
         if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
-            nodes.push(new Node(xPixels + ACTION_WIDTH / 2 + 40, yPixels, index.concat([-1])));
-        }
+            nodes.push(new Node(xPixels - ACTION_WIDTH / 2 - 40, yPixels, index.concat([-1]))); //-1 == start sequence with new node
+            nodes.push(new Node(xPixels + ACTION_WIDTH / 2 + 40, yPixels, index.concat([-2]))); //-2 == end sequence with new node
+        } // if this is in an iteration or sequence, add nodes to add directly to the control flow structure
         else if(prog.control == FlowControlEnum.iteration || prog.control == FlowControlEnum.sequence) {
             if(index[index.length - 1] == 0) {
                 nodes.push(new Node(xPixels - 20, yPixels, index));
@@ -342,13 +358,21 @@ function Action() {
             if(index[index.length - 1] == prog.actions.length - 1) {
                 nodes.push(new Node(nodeX + ACTION_WIDTH + 20, yPixels, index));
             }
-        }
-        else if(index[index.length - 1] == 0) {
-            var nodeX = (endX - startX) * ((x * 2 + 1) / (programWidth * 2 + 2)) + startX;
-            nodes.push(new Node(nodeX - 20, yPixels, index));
+        }// else this action is in the normal process structure
+        else {
+            if(index[index.length - 1] == 0) {
+                var nodeX = (endX - startX) * ((x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+                nodes.push(new Node(nodeX, yPixels, index));
+            }
+            if(index[index.length - 1] == prog.actions.length - 1) {
+                var nodeX = (endX - startX) * ((x * 2 + 3) / (programWidth * 2 + 2)) + startX;
+                var newIndex = index.slice();
+                newIndex[newIndex.length - 1]++; // index point to position after the action
+                nodes.push(new Node(nodeX, yPixels, newIndex));
+            }
         }
 
-        this.element.position(xPixels  - ACTION_WIDTH / 2, yPixels - ACTION_HEIGHT / 2);
+        this.element.position(xPixels  - (ACTION_WIDTH / 2) + offsetX, yPixels - (ACTION_HEIGHT / 2) + offsetY);
     }
 }
 
@@ -498,7 +522,14 @@ function Sequence(index){
         array = array[index[i]].actions;
     }
 
-    var sequenceArray = [array[index[index.length - 2]], new Action()];
+    var sequenceArray;
+    //start with new node
+    if(index[index.length - 1] == -2) {
+        sequenceArray = [new Action(), array[index[index.length - 2]]];
+    }//end with old node
+    else {
+        sequenceArray = [array[index[index.length - 2]], new Action()];
+    }
     //adds an sequence to program.actions
     array.splice(index[index.length - 2], 1,
         {name: "New_Sequence", control: FlowControlEnum.sequence, actions: sequenceArray});
@@ -534,11 +565,36 @@ function mousePressed(event) {
     if (state == StateEnum.form) return;
     redraw();
 
+    var x = event.clientX - offsetX;
+    var y = event.clientY - offsetY;
     for(var i = 0; i < nodes.length; i++) {
-        if(nodes[i].press(event.clientX, event.clientY)){
+        if(nodes[i].press(x, y)){
             redraw();
             break;
         }
+    }
+}
+
+function mouseDragged(event) {
+    var lastValueX = offsetX, lastValueY = offsetY;
+    // handle horizontal scrolling if display is wider than screen
+    if(endX + startX > width) {
+        offsetX += event.movementX;
+
+        if(offsetX > 0) {
+            offsetX = 0;
+        }
+
+        if(offsetX < width - (endX + startX)) {
+            offsetX = width - (endX + startX);
+        }
+    }
+
+    // only redraw with change
+    if(lastValueX != offsetX || lastValueY != offsetY) {
+        resetMatrix();
+        translate(offsetX, offsetY);
+        redraw();
     }
 }
 
@@ -551,13 +607,46 @@ $(document).ready(function () {
 });
 
 function editAction() {
-    selectedAction.name = document.getElementById('name').value;
+    var variableRegex = new RegExp('^[a-zA-Z_][a-zA-Z_0-9]*')
+    var name = document.getElementById('name').value;
+    if(!variableRegex.test(name)) {
+        alert(  "The name " + name + " of the Action is invalid, "
+              + "Action names must start with an underscore or  letter and contain"
+              + " only letters, numbers and underscrores.");
+        return
+    }
+
+    var agent = document.getElementById('agent').value;
+    if(!variableRegex.test(agent) && agent.length != 0) {
+        alert(  "The agent " + agent + " of the Action is invalid, "
+              + "agents must start with an underscore or  letter and contain "
+              + "only letters, numbers and underscrores.");
+        return
+    }
+
+    var requires = document.getElementById('requires').value
+    if(!variableRegex.test(requires) && requires.length != 0) {
+        alert(  "The requirement " + requires + " of the Action is invalid, "
+              + "requirements must start with an underscore or letter and contain "
+              + "only letters, numbers and underscrores.");
+        return
+    }
+
+    var provides = document.getElementById('provides').value;
+    if(!variableRegex.test(provides) && provides.length != 0) {
+        alert(  "The provision " + provides + " of the Action is invalid, "
+              + "provisions must start with an underscore or  letter and contain "
+              + "only letters, numbers and underscrores.");
+        return
+    }
+
+    selectedAction.name = name;
     selectedAction.type = document.getElementById('type').value;
-    selectedAction.agent = document.getElementById('agent').value;
+    selectedAction.agent = agent;
     selectedAction.script = document.getElementById('script').value;
     selectedAction.tool = document.getElementById('tool').value;
-    selectedAction.requires = document.getElementById('requires').value;
-    selectedAction.provides = document.getElementById('provides').value;
+    selectedAction.requires = requires;
+    selectedAction.provides = provides;
     selectedAction.selected = false;
 
     selectedAction.element.html(selectedAction.name);
