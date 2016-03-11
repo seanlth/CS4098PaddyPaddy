@@ -1,5 +1,6 @@
 function save_generated_pml(pml, callback){
     var content = btoa(pml); // encode editor content
+    
     $.ajax({
         url: '/tmp',
         data: { content: content },
@@ -50,7 +51,7 @@ function add_primitive(primitive, current_indentation) {
     // a control structure
 	if ( primitive.hasOwnProperty('control') ) {
 		primitive_string = current_indentation + primitive.control + " { \n";
-		primative_string += add_primitives(primitive.actions, current_indentation + "    ") + "\n";
+		primitive_string += add_primitives(primitive.actions, current_indentation + "    ") + "\n";
 		primitive_string += current_indentation + "}";
 	}
 	else { // an action
@@ -63,11 +64,8 @@ function add_primitive(primitive, current_indentation) {
 // adds branches, actions, iterations, sequences
 function add_primitives(primitives, current_indentation) {
 	var primitives_string = "";
-		
-	console.log("length" + primitives.length);
 	
 	for ( var i = 0; i < primitives.length; i++ ) {
-		console.log("index" + i);	
 		var primitive = primitives[i];
 		var node = add_primitive(primitive, current_indentation);
 		primitives_string += node + "\n";
@@ -81,8 +79,7 @@ function json_to_pml(program) {
 	PML_code += add_primitives(program.actions, "    ") + "\n";
 	PML_code += "}"
     
-    var content = btoa(PML_code) // encode content
-    save_generated_pml(content, function(response) {  } );     
+    save_generated_pml(PML_code, function(response) {  } );     
 
 	return PML_code;
 }

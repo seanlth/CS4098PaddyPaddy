@@ -3,6 +3,6 @@ env/
 .DS_Store
 __pycache__/
 src/database/__pycache__/
-pml.db
+*.db
 pmlcheck
 *.swp
