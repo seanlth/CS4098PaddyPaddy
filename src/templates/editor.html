@@ -83,17 +83,6 @@
     var editor;
     var error_marker;
 
-	function createCookie(name,value,days) {
-		if (days) {
-			var date = new Date();
-			date.setTime(date.getTime()+(days*24*60*60*1000));
-			var expires = "; expires="+date.toGMTString();
-		}
-		else var expires = "";
-		document.cookie = name+"="+value+expires+"; path=/";
-	}
-
-
     function new_hook() { console.log("new pressed"); editor && editor.setValue(""); }
 	function undo_hook(){ console.log("undo pressed"); editor && editor.undo();}
 	function redo_hook(){ console.log("redo pressed"); editor && editor.redo();}
@@ -101,8 +90,20 @@
 	function save_hook(){
       console.log("save pressed");
       var content = btoa(editor.getValue()); // encode editor content
-      createCookie("editor_content", content, 1);
-      window.location.href = 'saveFile'
+
+      $.ajax({
+          url: '/tmp',
+          data: { content: content },
+          type: 'POST',
+          success: function(response) {
+              //document.getElementById("output").innerHTML = response;
+              console.log(response);
+              window.location.href = 'saveFile'
+          },
+          error: function(error) {
+              console.log(error);
+          }
+      });
     }
 
     function open_hook() {

@@ -10,9 +10,10 @@ from database.database_create import Base, User
 from database.database_insert import insert_user
 from database.database_query import query_user, number_of_users
 
-import tempfile
-import os
 import base64
+import os
+import shutil
+import tempfile
 
 
 DEBUG = False
@@ -101,8 +102,6 @@ def upload():
 
 @app.route('/saveFile')
 def renderSaveFile():
-    content = request.cookies.get("editor_content")
-    session['editor_content'] = base64.b64decode(content).decode()
     if not 'email' in session:
         return redirect('/signup?return_url=saveFile')
     else:
@@ -121,11 +120,13 @@ def saveFile():
 
         if allowed_file(name):
             email = session['email']
-            content = session['editor_content']
             savepath = os.path.join(app.config['UPLOAD_FOLDER'], email)
             os.makedirs(savepath, exist_ok=True) # make the users save dir if it doesn't already exist
-            with open(os.path.join(savepath, name), mode="w") as file:
-                file.write(content)
+
+            saveFilePath = os.path.join(savepath, name)
+            tempFilePath = session.pop("tempFile", None)
+            shutil.copy(tempFilePath, saveFilePath)
+
             return redirect('/')
     flash("Invalid File")
     return redirect('/saveFile')
@@ -185,6 +186,14 @@ def logout():
     session.pop('email', None)
     return redirect('/')
 
+
+@app.route("/tmp", methods=["POST"])
+def tmp():
+    with tempfile.NamedTemporaryFile(mode="w+t", delete=False) as f:
+        content = base64.b64decode(request.form["content"]).decode()
+        f.write(content)
+        session["tempFile"] = f.name
+        return ""
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0", port=8000, debug=DEBUG)
