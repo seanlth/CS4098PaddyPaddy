@@ -78,9 +78,9 @@ def openFile():
         os.makedirs(userpath, exist_ok=True)
     return render_template('openFile.html', files=files)
 
-def uploadFile():
-    if not 'email' in session:
-        return redirect('/login?return_url=openFile')
+# def uploadFile():
+#     if not 'email' in session:
+#         return redirect('/login?return_url=openFile')
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -184,6 +184,12 @@ def loginButton():
 def logout():
     session.pop('email', None)
     return redirect('/')
+
+
+@app.route("/parse", methods=["POST"])
+def parse():
+    content = request.form["content"]
+    return parser.parse(content)
 
 
 if __name__ == "__main__":
