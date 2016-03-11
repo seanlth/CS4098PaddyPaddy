@@ -50,6 +50,7 @@ def my_form_post():
 @app.route("/")
 def editor(filename = ""):
     editor_content = "";
+    print(session['tempFile']);
     if session['tempFile'] != "":
         editor_content = open(session['tempFile']).read();  
 
@@ -210,7 +211,12 @@ def tmp():
 
 @app.route("/resetCurrent")
 def resetCurrent():
-    session.pop('currentFile')
+    if session.get('tempFile') is not None: 
+        session['tempFile'] = ""
+    
+    if session.get('currentFile') is not None: 
+        session['currentFile'].pop()
+
     return ""
 
 if __name__ == "__main__":
