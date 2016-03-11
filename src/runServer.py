@@ -93,6 +93,7 @@ def upload():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+        os.makedirs(userpath, exist_ok=True)
         file.save(os.path.join(userpath, filename))
         return redirect('/?filename=%s'%filename)
     flash("Invalid file")
