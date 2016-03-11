@@ -224,11 +224,19 @@ function indexToXY(index) {
 
         for(var j = 0; j < index[i]; j++) {
             if(prog.actions[j].constructor != Action) {
-                if(prog.actions[j].control != FlowControlEnum.branch && prog.actions[j].control != FlowControlEnum.selection) {
-                    y += sequenceHeight(prog.actions[j]) - 1;
+                if(index[0] == 0) {
+                    if(y < 0 && j % 2 == 1) {
+                        y = y - sequenceHeight(prog.actions[j]) + 1;
+                    }
+                    else if(y > 0 && j % 2 == 0) {
+                        y = y + sequenceHeight(prog.actions[j]) - 1;
+                    }
+                }
+                else if(y > 0) {
+                    y = y + sequenceHeight(prog.actions[j]) + 1;
                 }
                 else {
-                    x += sequenceLength(prog.actions[j]) - 1;
+                    y = y - sequenceHeight(prog.actions[j]) - 1;
                 }
             }
         }
@@ -482,26 +490,39 @@ function drawIterationLoop(prog, x, y, index, programWidth) {
 }
 
 function drawBranchBars(prog, x, y, index, programWidth) {
-    var endRectX, startXRectPixels, endRectXPixels;
-    [endRectX, startXRectPixels, endRectXPixels] = drawLine(prog, x, y, programWidth);
+    var endRectX, startXRectPixels, endRectXPixels, yPixels;
+    [endRectX, startXRectPixels, endRectXPixels, yPixels] = drawLine(prog, x, y, programWidth);
 
-    var yPixels = (y * ACTION_HEIGHT * 2) + middle;
-    line(startXRectPixels, yPixels, endRectXPixels, yPixels);
-
-    var seqHeight = sequenceHeight(prog);
-    var rectHeight = seqHeight * ACTION_HEIGHT * 2 + 6;
-    var rectPositionY;
+    // var yPixels = (y * ACTION_HEIGHT * 2) + middle;
+    var rectPositionYOne, rectPositionYTwo;
 
     if(y == 0) {
-        seqHeight = seqHeight / 2 % 1 == 0 ? seqHeight + 1 : seqHeight;
-        rectPositionY = middle - (ACTION_HEIGHT * (seqHeight / 2) * 2);
-    }
-    else if(y > 0){
-        rectPositionY = middle + (y * ACTION_HEIGHT * 2) + (ACTION_HEIGHT * seqHeight * 2);
+        var temp;
+        [temp, rectPositionYOne] = indexToXY(index.concat([prog.actions.length - 1]));
+
+        [temp, rectPositionYTwo] = indexToXY(index.concat([prog.actions.length - 2]));
     }
     else {
-        rectPositionY = middle + (y * ACTION_HEIGHT * 2) - (ACTION_HEIGHT * seqHeight * 2) + (ACTION_HEIGHT / 2);
+        var temp;
+        [temp, rectPositionYOne] = indexToXY(index.concat([0]));
+
+        [temp, rectPositionYTwo] = indexToXY(index.concat([prog.actions.length - 1]));
     }
+
+    rectPositionYOne = (rectPositionYOne * ACTION_HEIGHT * 2) + middle;
+    rectPositionYTwo = (rectPositionYTwo * ACTION_HEIGHT * 2) + middle;
+
+    var rectHeight = Math.abs(rectPositionYOne - rectPositionYTwo) + ACTION_HEIGHT + 10;
+    var rectPositionY;
+
+    if(rectPositionYOne < rectPositionYTwo) {
+        rectPositionY = rectPositionYOne;
+    }
+    else {
+        rectPositionY = rectPositionYTwo;
+    }
+
+    rectPositionY = rectPositionY - (ACTION_HEIGHT / 2) - 5;
 
     fill(0)
     rect(startXRectPixels - 5, rectPositionY, 10, rectHeight);
@@ -516,7 +537,6 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
     var endLineX, startXLinePixels, endLineXPixels, yPixels;
     [endLineX, startXLinePixels, endLineXPixels, yPixels] = drawLine(prog, x, y, programWidth);
 
-    var seqHeight = sequenceHeight(prog);
     var linePositionYStart, linePositionYEnd;
 
     if(y == 0) {
@@ -527,6 +547,8 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
     }
     else {
         var temp;
+        [temp, linePositionYStart] = indexToXY(index.concat([0]));
+
         [temp, linePositionYEnd] = indexToXY(index.concat([prog.actions.length - 1]));
     }
 
