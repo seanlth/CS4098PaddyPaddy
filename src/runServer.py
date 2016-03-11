@@ -99,38 +99,47 @@ def upload():
     return redirect('/openFile')
 
 
-
-@app.route('/saveFile')
-def renderSaveFile():
+@app.route('/save')
+def save():
     if not 'email' in session:
-        return redirect('/signup?return_url=saveFile')
+        return redirect('/signup?return_url=saveAs')
+    if 'currentFile' in session:
+        return saveFile(session['currentFile'])
+    return saveAs()
+
+@app.route('/saveAs')
+def saveAs():
+    if not 'email' in session:
+        return redirect('/signup?return_url=saveAs')
     else:
         return render_template('saveFile.html')
 
 
-@app.route('/saveFile', methods=['POST'])
-def saveFile():
+@app.route('/saveAs', methods=['POST'])
+@app.route('/save', methods=['POST'])
+def saveFile(fname=None):
     if not 'email' in session:
         return "", 401 # not authorised
 
-    name = request.form['filename']
+    name = fname if fname else request.form['filename']
     if name:
         if name[-4:] != ".pml": # check for '.pml' extension
             name += ".pml"
 
         if allowed_file(name):
+            session['currentFile'] = name
             email = session['email']
             savepath = os.path.join(app.config['UPLOAD_FOLDER'], email)
             os.makedirs(savepath, exist_ok=True) # make the users save dir if it doesn't already exist
 
             saveFilePath = os.path.join(savepath, name)
             tempFilePath = session.pop("tempFile", None)
-            shutil.copy(tempFilePath, saveFilePath)
+            if tempFilePath:
+                shutil.copy(tempFilePath, saveFilePath)
 
-            return redirect('/')
+                return redirect('/?filename=%s'%name)
     flash("Invalid File")
-    return redirect('/saveFile')
-
+    return redirect('/saveAs')
 
 
 @app.route("/signup")
@@ -194,6 +203,11 @@ def tmp():
         f.write(content)
         session["tempFile"] = f.name
         return ""
+
+@app.route("/resetCurrent")
+def resetCurrent():
+    session.pop('currentFile')
+    return ""
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0", port=8000, debug=DEBUG)
