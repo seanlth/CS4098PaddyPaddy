@@ -5,3 +5,4 @@ __pycache__/
 src/database/__pycache__/
 pml.db
 pmlcheck
+*.swp
