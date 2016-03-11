@@ -176,7 +176,7 @@ def loginButton():
             session['email'] = email
             return redirect('/')
 
-    return "incorrect email or password<br/>"
+    return "Incorrect/Invalid e-mail and/or password<br/>"
 
 
 
