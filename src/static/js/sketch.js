@@ -223,7 +223,7 @@ function indexToXY(index) {
         }
 
         for(var j = 0; j < index[i]; j++) {
-            if(prog.actions[j].constructor != Action) {
+            if(prog.actions[j].constructor != Action && (prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection)) {
                 if(index[0] == 0) {
                     if(y < 0 && j % 2 == 1) {
                         y = y - sequenceHeight(prog.actions[j]) + 1;
@@ -238,6 +238,9 @@ function indexToXY(index) {
                 else {
                     y = y - sequenceHeight(prog.actions[j]) - 1;
                 }
+            }
+            else if(prog.actions[j].constructor != Action) {
+                x += sequenceLength(prog.actions[j]) - 1;
             }
         }
 
