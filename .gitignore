@@ -6,3 +6,4 @@ src/database/__pycache__/
 *.db
 pmlcheck
 *.swp
+userFiles/

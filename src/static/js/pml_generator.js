@@ -16,7 +16,7 @@ function add_requirements(requirements, current_indentation) {
     if ( requirements != "" ) {
 	    var requirements_string = current_indentation + "requires { \n";
         requirements_string += current_indentation + "    " + requirements + "\n";
-        requirements_string += current_indentation + "}";
+        requirements_string += current_indentation + "} \n";
     
         return requirements_string;
     }
@@ -27,18 +27,50 @@ function add_provisions(provides, current_indentation) {
     if ( provides != "" ) {
 	    var provides_string = current_indentation + "provides { \n";
         provides_string += current_indentation + "    " + provides + "\n";
-        provides_string += current_indentation + "}";
+        provides_string += current_indentation + "} \n";
 
         return provides_string;
     } 
     return "";
 }
 
+function add_spec(spec, type, current_indentation) {
+    if ( spec != "" ) {
+	    var spec_string = current_indentation + type + " { \n";
+        spec_string += current_indentation + "    " + spec + "\n";
+        spec_string += current_indentation + "} \n";
+
+        return spec_string;
+    } 
+    return "";
+}
+
+function add_script(script, current_indentation) {
+    if ( script != "" ) {
+	    var script_string = current_indentation + "script { \n";
+        script_string += current_indentation + "    " + "\"" + script + "\"" + "\n";
+        script_string += current_indentation + "} \n";
+
+        return script_string;
+    } 
+    return "";
+}
+
+function add_type(type) {
+    if ( type != "none" ) {
+        return " " + type;
+    }
+    return "";
+}
+
 // builds the action string
 function add_action(action, current_indentation) {
-	node = current_indentation + "action " + action.name + " { \n";
-	node += add_requirements(action.requires, current_indentation + "    ") + "\n";
-	node += add_provisions(action.provides, current_indentation + "    ") + "\n"; 
+	node = current_indentation + "action " + action.name + add_type(action.type) + " { \n";
+	node += add_requirements(action.requires, current_indentation + "    ");
+	node += add_provisions(action.provides, current_indentation + "    ");
+ 	node += add_spec(action.agent, "agent", current_indentation + "    ");
+	node += add_spec(action.tool, "tool", current_indentation + "    ");
+ 	node += add_script(action.script, current_indentation + "    ");
 	node += current_indentation + "}";
 	
 	return node;
@@ -50,7 +82,7 @@ function add_primitive(primitive, current_indentation) {
     
     // a control structure
 	if ( primitive.hasOwnProperty('control') ) {
-		primitive_string = current_indentation + primitive.control + " { \n";
+		primitive_string = current_indentation + primitive.control + " " + primitive.name + " { \n";
 		primitive_string += add_primitives(primitive.actions, current_indentation + "    ") + "\n";
 		primitive_string += current_indentation + "}";
 	}
