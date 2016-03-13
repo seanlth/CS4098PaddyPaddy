@@ -27,7 +27,7 @@
       <br><br><br>
       <hr>
       <br>
-      <div class ="social">
+      <!-- <div class ="social">
         <p>Register with...</p>
         <a href="#">
           <img src="{{ url_for('static', filename = 'images/facebook.png') }}" width="50" height="50" alt="previous" title="Previous" border="0"/>
@@ -38,26 +38,26 @@
         <a href="#">
           <img src="{{ url_for('static', filename = 'images/twitter.png') }}" width="50" height="50" alt="previous" title="Previous" border="0"/>
         </a>
-      </div>
+      </div> -->
       <br><br><hr>
     </form>
   </div>
   <script>
     function validate(){
-        var email = document.forms["registration"]["email"] 
+        var email = document.forms["registration"]["email"]
 	    var password1 = document.forms["registration"]["password"].value;
         var password2 = document.forms["registration"]["verify"].value;
-		
+
 	    if ( email == "" || password1 == "" ) {
 	        alert("Not all fields are filled");
 	        return false;
-	    }		
+	    }
 
         if (password1 != password2){
             alert("Passwords must match");
             return false;
         }
-	
+
 
         return true;
     }

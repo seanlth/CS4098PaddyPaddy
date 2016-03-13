@@ -1,6 +1,6 @@
 var canvas, startX, endX, middle;// variables for drawing
 var program, nodes, names; // variables for storing actions in the program and nodes to add them
-var state, selectedAction, selectAdd, controlIndex, currentControlFlow; // variables for handling input
+var state, selectedAction, selectAdd, controlIndex, currentControlFlow, generatePML; // variables for handling input
 var offsetX, offsetY;
 
 var ACTION_HEIGHT = 50;
@@ -43,7 +43,16 @@ function setup() {
     selectAdd.changed(selectEvent);
     selectAdd.hide();
 
+    generatePML = createButton('Generate PML');
+    generatePML.position(20, 20);
+    generatePML.mousePressed(createPML);
+
     // noLoop();
+}
+
+function createPML() {
+    var pml_code = json_to_pml(program);
+	window.open('/');
 }
 
 function selectEvent() {
@@ -600,9 +609,7 @@ function drawIterationLoop(prog, x, y, index, programWidth) {
     fill(255, 255, 255, 0);
     rect(startXRectPixels, rectPositionY, endXRectPixels - startXRectPixels, rectHeight, 20, 20, 20, 20);
 
-    var iterationIndex = index.slice();
-    iterationIndex.pop();
-    names.push(new Name(prog.name, startXRectPixels + (endXRectPixels - startXRectPixels) / 2, rectPositionY - 20, iterationIndex));
+    names.push(new Name(prog.name, startXRectPixels + (endXRectPixels - startXRectPixels) / 2, rectPositionY - 20, index.slice()));
 }
 
 function getY(sequence) {
@@ -653,8 +660,6 @@ function drawBranchBars(prog, x, y, index, programWidth) {
     rect(startXRectPixels - 5, rectPositionY, 10, rectHeight);
     rect(endRectXPixels - 5, rectPositionY, 10, rectHeight);
 
-    var branchIndex = index.slice();
-    branchIndex.pop();
     var nameY;
     if(rectPositionYOne < rectPositionYTwo) {
         nameY = rectPositionYOne;
@@ -662,7 +667,7 @@ function drawBranchBars(prog, x, y, index, programWidth) {
     else {
         nameY = rectPositionYTwo;
     }
-    names.push(new Name(prog.name, startXRectPixels - 20, nameY - 50, branchIndex));
+    names.push(new Name(prog.name, startXRectPixels - 20, nameY - 50, index.slice()));
 
     var altIndex = index.slice();
     altIndex.push(prog.actions.length);
@@ -701,8 +706,6 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
     resetMatrix();
     translate(offsetX, offsetY);
 
-    var selectionIndex = index.slice();
-    selectionIndex.pop();
     var nameY;
     if(linePositionYStart < linePositionYEnd) {
         nameY = linePositionYStart;
@@ -710,7 +713,7 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
     else {
         nameY = linePositionYEnd;
     }
-    names.push(new Name(prog.name, startXLinePixels - 20, nameY - 40, selectionIndex));
+    names.push(new Name(prog.name, startXLinePixels - 20, nameY - 40, index.slice()));
 
     var altIndex = index.slice();
     altIndex.push(prog.actions.length);
@@ -838,8 +841,6 @@ function mousePressed(event) {
             break;
         }
     }
-	var pml_code = json_to_pml(program);
-	console.log(pml_code);
 
     for(var i = 0; i < names.length; i++) {
         if(names[i].press(x, y)){
