@@ -4,12 +4,13 @@
 <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
 <link rel="stylesheet" href="{{ url_for('static', filename='registerLogin.css') }}">
 <body>
+   
     <div class="wrapper">
         <h1 align="center">LOGIN</h1>
         <br>
-        <form class="form" method="post">
+        <form class="form" name="login" onsubmit="return validate()" method="POST">
             <input type="email" name="email" class="email" id="email" placeholder="Email Address">
-            <input type="password" name="password" class="password" id="password" placeholder="Password">
+            <input type="password" name="password" class="password" placeholder="Password">
             <input type="submit" name="submit" class="submit" value="LOGIN">
             <div class="u-form-group">
                 <br>
@@ -20,23 +21,36 @@
             <hr>
             <br>
             <p>Login with...</p>
-            <div class ="social">
-                <a href="#">
-                    <img src= {{ url_for('static', filename = 'images/facebook.png') }} width="50" height="50" alt="previous" title="Previous" border="0"/>
-                </a>
-                <a href="#">
-                    <img src= {{ url_for('static', filename = 'images/google.png') }} width="50" height="50" alt="previous" title="Previous" border="0"/>
-                </a>
-                <a href="#">
-                    <img src= {{ url_for('static', filename = 'images/twitter.png') }} width="50" height="50" alt="previous" title="Previous" border="0"/>
-                </a>
+            <div class ="#">
+              <a href="#">
+                <img src= "{{ url_for('static', filename = 'images/facebook.png') }}" width="50" height="50" alt="previous" title="Previous" border="0"/>
+              </a>
+              <a href="#">
+                <img src= "{{ url_for('static', filename = 'images/google.png') }}" width="50" height="50" alt="previous" title="Previous" border="0"/>
+              </a>
+              <a href="#">
+                <img src= "{{ url_for('static', filename = 'images/twitter.png') }}" width="50" height="50" alt="previous" title="Previous" border="0"/>
+              </a>
             </div>
             <br><br><hr>
             <div class = "login-box">
                 Need an account?
-                <a href="/signUp" id="_login" style="color:#4863A0">Sign up now!</a>
+                <a href="/signup" style="color:#4863A0">Sign up now!</a>
             </div>
         </form>
     </div>
+	<script>
+    function validate() { 
+        var email = document.forms["login"]["email"].value;
+        var password = document.forms["login"]["password"].value;
+
+        if (email == "" || password == ""){
+            alert("Fields are empty");
+            return false;
+        }
+
+        return true;
+    }
+  </script>
 </body>
 </html>

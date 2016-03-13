@@ -3,7 +3,6 @@ from flask import redirect, url_for, send_from_directory
 from flask import session, flash
 
 from subprocess import check_output, STDOUT, CalledProcessError
-
 from werkzeug import generate_password_hash, check_password_hash, secure_filename
 
 from database.database_create import Base, User
@@ -16,7 +15,7 @@ import shutil
 import tempfile
 
 
-DEBUG = True
+DEBUG = False
 app = Flask(__name__)
 app.secret_key = 'fe2917b485cc985c47071f3e38273348' # echo team paddy paddy | md5sum
 app.config['UPLOAD_FOLDER'] = 'userFiles/'
@@ -67,11 +66,10 @@ def editor(filename = ""):
     return render_template("editor.html", editor_content=editor_content)
 
 
-
 @app.route('/openFile')
 def openFile():
     if not 'email' in session:
-        return redirect('/signup?return_url=openFile')
+        return redirect('/login?return_url=openFile')
 
     files = []
     email = session['email']
@@ -82,6 +80,9 @@ def openFile():
         os.makedirs(userpath, exist_ok=True)
     return render_template('openFile.html', files=files)
 
+def uploadFile():
+    if not 'email' in session:
+        return redirect('/login?return_url=openFile')
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -94,6 +95,7 @@ def upload():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+        os.makedirs(userpath, exist_ok=True)
         file.save(os.path.join(userpath, filename))
         session['currentFile'] = filename
         return redirect('/?filename=%s'%filename)
@@ -145,6 +147,9 @@ def saveFile(fname=None):
     flash("Invalid File")
     return redirect('/saveAs')
 
+@app.route("/diagram")
+def diagram():
+    return render_template("diagramEditor.html")
 
 @app.route("/signup")
 def renderSignUp():
@@ -156,26 +161,31 @@ def renderSignUp():
 
 @app.route("/signup", methods=["POST"])
 def signUpButton():
+
     email = request.form["email"]
-    password = request.form["password"]
+    user = query_user(email)
+    if user == None:
+        password = request.form["password"]
+        password_hash = generate_password_hash(password)
+        insert_user(email, password_hash)
+        session['email'] = email
 
-    #print(email);
-    #print(password); #wat
-
-    password_hash = generate_password_hash(password)
-    insert_user(email, password_hash)
-    session['email'] = email
-
-    returnUrl = session.pop('return_url', None)
-    if returnUrl:
-        return redirect(returnUrl)
-    else:
-        return "Welcome screen"
+        returnUrl = session.pop('return_url', None)
+        if returnUrl:
+            return redirect(returnUrl)
+        else:
+            return redirect('/')
+    # email has been used
+    flash('Email already in use')
+    return redirect('/signup')
 
 
 
 @app.route("/login")
 def login():
+    if 'return_url' in request.args:
+        session['return_url'] = request.args['return_url']
+
     return render_template("login.html")
 
 
@@ -183,14 +193,18 @@ def login():
 def loginButton():
     email = request.form["email"]
     password = request.form["password"]
-    user = query_user(email);
+    user = query_user(email)
+
     if user != None:
-        #print(user.password);
         if check_password_hash(user.password, password):
             session['email'] = email
-            return "Login"
+            returnUrl = session.pop('return_url', None)
+            if returnUrl:
+                return redirect(returnUrl)
+            else:
+                return redirect('/')
 
-    return "incorrect email or password<br/>"
+    return "Incorrect/Invalid e-mail and/or password<br/>", 401
 
 
 
