@@ -45,7 +45,8 @@
    on, creaating a control structure with one new node. Red (+) nodes are invalid selections. You can change the names  
    of these control structures with the [...] displayed beside the name which will create a prompt. The various parameters  
    of an action can be altered using a form displayed when you click on one. The generate PML button will open a new  
-   tab/window with the editor open to PML generated based on your graph.
+   tab/window with the editor open to PML generated based on your diagram. If the diagram becomes larger than the screen  
+   scrolling is done by clicking and dragging the mouse or by using the arrow keys.
 
 ## Dependencies
 * Ubuntu 14.04

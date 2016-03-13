@@ -106,6 +106,8 @@ function draw() {
         translate(0, offsetY);
     }
 
+    keyboardInput();
+
     fill(0);
     line(startX, middle, endX, middle);
     names = [new Name(program.name, startX, middle - 45, [])];
@@ -128,6 +130,54 @@ function draw() {
     for(var i = 0; i < names.length; i++) {
         names[i].draw();
     }
+}
+
+function keyboardInput() {
+    var lastValueX = offsetX, lastValueY = offsetY;
+    var speed = 5;
+    // handle horizontal scrolling if display is wider than screen
+    if(endX + startX > width) {
+        if(keyIsDown(LEFT_ARROW)) {
+            offsetX += speed;
+        }
+        else if(keyIsDown(RIGHT_ARROW)) {
+            offsetX -= speed;
+        }
+
+        if(offsetX > 0) {
+            offsetX = 0;
+        }
+
+        if(offsetX < width - (endX + startX)) {
+            offsetX = width - (endX + startX);
+        }
+    }
+
+    var movementY = 0;
+    if(keyIsDown(UP_ARROW)) {
+        movementY = speed;
+    }
+    else if(keyIsDown(DOWN_ARROW)) {
+        movementY = -speed;
+    }
+
+    var offScreen = false, onScreen = 0;
+    for(var i = 0; i < nodes.length; i++) {
+        if(nodes[i].y + offsetY - (ACTION_WIDTH / 2) < 0 || nodes[i].y + offsetY + (ACTION_WIDTH / 2) > height) {
+            offScreen = true;
+        }
+
+        if(nodes[i].y + offsetY + movementY - (ACTION_WIDTH / 2) > 0 && nodes[i].y + offsetY + movementY + (ACTION_WIDTH / 2) < height) {
+            onScreen++;
+        }
+    }
+
+    if(offScreen && onScreen >= 1) {
+        offsetY += movementY
+    }
+
+    resetMatrix();
+    translate(offsetX, offsetY);
 }
 
 function drawActions(actions, programWidth, index) {
