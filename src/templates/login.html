@@ -4,31 +4,14 @@
 <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
 <link rel="stylesheet" href="{{ url_for('static', filename='registerLogin.css') }}">
 <body>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="{{url_for('static', filename='jquery.js') }}">\x3C/script>')</script>
-    <script>
-    function check() {
-        $.ajax({
-            url: '/login',
-            type: 'POST',
-            success: function(response) {
-                console.log(response);
-                document.getElementById("mismatch").innerHTML = response;
-            },
-            error: function(error) {
-                console.log(error);
-            }
-        })
-    }
-    </script>
-
+   
     <div class="wrapper">
         <h1 align="center">LOGIN</h1>
         <br>
-        <form class="form" method="POST">
+        <form class="form" name="login" onsubmit="return validate()" method="POST">
             <input type="email" name="email" class="email" id="email" placeholder="Email Address">
             <input type="password" name="password" class="password" placeholder="Password">
-            <input type="submit" name="submit" class="submit" value="LOGIN" onclick="check()">
+            <input type="submit" name="submit" class="submit" value="LOGIN">
             <div class="u-form-group">
                 <br>
                 <a href="#" class="forgot-password">Forgot password?</a>
@@ -56,5 +39,18 @@
             </div>
         </form>
     </div>
+	<script>
+    function validate() { 
+        var email = document.forms["login"]["email"].value;
+        var password = document.forms["login"]["password"].value;
+
+        if (email == "" || password == ""){
+            alert("Fields are empty");
+            return false;
+        }
+
+        return true;
+    }
+  </script>
 </body>
 </html>
