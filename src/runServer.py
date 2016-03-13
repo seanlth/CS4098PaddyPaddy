@@ -48,7 +48,10 @@ def my_form_post():
 
 @app.route("/")
 def editor(filename = ""):
-    editor_content = ""
+    editor_content = "";
+    print(session['tempFile']);
+    if session['tempFile'] != "":
+        editor_content = open(session['tempFile']).read();
 
     if 'filename' in request.args or filename != "":
         filename = filename if filename else request.args['filename']
@@ -62,6 +65,7 @@ def editor(filename = ""):
                     editor_content = f.read()
             except FileNotFoundError:
                 editor_content = "" #TODO: some kind of message here
+
 
     return render_template("editor.html", editor_content=editor_content)
 
@@ -161,7 +165,6 @@ def renderSignUp():
 
 @app.route("/signup", methods=["POST"])
 def signUpButton():
-
     email = request.form["email"]
     user = query_user(email)
     if user == None:
@@ -224,7 +227,12 @@ def tmp():
 
 @app.route("/resetCurrent")
 def resetCurrent():
-    session.pop('currentFile')
+    if session.get('tempFile') is not None:
+        session['tempFile'] = ""
+
+    if session.get('currentFile') is not None:
+        session['currentFile'].pop()
+
     return ""
 
 if __name__ == "__main__":
