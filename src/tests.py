@@ -15,6 +15,12 @@ class FlaskrTestCase(unittest.TestCase):
     def tearDown(self):
         os.close(self.db_fd)
         os.unlink(runServer.app.config['DATABASE'])
+
+    def register(self, email, password):
+        return self.app.post('/signup', data=dict(
+            email=email,
+            password=password
+        ), follow_redirects=True) 
     
     def login(self, email, password):
         return self.app.post('/login', data=dict(
@@ -24,12 +30,23 @@ class FlaskrTestCase(unittest.TestCase):
 
     def logout(self):
         return self.app.get('/logout', follow_redirects=True) 
+    
+    def test_register(self):
+        print('testing register')
+        rv = self.register('test', 'test')
+        assert rv.status == '200 OK'
+
+    def test_email_auth(self):
+        print('testing login/logout')
+        rv = self.login('test', 'test')
+        assert b'Incorrect/Invalid e-mail and/or password<br/>' != rv.data
+
 
     def test_email_auth_failure(self):
-        print('testing login/logout')
+        print('testing login/logout failure')
         rv = self.login('none', 'none')
         assert b'Incorrect/Invalid e-mail and/or password<br/>' == rv.data
-
+    
 
 if __name__ == '__main__':
     unittest.main()
