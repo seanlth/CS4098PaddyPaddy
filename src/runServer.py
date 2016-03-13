@@ -64,7 +64,6 @@ def editor(filename = ""):
     return render_template("editor.html", editor_content=editor_content)
 
 
-
 @app.route('/openFile')
 def openFile():
     if not 'email' in session:
@@ -79,6 +78,9 @@ def openFile():
         os.makedirs(userpath, exist_ok=True)
     return render_template('openFile.html', files=files)
 
+def uploadFile():
+    if not 'email' in session:
+        return redirect('/login?return_url=openFile')
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -126,7 +128,6 @@ def saveFile():
     return redirect('/saveFile')
 
 
-
 @app.route("/diagram")
 def diagram():
     return render_template("diagramEditor.html")
@@ -156,6 +157,7 @@ def signUpButton():
         else:
             return redirect('/')
     # email has been used
+    flash('Email already in use')
     return redirect('/signup')
 
 
@@ -183,7 +185,7 @@ def loginButton():
             else:
                 return redirect('/')
 
-    return "incorrect email or password<br/>", 401
+    return "Incorrect/Invalid e-mail and/or password<br/>", 401
 
 
 
