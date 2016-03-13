@@ -4,7 +4,7 @@
 <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
 <link rel="stylesheet" href="{{ url_for('static', filename='registerLogin.css') }}">
 <body>
-   
+
     <div class="wrapper">
         <h1 align="center">LOGIN</h1>
         <br>
@@ -14,13 +14,13 @@
             <input type="submit" name="submit" class="submit" value="LOGIN">
             <div class="u-form-group">
                 <br>
-                <a href="#" class="forgot-password">Forgot password?</a>
+                <!-- <a href="#" class="forgot-password">Forgot password?</a> -->
                 <p id="mismatch"> </p>
             </div>
             <br><br>
             <hr>
             <br>
-            <p>Login with...</p>
+            <!-- <p>Login with...</p>
             <div class ="#">
               <a href="#">
                 <img src= "{{ url_for('static', filename = 'images/facebook.png') }}" width="50" height="50" alt="previous" title="Previous" border="0"/>
@@ -31,7 +31,7 @@
               <a href="#">
                 <img src= "{{ url_for('static', filename = 'images/twitter.png') }}" width="50" height="50" alt="previous" title="Previous" border="0"/>
               </a>
-            </div>
+            </div> -->
             <br><br><hr>
             <div class = "login-box">
                 Need an account?
@@ -40,7 +40,7 @@
         </form>
     </div>
 	<script>
-    function validate() { 
+    function validate() {
         var email = document.forms["login"]["email"].value;
         var password = document.forms["login"]["password"].value;
 
