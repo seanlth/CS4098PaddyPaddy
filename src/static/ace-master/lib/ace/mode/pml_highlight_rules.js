@@ -7,8 +7,8 @@ var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 
 var PMLHighlightRules = function() {
     var keywordMapper = this.createKeywordMapper({
-        "variable.language": "this",
-        "keyword": "process|branch|selection|select|iteration|sequence|task|action|manual|executable|provides|requires|agent|script|tool"
+        "variable.language": "task|manual|executable|provides|requires|agent|script|tool",
+        "keyword": "action|process|branch|selection|select|iteration|sequence"
     }, "identifier");
 
     // regexp must not have capturing parentheses. Use (?:) instead.

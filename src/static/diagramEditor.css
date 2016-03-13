@@ -2,20 +2,27 @@
     position: fixed;
     padding: 0;
     margin: 0;
+    top: 0;
+    left: 0;
+}
+
+element.style {
+    position: fixed;
 }
 
 .Action {
+    position: fixed !important;
     font-family: 'Orbitron';
     background:#FFFFFF;
     color:#000000;
     font-size:10pt;
-    padding:4px;
+    padding: 0;
     text-align: center;
-    z-index: 3;
+    z-index: 1;
     width: 120px;
-    height: 80px;
+    height: 50px;
     border: 1px solid #000;
-    z-index: 0;
+    overflow: hidden;
 }
 
 .Action:hover {
@@ -23,8 +30,18 @@
 }
 
 .IterationButt {
-    position: inherit;
+    position: fixed !important;
     z-index: 1;
+}
+
+select {
+    position: fixed !important;
+    z-index: 2;
+}
+
+body {
+    position: fixed;
+    overflow: hidden;
 }
 
 form {

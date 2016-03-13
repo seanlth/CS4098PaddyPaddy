@@ -14,10 +14,20 @@
       <input type="password" name="verify" class="verify" placeholder="Confirm Password">
       <input type="submit" name="submit" class="submit" value="Register">
       <!-- <button type="submit" class="button" onclick="compile()"> Register </button> -->
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <ul class=flashes>
+          {% for message in messages %}
+            <li style="color:white">{{ message }}</li>
+          {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+      {% block body %}{% endblock %}
       <br><br><br>
       <hr>
       <br>
-      <div class ="social">
+      <!-- <div class ="social">
         <p>Register with...</p>
         <a href="#">
           <img src="{{ url_for('static', filename = 'images/facebook.png') }}" width="50" height="50" alt="previous" title="Previous" border="0"/>
@@ -28,19 +38,26 @@
         <a href="#">
           <img src="{{ url_for('static', filename = 'images/twitter.png') }}" width="50" height="50" alt="previous" title="Previous" border="0"/>
         </a>
-      </div>
+      </div> -->
       <br><br><hr>
     </form>
   </div>
   <script>
     function validate(){
-        var password1 = document.forms["registration"]["password"].value;
+        var email = document.forms["registration"]["email"]
+	    var password1 = document.forms["registration"]["password"].value;
         var password2 = document.forms["registration"]["verify"].value;
 
-        if(password1 != password2){
+	    if ( email == "" || password1 == "" ) {
+	        alert("Not all fields are filled");
+	        return false;
+	    }
+
+        if (password1 != password2){
             alert("Passwords must match");
             return false;
         }
+
 
         return true;
     }

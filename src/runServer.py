@@ -9,9 +9,10 @@ from database.database_create import Base, User
 from database.database_insert import insert_user
 from database.database_query import query_user, number_of_users
 
-import tempfile
-import os
 import base64
+import os
+import shutil
+import tempfile
 
 
 DEBUG = False
@@ -47,7 +48,10 @@ def my_form_post():
 
 @app.route("/")
 def editor(filename = ""):
-    editor_content = ""
+    editor_content = "";
+    if session.get('tempFile') is not None:
+        if session['tempFile'] != "":
+            editor_content = open(session['tempFile']).read();
 
     if 'filename' in request.args or filename != "":
         filename = filename if filename else request.args['filename']
@@ -55,11 +59,13 @@ def editor(filename = ""):
             email = session['email']
             userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
             filepath = os.path.join(userpath, filename)
+            session['currentFile'] = filename
             try:
                 with open(filepath) as f:
                     editor_content = f.read()
             except FileNotFoundError:
                 editor_content = "" #TODO: some kind of message here
+
 
     return render_template("editor.html", editor_content=editor_content)
 
@@ -93,40 +99,57 @@ def upload():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+        os.makedirs(userpath, exist_ok=True)
         file.save(os.path.join(userpath, filename))
+        session['currentFile'] = filename
         return redirect('/?filename=%s'%filename)
     flash("Invalid file")
     return redirect('/openFile')
 
 
-
-@app.route('/saveFile')
-def renderSaveFile():
-    content = request.cookies.get("editor_content")
-    session['editor_content'] = base64.b64decode(content).decode()
+@app.route('/save')
+def save():
+    print(session)
     if not 'email' in session:
-        return redirect('/signup?return_url=saveFile')
+        return redirect('/login?return_url=saveAs')
+    if 'currentFile' in session:
+        return saveFile(session['currentFile'])
+    return saveAs()
+
+@app.route('/saveAs')
+def saveAs():
+    if not 'email' in session:
+        return redirect('/login?return_url=saveAs')
     else:
         return render_template('saveFile.html')
 
 
-@app.route('/saveFile', methods=['POST'])
-def saveFile():
+@app.route('/saveAs', methods=['POST'])
+@app.route('/save', methods=['POST'])
+def saveFile(fname=None):
+    print(session)
     if not 'email' in session:
         return "", 401 # not authorised
 
-    name = request.form['filename']
-    if name and allowed_file(name):
-        email = session['email']
-        content = session['editor_content']
-        savepath = os.path.join(app.config['UPLOAD_FOLDER'], email)
-        os.makedirs(savepath, exist_ok=True) # make the users save dir if it doesn't already exist
-        with open(os.path.join(savepath, name), mode="w") as file:
-            file.write(content)
-        return redirect('/')
-    flash("Invalid File")
-    return redirect('/saveFile')
+    name = fname if fname else request.form['filename']
+    if name:
+        if name[-4:] != ".pml": # check for '.pml' extension
+            name += ".pml"
 
+        if allowed_file(name):
+            session['currentFile'] = name
+            email = session['email']
+            savepath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+            os.makedirs(savepath, exist_ok=True) # make the users save dir if it doesn't already exist
+
+            saveFilePath = os.path.join(savepath, name)
+            tempFilePath = session.pop("tempFile", None)
+            if tempFilePath:
+                shutil.copy(tempFilePath, saveFilePath)
+
+                return redirect('/?filename=%s'%name)
+    flash("Invalid File")
+    return redirect('/saveAs')
 
 @app.route("/diagram")
 def diagram():
@@ -143,25 +166,29 @@ def renderSignUp():
 @app.route("/signup", methods=["POST"])
 def signUpButton():
     email = request.form["email"]
-    password = request.form["password"]
+    user = query_user(email)
+    if user == None:
+        password = request.form["password"]
+        password_hash = generate_password_hash(password)
+        insert_user(email, password_hash)
+        session['email'] = email
 
-    #print(email);
-    #print(password); #wat
-
-    password_hash = generate_password_hash(password)
-    insert_user(email, password_hash)
-    session['email'] = email
-
-    returnUrl = session.pop('return_url', None)
-    if returnUrl:
-        return redirect(returnUrl)
-    else:
-        return redirect('/')
+        returnUrl = session.pop('return_url', None)
+        if returnUrl:
+            return redirect(returnUrl)
+        else:
+            return redirect('/')
+    # email has been used
+    flash('Email already in use')
+    return redirect('/signup')
 
 
 
 @app.route("/login")
 def login():
+    if 'return_url' in request.args:
+        session['return_url'] = request.args['return_url']
+
     return render_template("login.html")
 
 
@@ -169,14 +196,18 @@ def login():
 def loginButton():
     email = request.form["email"]
     password = request.form["password"]
-    user = query_user(email);
+    user = query_user(email)
+
     if user != None:
-        #print(user.password);
         if check_password_hash(user.password, password):
             session['email'] = email
-            return redirect('/')
+            returnUrl = session.pop('return_url', None)
+            if returnUrl:
+                return redirect(returnUrl)
+            else:
+                return redirect('/')
 
-    return "Incorrect/Invalid e-mail and/or password<br/>"
+    return "Incorrect/Invalid e-mail and/or password<br/>", 401
 
 
 
@@ -191,6 +222,23 @@ def parse():
     content = request.form["content"]
     return parser.parse(content)
 
+@app.route("/tmp", methods=["POST"])
+def tmp():
+    with tempfile.NamedTemporaryFile(mode="w+t", delete=False) as f:
+        content = base64.b64decode(request.form["content"]).decode()
+        f.write(content)
+        session["tempFile"] = f.name
+        return ""
+
+@app.route("/resetCurrent")
+def resetCurrent():
+    if session.get('tempFile') is not None:
+        session['tempFile'] = ""
+
+    if session.get('currentFile') is not None:
+        session['currentFile'].pop()
+
+    return ""
 
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", port=8000, debug="true")
+	app.run(host="0.0.0.0", port=8000, debug=DEBUG)

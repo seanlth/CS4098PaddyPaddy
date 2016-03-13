@@ -1,10 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
+
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/p5.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/p5.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/addons/p5.dom.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/addons/p5.sound.min.js"></script>
   <script src="{{url_for('static', filename='js/sketch.js')}}"></script>
+  <script src="{{url_for('static', filename='js/pml_generator.js')}}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='diagramEditor.css') }}">
   <body>
   <form id="actionEditor">
@@ -14,7 +17,7 @@
         <select id="type" name="type">
           <option value="none">None</option>
           <option value="manual">Manual</option>
-          <option value="provides">Provides</option>
+          <option value="executable">Executable</option>
         </select>
       </p>
       <p> Agent:
@@ -25,11 +28,25 @@
       <p> Tool:
         <input type="text" id="tool" name="tool"/>
       </p>
-      <!-- TODO requirements/provisions -->
+      <p> Requires:
+        <input type="text" id="requires" name="tool"/>
+      </p>
+      <p> Provides:
+        <input type="text" id="provides" name="tool"/>
+      </p>
       <p align="center">
-        <button type="button" value="enter" onClick="editAction()">Edit</button>
+        <button type="button" value="enter" onClick="editAction()">Done</button>
+      </p>
+      <p align="center">
+        <button type="button" value="enter" onClick="removeAction()">Remove Action</button>
       </p>
       </table>
     </form>
   </body>
+  <script type="text/javascript">
+    window.onbeforeunload = function()
+    {
+        return "Any progress you made on the diagram will be lost.";
+    };
+    </script>
 </html>
