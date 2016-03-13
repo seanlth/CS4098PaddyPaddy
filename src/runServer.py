@@ -127,7 +127,6 @@ def saveAs():
 @app.route('/saveAs', methods=['POST'])
 @app.route('/save', methods=['POST'])
 def saveFile(fname=None):
-    print(session)
     if not 'email' in session:
         return "", 401 # not authorised
 
@@ -144,10 +143,11 @@ def saveFile(fname=None):
 
             saveFilePath = os.path.join(savepath, name)
             tempFilePath = session.pop("tempFile", None)
+           
             if tempFilePath:
                 shutil.copy(tempFilePath, saveFilePath)
-
                 return redirect('/?filename=%s'%name)
+
     flash("Invalid File")
     return redirect('/saveAs')
 
@@ -214,6 +214,9 @@ def loginButton():
 @app.route("/logout")
 def logout():
     session.pop('email', None)
+    if session.get('tempFile') is not None:
+        session['tempFile'] = ""
+
     return redirect('/')
 
 

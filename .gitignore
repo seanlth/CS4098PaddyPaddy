@@ -4,6 +4,7 @@ env/
 __pycache__/
 src/database/__pycache__/
 *.db
+*.sqlite
 pmlcheck
 *.swp
 userFiles/

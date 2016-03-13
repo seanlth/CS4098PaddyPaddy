@@ -1,9 +1,10 @@
 import runServer
 
 import os
+import os.path
 import unittest
 import tempfile
-
+import base64
 
 class FlaskrTestCase(unittest.TestCase):
 
@@ -34,6 +35,16 @@ class FlaskrTestCase(unittest.TestCase):
     def editor(self):
         return self.app.get('/', follow_redirects=True)  
 
+    def filesave(self, name):
+        return self.app.post('/saveAs', data=dict(
+            filename=name 
+        ), follow_redirects=True)  
+    
+    def tmp(self, contents):
+        return self.app.post('/tmp', data=dict(
+            content=contents 
+        ), follow_redirects=True)  
+
     def test_register(self):
         print('testing register')
         rv = self.register('test', 'test')
@@ -58,6 +69,14 @@ class FlaskrTestCase(unittest.TestCase):
         assert response.find(liveautocomplete) != -1
         assert response.find(basicautocomplete) != -1
             
+    def test_filesave(self):
+        print('testing file save')
+        self.login('test', 'test')
+        pml_code = b'some pml'
+        self.tmp(base64.b64encode(pml_code))
+        self.filesave('test.pml')
+        assert os.path.isfile('userFiles/test/test.pml') == True
+
 
 if __name__ == '__main__':
     unittest.main()
