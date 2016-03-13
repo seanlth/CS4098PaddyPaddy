@@ -1,5 +1,5 @@
 var canvas, startX, endX, middle;// variables for drawing
-var program, nodes; // variables for storing actions in the program and nodes to add them
+var program, nodes, names; // variables for storing actions in the program and nodes to add them
 var state, selectedAction, selectAdd, controlIndex, currentControlFlow; // variables for handling input
 var offsetX, offsetY;
 
@@ -25,14 +25,14 @@ function setup() {
     canvas = createCanvas(windowWidth, windowHeight);
     canvas.id('canvas');
     startX = 40;
-    endX = windowWidth - 40;
-    middle = windowHeight / 2;
+    endX = width - 40;
+    middle = height / 2;
     offsetX = 0;
     offsetY = 0;
+    controlIndex = [];
 
     program = {name: "new_process", actions: new Array()};
     nodes = new Array();
-    // addNodes();
 
     selectAdd = createSelect();
     selectAdd.option('Select an option');
@@ -41,17 +41,15 @@ function setup() {
     selectAdd.option('Iteration');
     selectAdd.option('Selection');
     selectAdd.changed(selectEvent);
+    selectAdd.hide();
 
-    textAlign(CENTER, CENTER);
-
-    noLoop();
+    // noLoop();
 }
 
 function selectEvent() {
     var selection = selectAdd.value();
     if(selection === 'Action'){
         addAction(selectAdd.index);
-        // addNodes();
     }
     else {
         state = StateEnum.controlFlow;
@@ -75,37 +73,50 @@ function selectEvent() {
 
     selectAdd.selected('Select an option');
     selectAdd.hide();
-    redraw();
+    // redraw();
 }
 
 function draw() {
     background(255);
 
+    // check program isn't too crowded and resize if needed
+    var progWidth = sequenceLength(program);
+    var prefferedSize = progWidth * ACTION_WIDTH * 2;
+    if(prefferedSize > endX - startX) {
+        endX = prefferedSize + startX;
+    }
+    else if(prefferedSize < endX - startX) {
+        endX = prefferedSize + startX;
+    }
+
+    if(endX < width - 40) {
+        endX = width - 40;
+        offsetX = 0;
+        resetMatrix();
+        translate(0, offsetY);
+    }
+
     fill(0);
     line(startX, middle, endX, middle);
+    names = [new Name(program.name, startX, middle - 45, [])];
     ellipse(startX, middle, 30, 30);
     fill(255);
     ellipse(endX, middle, 30, 30);
     fill(0);
     ellipse(endX, middle, 20, 20);
 
-    var progWidth = sequenceLength(program);
     nodes = [];
+    drawActions(program.actions, progWidth, []);
     if(program.actions.length == 0) {
         nodes.push(new Node(width / 2, height / 2, [0]));
     }
-    else {
-        // check program isn't too crowded and resize if needed
-        var prefferedSize = progWidth * ACTION_WIDTH * 2;
-        if(prefferedSize > endX - startX) {
-            endX = prefferedSize + startX;
-        }
-
-        drawActions(program.actions, progWidth, []);
-    }
 
     for(var i = 0; i < nodes.length; i++) {
-        nodes[i].draw(progWidth);
+        nodes[i].draw();
+    }
+
+    for(var i = 0; i < names.length; i++) {
+        names[i].draw();
     }
 }
 
@@ -114,6 +125,10 @@ function drawActions(actions, programWidth, index) {
     for(i = 0; i < actions.length; i++) {
         if(actions[i].constructor == Action) {
             actions[i].draw(index.concat([i]), programWidth);
+        }
+        else if(actions[i].actions.length == 0) {
+            actions.splice(i, 1);
+            continue;
         }
         else {
             var prog = program;
@@ -187,10 +202,12 @@ function sequenceLength(sequence) {
     return length + 3;
 }
 
-function sequenceHeight(sequence) {
+function sequenceHeight(sequence, start, incrementor) {
+    start = start || 0;
+    incrementor = incrementor || 1;
     var height = 0;
 
-    for(var i = 0; i < sequence.actions.length; i++) {
+    for(var i = 0; i < sequence.actions.length; i += incrementor) {
         if(sequence.actions[i].constructor != Action){
             height += sequenceHeight(sequence.actions[i]) - 1;
         }
@@ -224,22 +241,31 @@ function indexToXY(index) {
 
         for(var j = 0; j < index[i]; j++) {
             if(prog.actions[j].constructor != Action && (prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection)) {
-                if(index[0] == 0) {
-                    if(y < 0 && j % 2 == 1) {
-                        y = y - sequenceHeight(prog.actions[j]) + 1;
-                    }
-                    else if(y > 0 && j % 2 == 0) {
-                        y = y + sequenceHeight(prog.actions[j]) - 1;
+                if(y < 0) {
+                    var temp;
+                    temp = lowestY(prog.actions[j]) - 1;
+                    if(y > temp) {
+                        y = temp;
                     }
                 }
                 else if(y > 0) {
-                    y = y + sequenceHeight(prog.actions[j]) + 1;
-                }
-                else {
-                    y = y - sequenceHeight(prog.actions[j]) - 1;
+                    var temp;
+                    temp = highestY(prog.actions[j]) + 1;
+                    if(y < temp) {
+                        y = temp;
+                    }
                 }
             }
-            else if(prog.actions[j].constructor != Action) {
+            else if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
+                if(y < 0 && y >= prog.actions[j].y) {
+                    y = prog.actions[j].y - 1;
+                }
+                else if(y > 0 && y <= prog.actions[j].y) {
+                    y = prog.actions[j].y + 1;
+                }
+            }
+
+            if(prog.actions[j].constructor != Action && prog.control != FlowControlEnum.branch && prog.control != FlowControlEnum.selection) {
                 x += sequenceLength(prog.actions[j]) - 1;
             }
         }
@@ -287,6 +313,48 @@ function addNodesRec(actions, index, progWidth) {
     nodes.push(new Node(index.concat([actions.length]), progWidth));
 }
 
+function highestY(sequence) {
+    if(sequence.constructor == Action) return sequence.y;
+
+    var maxY = Number.MIN_VALUE;
+    for(var i = 0; i < sequence.actions.length; i++) {
+        var y;
+        if(sequence.actions[i].constructor == Action) {
+            y = sequence.actions[i].y;
+        }
+        else {
+            y = highestY(sequence.actions[i]);
+        }
+
+        if(maxY < y) {
+            maxY = y;
+        }
+    }
+
+    return maxY;
+}
+
+function lowestY(sequence) {
+    if(sequence.constructor == Action) return sequence.y;
+
+    var minY = Number.MAX_VALUE;
+    for(var i = 0; i < sequence.actions.length; i++) {
+        var y;
+        if(sequence.actions[i].constructor == Action) {
+            y = sequence.actions[i].y;
+        }
+        else {
+            y = lowestY(sequence.actions[i]);
+        }
+
+        if(minY > y) {
+            minY = y;
+        }
+    }
+
+    return minY;
+}
+
 function Node(x, y, index) {
     this.index = index;
 
@@ -305,10 +373,10 @@ function Node(x, y, index) {
                 selectAdd.show();
             }
             else if(state == StateEnum.controlFlow) {
-                state = StateEnum.normal;
                 if(validControlFlow(this)) {
                     ControlFlow(this.index, controlIndex);
                 }
+                state = StateEnum.normal;
             }
 
             return true;
@@ -317,14 +385,15 @@ function Node(x, y, index) {
         return false;
     }
 
-    this.draw = function(progWidth) {
+    this.draw = function() {
+        var validCF = validControlFlow(this);
         if(state != StateEnum.controlFlow) {
             fill(255);
         }
-        else if(compareArrays(controlIndex, this.index, this.index.length)) {
+        else if(compareArrays(controlIndex, this.index, this.index.length) && validCF) {
             fill(0, 120, 0);
         }
-        else if(validControlFlow(this)) {
+        else if(validCF) {
             fill(0, 255, 0);
         }
         else {
@@ -333,7 +402,48 @@ function Node(x, y, index) {
 
         ellipse(this.x, this.y, this.diameter, this.diameter);
         fill(0);
+        textAlign(CENTER, CENTER);
         text('+', this.x, this.y);
+    }
+}
+
+function Name(name, x, y, index) {
+    this.index = index;
+
+    this.x = x;
+    this.y = y;
+    this.name = name;
+    this.buttonWidth = 16;
+
+    this.press = function(x, y) {
+        if(x > this.x && x < this.x + this.buttonWidth && y > this.y && y < this.y + this.buttonWidth) {
+            var prog = program;
+            for(var i = 0; i < this.index.length; i++) {
+                prog = prog.actions[index[i]];
+            }
+
+            var control = prog.control || 'process';
+            var newName = prompt('Input the new name for this ' + control, prog.name) || prog.name;
+            var variableRegex = new RegExp('^[a-zA-Z_][a-zA-Z_0-9]*$');
+            while(!variableRegex.test(newName)) {
+                newName = prompt('\"' + newName + '\" is invalid, it must start with\
+                    a letter or an underscore and contain only these and numbers.',
+                    prog.name) || prog.name;
+            }
+
+            prog.name = newName;
+            this.name = newName;
+        }
+    }
+
+    this.draw = function() {
+        fill(255);
+        rect(this.x, this.y, this.buttonWidth, this.buttonWidth);
+        fill(0);
+        textAlign(CENTER, CENTER);
+        text('...', this.x + this.buttonWidth / 2, this.y + this.buttonWidth / 2);
+        textAlign(LEFT, TOP);
+        text(this.name, this.x + this.buttonWidth + 3, this.y);
     }
 }
 
@@ -356,6 +466,8 @@ function compareArrays(array1, array2, length) {
 
 function Action() {
     this.id = numActions++;
+    this.x;
+    this.y;
 
     // Set up the element
     this.element = createDiv('New_Action');
@@ -374,8 +486,7 @@ function Action() {
     this.selected = false;
 
     this.draw = function(index, programWidth) {
-        var x, y;
-        [x, y] = indexToXY(index);
+        [this.x, this.y] = indexToXY(index);
 
         var prog = program;
         for(var i = 0; i < index.length - 1; i++) {
@@ -384,43 +495,50 @@ function Action() {
 
         // draw the lines connecting "simultaneous" flow actions to the graph
         if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
-            drawLine(prog, x - 1, y, programWidth);
+            drawLine(prog, this.x - 1, this.y, programWidth);
         }
 
-        var yPixels = (y * ACTION_HEIGHT * 2) + middle;
-        var xPixels = (endX - startX) * ((x + 1) / (programWidth + 1)) + startX;
+        var yPixels = (this.y * ACTION_HEIGHT * 2) + middle;
+        var xPixels = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX;
 
         // if action isn't the first action in a horixaontal control structure, add a node between this and the last action
         if(index[index.length - 1] != 0 && prog.control != FlowControlEnum.branch && prog.control != FlowControlEnum.selection) {
-            var nodeX = (endX - startX) * ((x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+            var nodeX = (endX - startX) * ((this.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
             nodes.push(new Node(nodeX, yPixels, index));
         }
 
         // if this is in a branch or sequence, add nodes capable of changing it to a sequence
         if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
-            var nodeX = (endX - startX) * ((x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+            var nodeX = (endX - startX) * ((this.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
             nodes.push(new Node(nodeX, yPixels, index.concat([-1]))); //-1 == start sequence with new node
 
-            nodeX = (endX - startX) * ((x * 2 + 3) / (programWidth * 2 + 2)) + startX;
+            nodeX = (endX - startX) * ((this.x * 2 + 3) / (programWidth * 2 + 2)) + startX;
             nodes.push(new Node(nodeX, yPixels, index.concat([-2]))); //-2 == end sequence with new node
         } // if this is in an iteration, add nodes to add directly to the control flow structure
         else if(prog.control == FlowControlEnum.iteration) {
             if(index[index.length - 1] == 0) {
-                nodes.push(new Node(xPixels - 20 - ACTION_WIDTH / 2, yPixels, index));
+                nodes.push(new Node(xPixels - 10 - ACTION_WIDTH / 2, yPixels, index));
             }
             if(index[index.length - 1] == prog.actions.length - 1) {
                 var nextIndex = index.slice();
                 nextIndex[index.length - 1] = prog.actions.length;
-                nodes.push(new Node(xPixels + 20 + ACTION_WIDTH / 2, yPixels, nextIndex));
+                nodes.push(new Node(xPixels + 10 + ACTION_WIDTH / 2, yPixels, nextIndex));
             }
         }// else this action is in the normal process structure or sequence
         else {
             if(index[index.length - 1] == 0) {
-                var nodeX = (endX - startX) * ((x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+                var nodeX = (endX - startX) * ((this.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+
+                if(prog.control == FlowControlEnum.sequence) {
+                    var sequenceIndex = index.slice();
+                    sequenceIndex.pop();
+                    names.push(new Name(prog.name, nodeX, yPixels - 15 - ACTION_HEIGHT / 2, sequenceIndex));
+                }
+
                 nodes.push(new Node(nodeX, yPixels, index));
             }
             if(index[index.length - 1] == prog.actions.length - 1) {
-                var nodeX = (endX - startX) * ((x * 2 + 3) / (programWidth * 2 + 2)) + startX;
+                var nodeX = (endX - startX) * ((this.x * 2 + 3) / (programWidth * 2 + 2)) + startX;
                 var newIndex = index.slice();
                 newIndex[newIndex.length - 1]++; // index point to position after the action
                 nodes.push(new Node(nodeX, yPixels, newIndex));
@@ -471,25 +589,29 @@ function drawIterationLoop(prog, x, y, index, programWidth) {
 
     var yPixels = (y * ACTION_HEIGHT * 2) + middle;
 
-    var seqHeight = sequenceHeight(prog);
-    var rectHeight = seqHeight * ACTION_HEIGHT * 2 + 10;
-    var rectPositionY;
+    var yTop = lowestY(prog);
+    var loopHeight = sequenceHeight(prog);
+    var rectHeight = loopHeight * ACTION_HEIGHT * 2;
 
-    if(y == 0) {
-        seqHeight = seqHeight / 2 % 1 == 0 ? seqHeight + 1 : seqHeight;
-        rectPositionY = middle - (ACTION_HEIGHT * (seqHeight / 2) * 2) - 5;
-    }
-    else if(y > 0){
-        rectPositionY = middle - (ACTION_HEIGHT / 2 + seqHeight * 2) - 5;
-    }
-    else {
-        rectPositionY = middle - (y * ACTION_HEIGHT * 2) - 5;
-    }
+    rectPositionY = middle + (ACTION_HEIGHT * yTop * 2) - ACTION_HEIGHT;
 
-    startXRectPixels = startXRectPixels - (ACTION_WIDTH / 2) - 20;
-    endXRectPixels = endXRectPixels + (ACTION_WIDTH / 2) + 20;
+    startXRectPixels = startXRectPixels - (ACTION_WIDTH / 2) - 10;
+    endXRectPixels = endXRectPixels + (ACTION_WIDTH / 2) + 10;
     fill(255, 255, 255, 0);
     rect(startXRectPixels, rectPositionY, endXRectPixels - startXRectPixels, rectHeight, 20, 20, 20, 20);
+
+    var iterationIndex = index.slice();
+    iterationIndex.pop();
+    names.push(new Name(prog.name, startXRectPixels + (endXRectPixels - startXRectPixels) / 2, rectPositionY - 20, iterationIndex));
+}
+
+function getY(sequence) {
+    var prog = sequence;
+    while(!prog.hasOwnProperty('y')) {
+        prog = prog.actions[0];
+    }
+
+    return prog.y;
 }
 
 function drawBranchBars(prog, x, y, index, programWidth) {
@@ -531,6 +653,17 @@ function drawBranchBars(prog, x, y, index, programWidth) {
     rect(startXRectPixels - 5, rectPositionY, 10, rectHeight);
     rect(endRectXPixels - 5, rectPositionY, 10, rectHeight);
 
+    var branchIndex = index.slice();
+    branchIndex.pop();
+    var nameY;
+    if(rectPositionYOne < rectPositionYTwo) {
+        nameY = rectPositionYOne;
+    }
+    else {
+        nameY = rectPositionYTwo;
+    }
+    names.push(new Name(prog.name, startXRectPixels - 20, nameY - 50, branchIndex));
+
     var altIndex = index.slice();
     altIndex.push(prog.actions.length);
     nodes.push(new Node(startXRectPixels, (y * ACTION_HEIGHT * 2) + middle, altIndex));
@@ -568,6 +701,17 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
     resetMatrix();
     translate(offsetX, offsetY);
 
+    var selectionIndex = index.slice();
+    selectionIndex.pop();
+    var nameY;
+    if(linePositionYStart < linePositionYEnd) {
+        nameY = linePositionYStart;
+    }
+    else {
+        nameY = linePositionYEnd;
+    }
+    names.push(new Name(prog.name, startXLinePixels - 20, nameY - 40, selectionIndex));
+
     var altIndex = index.slice();
     altIndex.push(prog.actions.length);
     nodes.push(new Node(startXLinePixels, (y * ACTION_HEIGHT * 2) + middle, altIndex));
@@ -589,7 +733,17 @@ function selectAction(actions, id){
     return false;
 }
 
-function ControlFlow(firstIndex, secondIndex){
+function ControlFlow(firstIndex, secondIndex) {
+    if(firstIndex[firstIndex.length - 1] < 0 || secondIndex[secondIndex.length - 1] < 0) {
+        if(firstIndex[firstIndex.length - 1] == secondIndex[secondIndex.length - 1]) {
+            Sequence(firstIndex);
+            return;
+        }
+        else {
+            Sequence(firstIndex, true);
+            return;
+        }
+    }
     var start, end, length;
     if(firstIndex.length < secondIndex.length){
         length = firstIndex.length;
@@ -608,50 +762,70 @@ function ControlFlow(firstIndex, secondIndex){
     }
 
     var array = program.actions;
+    var prog = program;
     for(var i = 0; i < length - 1; i++) {
         array = array[start[i]].actions;
+        prog = prog.actions[start[i]];
     }
 
     //selected same node twice, add iteration with new Action
     if(start[length - 1] == end[length - 1]) {
-        array.splice(start[length - 1], 0, {name: "New_" + currentControlFlow, control: currentControlFlow, actions: [new Action()]});
+        var blankControlFlow =  {name: 'New_' + currentControlFlow, control: currentControlFlow, actions: [new Action()]};
+        // if the new action is to be in a branch/selection, surre=ound it in a sequence
+        if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
+            array.splice(start[length - 1], 0,
+                {name: "New_Sequence", control: FlowControlEnum.sequence, actions: [blankControlFlow]});
+            return;
+        }
+
+        array.splice(start[length - 1], 0, blankControlFlow);
         return;
     }
 
-    //adds an iteration to program.actions
+    //adds a control flow to program
     array.splice(start[length - 1], end[length - 1] - start[length - 1],
         {name: "New_" + currentControlFlow, control: currentControlFlow, actions: array.slice(start[length - 1], end[length - 1])});
-
-    // addNodes();
 }
 
-function Sequence(index){
+function Sequence(index, replace){
+    replace = replace || false;
     var array = program.actions;
     for(var i = 0; i < index.length - 2; i++) {
         array = array[index[i]].actions;
     }
 
-    var newAction = new Action();
+    var newAction;
     if(state == StateEnum.controlFlow) {
-        newAction = {name: "New_" + currentControlFlow, control: currentControlFlow, actions: newAction};
+        if(replace) {
+            newAction = {name: 'New_' + currentControlFlow, control: currentControlFlow, actions: [array[index[index.length - 2]]]};
+        }
+        else {
+            newAction = {name: 'New_' + currentControlFlow, control: currentControlFlow, actions: [new Action()]};
+        }
+    }
+    else {
+        newAction = new Action();
     }
 
     var sequenceArray;
     //start with new node
-    if(index[index.length - 1] == -2) {
+    if(replace) {
+        sequenceArray = [newAction];
+    }
+    else if(index[index.length - 1] == -1) {
         sequenceArray = [newAction, array[index[index.length - 2]]];
     }//end with old node
     else {
         sequenceArray = [array[index[index.length - 2]], newAction];
     }
-    //adds an sequence to program.actions
+
+    //adds a sequence to program.actions
     array.splice(index[index.length - 2], 1,
-        {name: "New_Sequence", control: FlowControlEnum.sequence, actions: sequenceArray});
+        {name: 'New_Sequence', control: FlowControlEnum.sequence, actions: sequenceArray});
 }
 
 function mousePressed(event) {
     if (state == StateEnum.form) return;
-    redraw();
 
     var x = event.clientX - offsetX;
     var y = event.clientY - offsetY;
@@ -659,7 +833,7 @@ function mousePressed(event) {
 
     for(var i = 0; i < nodes.length; i++) {
         if(nodes[i].press(x, y)){
-            redraw();
+            // redraw();
             pressed = true;
             break;
         }
@@ -667,13 +841,43 @@ function mousePressed(event) {
 	var pml_code = json_to_pml(program);
 	console.log(pml_code);
 
-    if(!pressed && event.srcElement.id == 'canvas') {
-        state = StateEnum.normal;
-        selectAdd.hide();
+    for(var i = 0; i < names.length; i++) {
+        if(names[i].press(x, y)){
+            // redraw();
+            pressed = true;
+            break;
+        }
     }
+
+    if(!pressed && event.movementX == 0 && event.movementY == 0) {
+        if(event.srcElement) {
+            if(event.srcElement.id == 'canvas') {
+                state = StateEnum.normal;
+                selectAdd.hide();
+            }
+        }
+        else if(event.target){
+            if(event.target.id == 'canvas') {
+                state = StateEnum.normal;
+                selectAdd.hide();
+            }
+        }
+    }
+    // redraw();
 }
 
 function mouseDragged(event) {
+    if(event.srcElement) {
+        if(event.srcElement.id != 'canvas') {
+            return;
+        }
+    }
+    else if(event.target){
+        if(event.target.id != 'canvas') {
+            return;
+        }
+    }
+
     var lastValueX = offsetX, lastValueY = offsetY;
     // handle horizontal scrolling if display is wider than screen
     if(endX + startX > width) {
@@ -688,21 +892,28 @@ function mouseDragged(event) {
         }
     }
 
+    var offScreen = false, onScreen = 0;
+    for(var i = 0; i < nodes.length; i++) {
+        if(nodes[i].y + offsetY - (ACTION_WIDTH / 2) < 0 || nodes[i].y + offsetY + (ACTION_WIDTH / 2) > height) {
+            offScreen = true;
+        }
+
+        if(nodes[i].y + offsetY + event.movementY - (ACTION_WIDTH / 2) > 0 && nodes[i].y + offsetY + event.movementY + (ACTION_WIDTH / 2) < height) {
+            onScreen++;
+        }
+    }
+
+    if(offScreen && onScreen >= 1) {
+        offsetY += event.movementY;
+    }
+
     // only redraw with change
     if(lastValueX != offsetX || lastValueY != offsetY) {
         resetMatrix();
         translate(offsetX, offsetY);
-        redraw();
+        // redraw();
     }
 }
-
-$(document).ready(function () {
-    toggleFields();
-    $("#flow").change(function () {
-        toggleFields();
-    });
-
-});
 
 function editAction() {
     var variableRegex = new RegExp('^[a-zA-Z_][a-zA-Z_0-9]*$')
@@ -713,8 +924,9 @@ function editAction() {
               + " only letters, numbers and underscrores.");
         return
     }
-    
-    var specRegex = new RegExp("^[a-zA-Z_][a-zA-Z_0-9]*|\"[^\"]*\"$")    
+
+    var specRegex = new RegExp("^[a-zA-Z_][a-zA-Z_0-9]*|\"[^\"]*\"$")
+    var predicateRegex = new RegExp('^([a-zA-Z_.]+ *(\|\||\&\&)? *)+[a-zA-Z_.]+$');
 
     var agent = document.getElementById('agent').value;
     if ( !specRegex.test(agent) && agent.length != 0) {
@@ -723,26 +935,20 @@ function editAction() {
               + "only letters, numbers and underscrores.");
         return
     }
-    
+
     var tool = document.getElementById('tool').value;
-    if ( !specRegex.test(tool) && tool.length != 0 ) {
-        alert(  "The tool " + tool + " of the Action is invalid, "
-              + "tools must be be strings or start with an underscore or letter and contain "
-              + "only letters, numbers and underscrores.");
-        return
-    }
 
     var requires = document.getElementById('requires').value
-    if(!variableRegex.test(requires) && requires.length != 0) {
-        alert(  "The requirement " + requires + " of the Action is invalid, "
+    if(!predicateRegex.test(requires) && requires.length != 0) {
+        alert(  "The requirement \"" + requires + "\" of the Action is invalid, "
               + "requirements must start with an underscore or letter and contain "
               + "only letters, numbers and underscrores.");
         return
     }
 
     var provides = document.getElementById('provides').value;
-    if(!variableRegex.test(provides) && provides.length != 0) {
-        alert(  "The provision " + provides + " of the Action is invalid, "
+    if(!predicateRegex.test(provides) && provides.length != 0) {
+        alert(  "The provision \"" + provides + "\" of the Action is invalid, "
               + "provisions must start with an underscore or  letter and contain "
               + "only letters, numbers and underscrores.");
         return
@@ -761,16 +967,34 @@ function editAction() {
 
     $("#actionEditor").hide();
     state = StateEnum.normal;
-    redraw();
+    // redraw();
 }
 
-function toggleFields() {
-    if($("#flow").val() == "action") {
-        $("#actionFields").show();
-        $("#otherFields").hide();
+
+// deletes an action with matching id from program prog
+function deleteAction(prog, id) {
+    for(var i = 0; i < prog.actions.length; i++) {
+        if(prog.actions[i].constructor == Action) {
+            if(prog.actions[i].id == id) {
+                prog.actions[i].element.remove()
+                prog.actions.splice(i, 1);
+                return true;
+            }
+        }
+        else {
+            if(deleteAction(prog.actions[i], id)) return true;
+        }
     }
-    else {
-        $("#actionFields").hide();
-        $("#otherFields").show();
-    }
+    return false;
+}
+
+
+function removeAction() {
+    if(!confirm("Are you sure you wish to delete this action?")) return;
+
+    deleteAction(program, selectedAction.id);
+
+    $("#actionEditor").hide();
+    state = StateEnum.normal;
+    // redraw();
 }

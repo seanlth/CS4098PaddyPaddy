@@ -6,8 +6,12 @@
     left: 0;
 }
 
+element.style {
+    position: fixed;
+}
+
 .Action {
-    position: static;
+    position: fixed !important;
     font-family: 'Orbitron';
     background:#FFFFFF;
     color:#000000;
@@ -26,15 +30,17 @@
 }
 
 .IterationButt {
-    position: inherit;
+    position: fixed !important;
     z-index: 1;
 }
 
 select {
+    position: fixed !important;
     z-index: 2;
 }
 
 body {
+    position: fixed;
     overflow: hidden;
 }
 
