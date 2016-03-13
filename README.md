@@ -17,12 +17,9 @@
 * Code Completion
 * Syntax Analysis (test by running code)
 * Error Highlighting (same as above, with errors)
-
 * Email Authentification (Create login on ```0.0.0.0:8000/signUp```, using those credentials on ```0.0.0.0:8000/login``` will indicate success)
-
-* File Save (Sign in using email and click file in editor, currently there is a bug on large files)
+* File Save (Sign in using email and click file in editor)
 * File Open (Sign in using email and click open in editor)
-
 * Boxes and Arrows (in-progress, very buggy at ```0.0.0.0:8000/diagram```)
 * Scripts (in editor, needs styling, click on an action after clicking (+))
 

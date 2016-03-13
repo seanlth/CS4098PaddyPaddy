@@ -928,7 +928,7 @@ function editAction() {
     }
 
     var specRegex = new RegExp("^[a-zA-Z_][a-zA-Z_0-9]*|\"[^\"]*\"$")
-    var predicateRegex = new RegExp('^([a-zA-Z_.]+ *(\|\||\&\&)? *)+[a-zA-Z_.]+$');
+    var predicateRegex = new RegExp('^([a-zA-Z_.]+ *(\|\||\&\&)? *)*[a-zA-Z_.]+$');
 
     var agent = document.getElementById('agent').value;
     if ( !specRegex.test(agent) && agent.length != 0) {
