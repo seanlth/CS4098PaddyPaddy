@@ -42,6 +42,30 @@ function setup() {
     noLoop();
 }
 
+function drawJSON(json) {
+    numActions = 0;
+    $('.Action').remove();
+
+    function addActions(acts){
+      for (var i = 0; i < acts.length; i++){
+        if (acts[i].control == FlowControlEnum.action){
+          var newAct = new Action();
+          acts[i]['element'] = newAct.element;
+          acts[i].draw = function(x,y){
+             this.element.position(x,y);
+          }
+          acts[i].element.html(acts[i].name);
+        } else {
+          addActions(acts[i].actions);
+        }
+      }
+    }
+
+    addActions(json);
+    program = json;
+    redraw();
+}
+
 function selectEvent() {
     var selection = selectAdd.value();
     if(selection === 'Action'){
@@ -97,7 +121,7 @@ function drawSequenceOrIteration(actions, progWidth, x, y, index) {
         var nodeXInPixels = ((endX - startX) * ((((x + xChange + iteration_length) * 2) + 1) / ((progWidth * 2) + 2))) + startX;
         var yInPixels = (y * 1.5 * ACTION_HEIGHT) + middle - (ACTION_HEIGHT / 2);
 
-        if(actions[i].constructor == Action){
+        if(actions[i].control == FlowControlEnum.action){
             if(index.length > 0 && i == 0) {
                 nodes.push(new Node(xInPixels - 20, yInPixels + (ACTION_HEIGHT / 2), index.concat([i])));
             }
@@ -167,7 +191,7 @@ function drawBranchOrSelection(actions, progWidth, x, y, index) {
         var xInPixels = (((x + 1 + xChange + iteration_length)  / (progWidth + 1)) * (endX - startX)) + startX - (ACTION_WIDTH / 2);
         var yInPixels = ((y + yChange) * 1.5 * ACTION_HEIGHT) + middle - (ACTION_HEIGHT / 2);
 
-        if(actions[i].constructor == Action){
+        if(actions[i].control == FlowControlEnum.action){
             nodes.push(new Node(xInPixels + ACTION_WIDTH + 50, yInPixels + (ACTION_HEIGHT / 2), index.concat([i, -1])));
             actions[i].draw(xInPixels, yInPixels);
         }
@@ -191,7 +215,7 @@ function validIterations(actions) { // TODO: fix
     var selectedIndex = -1;
 
     for(var i = 0; i < actions.length; i++) {
-        if(found && actions[i].constructor == Action) {
+        if(found && actions[i].control == FlowControlEnum.action) {
             iterations.push(i);
             break;
         }
@@ -204,7 +228,7 @@ function validIterations(actions) { // TODO: fix
     }
 
     for(var i = selectedIndex; i >= 0; i--) {
-        if(actions[i].constructor == Action) {
+        if(actions[i].control == FlowControlEnum.action) {
             iterations.push(i);
         }
         else {
@@ -218,7 +242,7 @@ function validIterations(actions) { // TODO: fix
 function sequenceLength(actions) {
     var length = 0;
     for(var i = 0; i < actions.length; i++) {
-        if(actions[i].constructor != Action){
+        if(actions[i].control != FlowControlEnum.action){
             length += sequenceLength(actions[i].actions);
             if(actions[i].control == FlowControlEnum.sequence || actions[i].control == FlowControlEnum.iteration) {
                 length += actions[i].actions.length - 1;
@@ -235,7 +259,7 @@ function sequenceLength(actions) {
 function sequenceHeight(actions) {
     var height = 0;
     for(var i = 0; i < actions.length; i++) {
-        if(actions[i].constructor != Action){
+        if(actions[i].control != FlowControlEnum.action){
             height += sequenceHeight(actions[i].actions);
             if(actions[i].control == FlowControlEnum.branch || actions[i].control == FlowControlEnum.selection) {
                 height += actions[i].actions.length;
@@ -274,7 +298,7 @@ function addNodesRec(actions, index, progWidth) {
     for(var i = 0; i < actions.length; i++) {
         nodes.push(new Node(index.concat([i]), progWidth));
 
-        if(actions[i].constructor != Action) {
+        if(actions[i].control != FlowControlEnum.action) {
             addNodesRec(actions[i].actions, index.concat([i]), progWidth);
         }
     }
@@ -387,7 +411,7 @@ Action.prototype.openActionEditor = function(event) {
 
 function selectAction(actions, id){
     for(var i = 0; i < actions.length; i++) {
-        if(actions[i].constructor == Action) {
+        if(actions[i].control == FlowControlEnum.action) {
             if(actions[i].id == id) {
                 selectedAction = actions[i];
                 return true;
