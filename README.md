@@ -49,6 +49,8 @@
    scrolling is done by clicking and dragging the mouse or by using the arrow keys. [Dialog pop-ups are integral please  
    do not disable the page from creating them.]
 
+4. There are also some smoke tests available by running "make test".
+
 ## Dependencies
 * Ubuntu 14.04
 
