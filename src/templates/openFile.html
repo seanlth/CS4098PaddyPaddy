@@ -1,17 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
   <head>
-    <link href="//netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"
-          rel="stylesheet">
+    <link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="{{ url_for('static', filename='registerLogin.css') }}">
   </head>
   <body>
-    <div class="container">
+    <div class="wrapper">
       <div class="header">
         {% with messages = get_flashed_messages() %}
           {% if messages %}
             <ul class=flashes>
               {% for message in messages %}
-              <li><h1>{{ message }}</h1></li>
+              <li><p2>{{ message }}</p2></li>
               {% endfor %}
             </ul>
           {% endif %}
@@ -19,20 +20,15 @@
       </div>
       <hr/>
       <div>
-
       <ul>
       {% for file in files %}
-      <li><a href='/?filename={{ file }}'> open '{{file}}'</a></li>
+      <li><a href='/?filename={{ file }}'><p1> open '{{file}}'<p1></a></li>
       {% else %}
-      <li><em>no files found</em></li>
+      <li><em><p1>no files found</p1></em></li>
       {% endfor %}
 
       </ul>
       <hr/>
-
-      <form action="upload" method="post" enctype="multipart/form-data">
-        <input type="file" name="file"><br /><br />
-        <input type="submit" value="Upload">
       </form>
       </div>
     </div>

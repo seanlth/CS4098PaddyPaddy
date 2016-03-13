@@ -838,6 +838,8 @@ function mousePressed(event) {
             break;
         }
     }
+	var pml_code = json_to_pml(program);
+	console.log(pml_code);
 
     for(var i = 0; i < names.length; i++) {
         if(names[i].press(x, y)){
@@ -914,23 +916,27 @@ function mouseDragged(event) {
 }
 
 function editAction() {
-    var variableRegex = new RegExp('^[a-zA-Z_][a-zA-Z_0-9]*$');
+    var variableRegex = new RegExp('^[a-zA-Z_][a-zA-Z_0-9]*$')
     var name = document.getElementById('name').value;
-    if(!variableRegex.test(name)) {
-        alert(  "The name \"" + name + "\" of the Action is invalid, "
-              + "Action names must start with an underscore or  letter and contain"
+    if (!variableRegex.test(name)) {
+        alert(  "The name " + name + " of the Action is invalid, "
+              + "Action names must start with an underscore or letter and contain"
               + " only letters, numbers and underscrores.");
         return
     }
 
+    var specRegex = new RegExp("^[a-zA-Z_][a-zA-Z_0-9]*|\"[^\"]*\"$")
     var predicateRegex = new RegExp('^([a-zA-Z_.]+ *(\|\||\&\&)? *)+[a-zA-Z_.]+$');
+
     var agent = document.getElementById('agent').value;
-    if(!predicateRegex.test(agent) && agent.length != 0) {
-        alert(  "The agent \"" + agent + "\" of the Action is invalid, "
-              + "agents must start with an underscore or  letter and contain "
+    if ( !specRegex.test(agent) && agent.length != 0) {
+        alert(  "The agent " + agent + " of the Action is invalid, "
+              + "agents must be be strings or start with an underscore or letter and contain "
               + "only letters, numbers and underscrores.");
         return
     }
+
+    var tool = document.getElementById('tool').value;
 
     var requires = document.getElementById('requires').value
     if(!predicateRegex.test(requires) && requires.length != 0) {
@@ -952,7 +958,7 @@ function editAction() {
     selectedAction.type = document.getElementById('type').value;
     selectedAction.agent = agent;
     selectedAction.script = document.getElementById('script').value;
-    selectedAction.tool = document.getElementById('tool').value;
+    selectedAction.tool = tool;
     selectedAction.requires = requires;
     selectedAction.provides = provides;
     selectedAction.selected = false;

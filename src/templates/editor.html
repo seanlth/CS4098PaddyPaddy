@@ -4,20 +4,24 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <title>Editor</title>
 <style type=text/css>{{ get_resource_as_string('static/editor.css') }}</style>
-
 </head>
 <body>
-
+<style type="text/css">
+.navbar{
+  background:url("static/images/dark_wall.png");
+}
+</style>
 <nav class="navbar navbar-default" role="navigation">
     <div class="navbar-header">
         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-            <span class="sr-only">Toggle navigation</span>
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
         </button>
     </div>
-
     <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav">
             <li class="dropdown">
@@ -25,20 +29,34 @@
                 <ul class="dropdown-menu">
                     <li><a href="javascript:new_hook()">New</a></li>
                     <li><a href="javascript:open_hook()">Open</a></li>
+                    <li>
+                      <form action="upload" method="post" enctype="multipart/form-data" id ="fileUpload">
+                        {% if not 'email' in session %}
+                          <a href="/login" style="color: #333333;">Upload</a>
+                        {% else %}
+                          <input id="upload-file" type="file" name="file" style="display: none;">
+                          <script>
+                            document.getElementById('upload-file').onchange = function() {
+                                document.getElementById("fileUpload").submit();
+                            }
+                          </script>
+                          <a1 onclick="$('input[id=upload-file]').click();">Upload</a1>
+                        {% endif %}
+                      </form>
+                    </li>
                     <li><a href="javascript:save_hook()">Save</a></li>
+                    <li><a href="javascript:saveAs_hook()">Save As</a></li>
                     <!-- <li class="divider"></li> -->
                     <!-- <li><a href="#">Separated link</a></li> -->
                 </ul>
             </li>
-
             <li class="dropdown">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Edit </a>
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Edit</a>
                 <ul class="dropdown-menu">
                     <li><a href="javascript:undo_hook()">Undo</a></li>
                     <li><a href="javascript:redo_hook()">Redo</a></li>
                 </ul>
             </li>
-
             <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Bindings </a>
                 <ul class="dropdown-menu">
@@ -47,14 +65,21 @@
                     <li><a href="javascript:changeBindings('emacs')">Emacs</a></li>
                 </ul>
             </li>
-
             <li>
                 <a href="javascript:run_hook()">Run </a>
             </li>
         </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li>
+            {% if not 'email' in session %}
+            <a href="/login"><r>Login</r></a>
+            {% else %}
+            <a href="/logout"><r>Logout</r></a>
+            {% endif %}
+          </li>
+        </ul>
     </div><!-- /.navbar-collapse -->
 </nav>
-
 <div class="container" id="editor">{{editor_content}}</div>
 
 <textarea id="output" disabled="disabled">Output</textarea>
@@ -83,33 +108,51 @@
     var editor;
     var error_marker;
 
-	function createCookie(name,value,days) {
-		if (days) {
-			var date = new Date();
-			date.setTime(date.getTime()+(days*24*60*60*1000));
-			var expires = "; expires="+date.toGMTString();
-		}
-		else var expires = "";
-		document.cookie = name+"="+value+expires+"; path=/";
-	}
+    function pushTemp(callback){
+      var content = btoa(editor.getValue()); // encode editor content
 
+      $.ajax({
+          url: '/tmp',
+          data: { content: content },
+          type: 'POST',
+          success: callback,
+          error: function(error) {
+              console.log(error);
+          }
+      });
+    }
 
-    function new_hook() { console.log("new pressed"); editor && editor.setValue(""); }
 	function undo_hook(){ console.log("undo pressed"); editor && editor.undo();}
 	function redo_hook(){ console.log("redo pressed"); editor && editor.redo();}
 
-	function save_hook(){
-      console.log("save pressed");
-      var content = btoa(editor.getValue()) // encode editor content
-      createCookie("editor_content", content, 1);
-      window.location.href = 'saveFile'
+
+    function new_hook() {
+      console.log("new pressed");
+      editor && editor.setValue("");
+      $.ajax("/resetCurrent");
     }
 
+	function save_hook(){
+      console.log("save pressed");
+      pushTemp(function(response) {
+        window.location.href = 'save'
+      });
+    }
+
+    function saveAs_hook(){
+      console.log("save as pressed");
+      pushTemp(function(response) {
+        window.location.href = 'saveAs'
+      });
+    }
     function open_hook() {
       console.log("open pressed");
       window.location.href = 'openFile';
     }
-
+    function upload_hook() {
+      console.log("open pressed");
+      window.location.href = 'openFile';
+    }
     function changeBindings(binding){
       var keyBindings = {
         ace: null,
@@ -154,7 +197,7 @@
             document.getElementById("output").innerHTML = "Output";
 
             editor.session.removeMarker(error_marker);
-            editor.session.clearAnnotations()
+            editor.session.clearAnnotations();
 
             $.ajax({
                 url: '/',
