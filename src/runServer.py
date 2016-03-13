@@ -59,6 +59,7 @@ def editor(filename = ""):
             email = session['email']
             userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
             filepath = os.path.join(userpath, filename)
+            session['currentFile'] = filename
             try:
                 with open(filepath) as f:
                     editor_content = f.read()
@@ -100,6 +101,7 @@ def upload():
         userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
         os.makedirs(userpath, exist_ok=True)
         file.save(os.path.join(userpath, filename))
+        session['currentFile'] = filename
         return redirect('/?filename=%s'%filename)
     flash("Invalid file")
     return redirect('/openFile')
@@ -107,8 +109,9 @@ def upload():
 
 @app.route('/save')
 def save():
+    print(session)
     if not 'email' in session:
-        return redirect('/signup?return_url=saveAs')
+        return redirect('/login?return_url=saveAs')
     if 'currentFile' in session:
         return saveFile(session['currentFile'])
     return saveAs()
@@ -116,7 +119,7 @@ def save():
 @app.route('/saveAs')
 def saveAs():
     if not 'email' in session:
-        return redirect('/signup?return_url=saveAs')
+        return redirect('/login?return_url=saveAs')
     else:
         return render_template('saveFile.html')
 
@@ -124,6 +127,7 @@ def saveAs():
 @app.route('/saveAs', methods=['POST'])
 @app.route('/save', methods=['POST'])
 def saveFile(fname=None):
+    print(session)
     if not 'email' in session:
         return "", 401 # not authorised
 
