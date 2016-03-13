@@ -9,8 +9,8 @@
 </head>
 <body>
 <style type="text/css">
-#navigation,.navbar .navbar-nav{
-  background-image:url("images/dark_wall.png");
+.navbar{
+  background:url("static/images/dark_wall.png");
 }
 </style>
 <nav class="navbar navbar-default" role="navigation">
@@ -34,7 +34,7 @@
                         {% if not 'email' in session %}
                           <a href="/login" style="color: #333333;">Upload</a>
                         {% else %}
-                          <input id="upload-file" type="file" name="file" style="display: none;">
+                          <input id="upload-file" type="file" name="file" style="display: none;" onchange="function() {document.getElementById("fileUpload").submit();};">
                           <a1 onclick="$('input[id=upload-file]').click();">Upload</a1>
                         {% endif %}
                       </form>
@@ -42,11 +42,6 @@
                     <li><a href="javascript:save_hook()">Save</a></li>
                 </ul>
             </li>
-            <script type="text/javascript">
-              document.getElementById("upload-file").onchange = function() {
-                document.getElementById("fileUpload").submit();
-              };
-            </script>
             <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Edit</a>
                 <ul class="dropdown-menu">
