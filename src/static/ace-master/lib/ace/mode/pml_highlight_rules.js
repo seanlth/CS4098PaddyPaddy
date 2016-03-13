@@ -28,19 +28,10 @@ var PMLHighlightRules = function() {
                 token : "string", // character
                 regex : /'(?:.|\\(:?u[\da-fA-F]+|x[\da-fA-F]+|[tbrf'"n]))'/
             }, {
-                token : "string", start : '"', end : '"|$', next: [
-                    {token: "constant.language.escape", regex: /\\(:?u[\da-fA-F]+|x[\da-fA-F]+|[tbrf'"n])/},
-                    {token: "invalid", regex: /\\./}
-                ]
+                token : "string", start : '"', end : '"'
             }, {
                 token : "string", start : '@"', end : '"', next:[
                     {token: "constant.language.escape", regex: '""'}
-                ]
-            }, {
-                token : "string", start : /\$"/, end : '"|$', next: [
-                    {token: "constant.language.escape", regex: /\\(:?$)|{{/},
-                    {token: "constant.language.escape", regex: /\\(:?u[\da-fA-F]+|x[\da-fA-F]+|[tbrf'"n])/},
-                    {token: "invalid", regex: /\\./}
                 ]
             }, {
                 token : "constant.numeric", // hex
