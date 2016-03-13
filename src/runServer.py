@@ -107,7 +107,7 @@ def upload():
 def save():
     print(session)
     if not 'email' in session:
-        return redirect('/signup?return_url=saveAs')
+        return redirect('/login?return_url=saveAs')
     if 'currentFile' in session:
         return saveFile(session['currentFile'])
     return saveAs()
@@ -115,7 +115,7 @@ def save():
 @app.route('/saveAs')
 def saveAs():
     if not 'email' in session:
-        return redirect('/signup?return_url=saveAs')
+        return redirect('/login?return_url=saveAs')
     else:
         return render_template('saveFile.html')
 
