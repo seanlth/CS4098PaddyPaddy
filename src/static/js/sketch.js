@@ -65,9 +65,7 @@ function drawJSON(json) {
         if (acts[i].control == FlowControlEnum.action){
           var newAct = new Action();
           acts[i]['element'] = newAct.element;
-          acts[i].draw = function(x,y){
-             this.element.position(x,y);
-          }
+          acts[i].draw = newAct.draw;
           acts[i].element.html(acts[i].name);
         } else {
           addActions(acts[i].actions);
@@ -75,7 +73,7 @@ function drawJSON(json) {
       }
     }
 
-    addActions(json);
+    addActions(json.actions);
     program = json;
     redraw();
 }

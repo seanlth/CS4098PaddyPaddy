@@ -150,8 +150,7 @@ def selector():
 
 def process():
     expect("PROCESS")
-    expect("IDENT")
-    return listOf(prim) # the ident of the process doesn't seem to be used in the diagram
-
-print(parse("process p { action a { tool { asdf } provides {qqq} provides {eee}} }"))
+    ident = expect("IDENT")
+    prims = listOf(prim)
+    return { "actions": prims, "name": ident }
 
