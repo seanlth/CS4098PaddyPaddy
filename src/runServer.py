@@ -49,9 +49,9 @@ def my_form_post():
 @app.route("/")
 def editor(filename = ""):
     editor_content = "";
-    print(session['tempFile']);
-    if session['tempFile'] != "":
-        editor_content = open(session['tempFile']).read();
+    if session.get('tempFile') is not None:
+        if session['tempFile'] != "":
+            editor_content = open(session['tempFile']).read();
 
     if 'filename' in request.args or filename != "":
         filename = filename if filename else request.args['filename']
