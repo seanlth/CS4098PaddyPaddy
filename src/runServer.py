@@ -16,7 +16,7 @@ import shutil
 import tempfile
 
 
-DEBUG = False
+DEBUG = True
 app = Flask(__name__)
 app.secret_key = 'fe2917b485cc985c47071f3e38273348' # echo team paddy paddy | md5sum
 app.config['UPLOAD_FOLDER'] = 'userFiles/'
@@ -57,6 +57,7 @@ def editor(filename = ""):
             email = session['email']
             userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
             filepath = os.path.join(userpath, filename)
+            session['currentFile'] = filename
             try:
                 with open(filepath) as f:
                     editor_content = f.read()
@@ -94,6 +95,7 @@ def upload():
         filename = secure_filename(file.filename)
         userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
         file.save(os.path.join(userpath, filename))
+        session['currentFile'] = filename
         return redirect('/?filename=%s'%filename)
     flash("Invalid file")
     return redirect('/openFile')
@@ -101,6 +103,7 @@ def upload():
 
 @app.route('/save')
 def save():
+    print(session)
     if not 'email' in session:
         return redirect('/signup?return_url=saveAs')
     if 'currentFile' in session:
@@ -118,6 +121,7 @@ def saveAs():
 @app.route('/saveAs', methods=['POST'])
 @app.route('/save', methods=['POST'])
 def saveFile(fname=None):
+    print(session)
     if not 'email' in session:
         return "", 401 # not authorised
 
@@ -211,4 +215,3 @@ def resetCurrent():
 
 if __name__ == "__main__":
 	app.run(host="0.0.0.0", port=8000, debug=DEBUG)
-
