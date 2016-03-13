@@ -46,6 +46,7 @@ function setup() {
     generatePML = createButton('Generate PML');
     generatePML.position(20, 20);
     generatePML.mousePressed(createPML);
+    generatePML.id('generatePML');
 
     // noLoop();
 }
