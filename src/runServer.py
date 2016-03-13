@@ -15,7 +15,7 @@ import shutil
 import tempfile
 
 
-DEBUG = False
+DEBUG = True
 app = Flask(__name__)
 app.secret_key = 'fe2917b485cc985c47071f3e38273348' # echo team paddy paddy | md5sum
 app.config['UPLOAD_FOLDER'] = 'userFiles/'
@@ -49,9 +49,9 @@ def my_form_post():
 @app.route("/")
 def editor(filename = ""):
     editor_content = "";
-    print(session['tempFile']);
-    if session['tempFile'] != "":
-        editor_content = open(session['tempFile']).read();
+    if session.get('tempFile') is not None:
+        if session['tempFile'] != "":
+            editor_content = open(session['tempFile']).read();
 
     if 'filename' in request.args or filename != "":
         filename = filename if filename else request.args['filename']
