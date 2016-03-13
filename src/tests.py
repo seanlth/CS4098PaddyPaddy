@@ -45,6 +45,11 @@ class FlaskrTestCase(unittest.TestCase):
             content=contents 
         ), follow_redirects=True)  
 
+    def test_editor(self):
+        print('testing editor')
+        rv = self.editor()
+        assert rv.status == '200 OK'
+
     def test_register(self):
         print('testing register')
         rv = self.register('test', 'test')
