@@ -45,6 +45,11 @@ class FlaskrTestCase(unittest.TestCase):
             content=contents 
         ), follow_redirects=True)  
 
+    def openFile(self, name):
+    	return self.app.post('/openFile', data=dict(
+    		filename=name
+    	), follow_redirects=True)    
+
     def test_editor(self):
         print('testing editor')
         rv = self.editor()
@@ -81,6 +86,16 @@ class FlaskrTestCase(unittest.TestCase):
         self.tmp(base64.b64encode(pml_code))
         self.filesave('test.pml')
         assert os.path.isfile('userFiles/test/test.pml') == True
+
+    def test_openFile(self):
+    	print('Testing open file')
+    	rv = self.editor()
+    	self.login('test', 'test')
+    	pml_code = b'some pml'
+        self.tmp(base64.b64encode(pml_code))
+        self.fileSave('test.pml')
+        respone = self.openFile('test.pml').data
+        assert response.find(pml_code) != 1
 
 
 if __name__ == '__main__':
