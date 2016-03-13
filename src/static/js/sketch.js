@@ -206,6 +206,9 @@ function sequenceLength(sequence) {
     }
 
     if(sequence.control != FlowControlEnum.branch && sequence.control != FlowControlEnum.selection) {
+        if(sequence.control == FlowControlEnum.iteration) {
+            return length + sequence.actions.length + 2;
+        }
         return length + sequence.actions.length;
     }
     // designate space for the branch and sequence visual elements
@@ -238,6 +241,9 @@ function indexToXY(index) {
     for(var i = 0; i < index.length; i++) {
         if(prog.control != FlowControlEnum.branch && prog.control != FlowControlEnum.selection) {
             x += index[i];
+            if(prog.control == FlowControlEnum.iteration) {
+                x++;//move along to give space for extra node
+            }
         }
         else {
             x++; // move x position past control flow visual element
@@ -527,12 +533,14 @@ function Action() {
         } // if this is in an iteration, add nodes to add directly to the control flow structure
         else if(prog.control == FlowControlEnum.iteration) {
             if(index[index.length - 1] == 0) {
-                nodes.push(new Node(xPixels - 10 - ACTION_WIDTH / 2, yPixels, index));
+                var nodeX = (endX - startX) * ((this.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+                nodes.push(new Node(nodeX, yPixels, index));
             }
             if(index[index.length - 1] == prog.actions.length - 1) {
                 var nextIndex = index.slice();
                 nextIndex[index.length - 1] = prog.actions.length;
-                nodes.push(new Node(xPixels + 10 + ACTION_WIDTH / 2, yPixels, nextIndex));
+                var nodeX = (endX - startX) * ((this.x * 2 + 3) / (programWidth * 2 + 2)) + startX;
+                nodes.push(new Node(nodeX, yPixels, nextIndex));
             }
         }// else this action is in the normal process structure or sequence
         else {
@@ -605,8 +613,8 @@ function drawIterationLoop(prog, x, y, index, programWidth) {
 
     rectPositionY = middle + (ACTION_HEIGHT * yTop * 2) - ACTION_HEIGHT;
 
-    startXRectPixels = startXRectPixels - (ACTION_WIDTH / 2) - 10;
-    endXRectPixels = endXRectPixels + (ACTION_WIDTH / 2) + 10;
+    startXRectPixels = startXRectPixels;
+    endXRectPixels = endXRectPixels;
     fill(255, 255, 255, 0);
     rect(startXRectPixels, rectPositionY, endXRectPixels - startXRectPixels, rectHeight, 20, 20, 20, 20);
 
