@@ -45,6 +45,9 @@
                       </form>
                     </li>
                     <li><a href="javascript:save_hook()">Save</a></li>
+                    <li><a href="javascript:saveAs_hook()">Save As</a></li>
+                    <!-- <li class="divider"></li> -->
+                    <!-- <li><a href="#">Separated link</a></li> -->
                 </ul>
             </li>
             <li class="dropdown">
@@ -105,25 +108,42 @@
     var editor;
     var error_marker;
 
-	function createCookie(name,value,days) {
-		if (days) {
-			var date = new Date();
-			date.setTime(date.getTime()+(days*24*60*60*1000));
-			var expires = "; expires="+date.toGMTString();
-		}
-		else var expires = "";
-		document.cookie = name+"="+value+expires+"; path=/";
-	}
+    function pushTemp(callback){
+      var content = btoa(editor.getValue()); // encode editor content
 
-  function new_hook() { console.log("new pressed"); editor && editor.setValue(""); }
+      $.ajax({
+          url: '/tmp',
+          data: { content: content },
+          type: 'POST',
+          success: callback,
+          error: function(error) {
+              console.log(error);
+          }
+      });
+    }
+
 	function undo_hook(){ console.log("undo pressed"); editor && editor.undo();}
 	function redo_hook(){ console.log("redo pressed"); editor && editor.redo();}
 
+
+    function new_hook() {
+      console.log("new pressed");
+      editor && editor.setValue("");
+      $.ajax("/resetCurrent");
+    }
+
 	function save_hook(){
       console.log("save pressed");
-      var content = btoa(editor.getValue()) // encode editor content
-      createCookie("editor_content", content, 1);
-      window.location.href = 'saveFile'
+      pushTemp(function(response) {
+        window.location.href = 'save'
+      });
+    }
+
+    function saveAs_hook(){
+      console.log("save as pressed");
+      pushTemp(function(response) {
+        window.location.href = 'saveAs'
+      });
     }
     function open_hook() {
       console.log("open pressed");
