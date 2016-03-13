@@ -4,8 +4,8 @@ all: run
 
 build: buildDeps
 
-test: #TODO
-	:
+test:
+	env/bin/python3 src/tests.py
 
 install: buildDeps
 	git submodule init
