@@ -46,7 +46,8 @@
    of these control structures with the [...] displayed beside the name which will create a prompt. The various parameters  
    of an action can be altered using a form displayed when you click on one. The generate PML button will open a new  
    tab/window with the editor open to PML generated based on your diagram. If the diagram becomes larger than the screen  
-   scrolling is done by clicking and dragging the mouse or by using the arrow keys.
+   scrolling is done by clicking and dragging the mouse or by using the arrow keys. [Dialog pop-ups are integral please  
+   do not disable the page from creating them.]
 
 ## Dependencies
 * Ubuntu 14.04
