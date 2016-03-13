@@ -143,7 +143,7 @@ def renderSignUp():
 
 @app.route("/signup", methods=["POST"])
 def signUpButton():
-    
+
     email = request.form["email"]
     user = query_user(email)
     if user == None:
@@ -176,7 +176,7 @@ def loginButton():
     email = request.form["email"]
     password = request.form["password"]
     user = query_user(email)
-    
+
     if user != None:
         if check_password_hash(user.password, password):
             session['email'] = email
@@ -197,4 +197,4 @@ def logout():
 
 
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", port=8000, debug="true")
+	app.run(host="0.0.0.0", port=8000, debug="false")

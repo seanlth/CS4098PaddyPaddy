@@ -34,7 +34,12 @@
                         {% if not 'email' in session %}
                           <a href="/login" style="color: #333333;">Upload</a>
                         {% else %}
-                          <input id="upload-file" type="file" name="file" style="display: none;" onchange="function() {document.getElementById("fileUpload").submit();};">
+                          <input id="upload-file" type="file" name="file" style="display: none;">
+                          <script>
+                            document.getElementById('upload-file').onchange = function() {
+                                document.getElementById("fileUpload").submit();
+                            }
+                          </script>
                           <a1 onclick="$('input[id=upload-file]').click();">Upload</a1>
                         {% endif %}
                       </form>
