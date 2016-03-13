@@ -423,12 +423,12 @@ function Name(name, x, y, index) {
             }
 
             var control = prog.control || 'process';
-            var newName = prompt('Input the new name for this ' + control, prog.name);
+            var newName = prompt('Input the new name for this ' + control, prog.name) || prog.name;
             var variableRegex = new RegExp('^[a-zA-Z_][a-zA-Z_0-9]*$');
             while(!variableRegex.test(newName)) {
                 newName = prompt('\"' + newName + '\" is invalid, it must start with\
                     a letter or an underscore and contain only these and numbers.',
-                    prog.name);
+                    prog.name) || prog.name;
             }
 
             prog.name = newName;
@@ -599,6 +599,10 @@ function drawIterationLoop(prog, x, y, index, programWidth) {
     endXRectPixels = endXRectPixels + (ACTION_WIDTH / 2) + 10;
     fill(255, 255, 255, 0);
     rect(startXRectPixels, rectPositionY, endXRectPixels - startXRectPixels, rectHeight, 20, 20, 20, 20);
+
+    var iterationIndex = index.slice();
+    iterationIndex.pop();
+    names.push(new Name(prog.name, startXRectPixels + (endXRectPixels - startXRectPixels) / 2, rectPositionY - 20, iterationIndex));
 }
 
 function getY(sequence) {
