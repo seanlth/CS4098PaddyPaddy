@@ -9,6 +9,7 @@
   <script src="{{url_for('static', filename='js/sketch.js')}}"></script>
   <script src="{{url_for('static', filename='js/pml_generator.js')}}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='diagramEditor.css') }}">
+
   <body>
   <form id="actionEditor">
     <table>
@@ -44,6 +45,12 @@
     </form>
   </body>
   <script type="text/javascript">
+    {% if data %}
+      $(window).load(function(){
+        var data = {{ data | safe }};
+        drawJSON(data);
+      });
+    {% endif %}
     window.onbeforeunload = function()
     {
         return "Any progress you made on the diagram will be lost.";

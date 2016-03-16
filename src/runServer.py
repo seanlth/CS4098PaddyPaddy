@@ -10,10 +10,12 @@ from database.database_insert import insert_user
 from database.database_query import query_user, number_of_users
 
 import base64
+import json
 import os
 import shutil
 import tempfile
 
+import parser
 
 DEBUG = False
 app = Flask(__name__)
@@ -153,6 +155,13 @@ def saveFile(fname=None):
 
 @app.route("/diagram")
 def diagram():
+    if 'useParsed' in request.args and 'tempFile' in session:
+        tempFile = session['tempFile']
+        with open(tempFile) as f:
+            data = f.read()
+            parsed = parser.parse(data) # TODO: an error message or something in case of bad parse
+            return render_template("diagramEditor.html", data=json.dumps(parsed))
+
     return render_template("diagramEditor.html")
 
 @app.route("/signup")
@@ -216,11 +225,6 @@ def logout():
     session.pop('email', None)
     return redirect('/')
 
-
-@app.route("/parse", methods=["POST"])
-def parse():
-    content = request.form["content"]
-    return parser.parse(content)
 
 @app.route("/tmp", methods=["POST"])
 def tmp():

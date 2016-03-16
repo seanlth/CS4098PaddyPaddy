@@ -61,14 +61,15 @@ function drawJSON(json) {
     $('.Action').remove();
 
     function addActions(acts){
-      for (var i = 0; i < acts.length; i++){
-        if (acts[i].control == FlowControlEnum.action){
-          var newAct = new Action();
-          acts[i]['element'] = newAct.element;
-          acts[i].draw = newAct.draw;
-          acts[i].element.html(acts[i].name);
-        } else {
-          addActions(acts[i].actions);
+      if (acts){
+        for (var i = 0; i < acts.length; i++){
+          if (acts[i].control == "action"){
+            acts[i] = new Action(acts[i]);
+            acts[i].element.html(acts[i].name);
+          } else {
+            addActions(acts[i].actions);
+          }
+
         }
       }
     }
@@ -496,7 +497,7 @@ function compareArrays(array1, array2, length) {
     return true;
 }
 
-function Action() {
+function Action(action) {
     this.id = numActions++;
     this.x;
     this.y;
@@ -508,14 +509,14 @@ function Action() {
     this.element.id(this.id + "-action");
 
     // All the PML important details
-    this.name = "New_Action";
-    this.type = "";
-    this.agent = "";
-    this.script = "";
-    this.tool = "";
-    this.requires = "";
-    this.provides = "";
-    this.selected = false;
+    this.name     = action.name     || "New_Action";
+    this.type     = action.type     || "";
+    this.agent    = action.agent    || "";
+    this.script   = action.script   || "";
+    this.tool     = action.tool     || "";
+    this.requires = action.requires || "";
+    this.provides = action.provides || "";
+    this.selected = action.selected || false;
 
     this.draw = function(index, programWidth) {
         [this.x, this.y] = indexToXY(index);

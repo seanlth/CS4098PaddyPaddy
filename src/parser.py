@@ -72,7 +72,6 @@ def parse(content):
     return res
 
 
-
 def listOf(pFunc):
     items = []
     expect("LBRACE")
@@ -124,12 +123,12 @@ def spec():
         specType = "requires"
     elif check("PROVIDES"):
         specType = "provides"
-    elif check("TOOL"):
-        specType = "tool"
     elif check("AGENT"):
         specType = "agent"
     elif check("SCRIPT"):
         specType = "script"
+    elif check("TOOL"):
+        specType = "tool"
     else:
         fail()
 
