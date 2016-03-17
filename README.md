@@ -10,21 +10,47 @@
 
 
 ## Features
-* Testable on ```0.0.0.0:8000```:
-* Syntax Highlighting
-* Code editor
-* Keybinding Emulation
-* Code Completion
-* Syntax Analysis (test by running code)
-* Error Highlighting (same as above, with errors)
+* On ```0.0.0.0:8000```
+  * Syntax Highlighting
+  * Code editor
+  * Keybinding Emulation
+  * Code Completion
+  * Syntax Analysis
+  * Error Highlighting
+  * File Save (must be logged in)
+  * File Upload(must be logged in)
+  * File Open (must be logged in)
+* On ```0.0.0.0:8000/login``` and ```0.0.0.0:8000/signup```
+  * Email Authentification
+* On ```0.0.0.0:8000/diagram```
+  * Boxes and Arrows
+  * Scripts
+  * Resouces (simple)
+  * Agents (simple)
+  * PML Generation
 
-* Email Authentification (Create login on ```0.0.0.0:8000/signUp```, using those credentials on ```0.0.0.0:8000/login``` will indicate success)
+##Testing Instructions:
+1. For many of the features available on ```0.0.0.0:8000``` testing can be donw without signing in, Syntax highlighting  
+   and code completion are automaticically available with the latter being activated by pressing Tab or Enter while the  
+   popup is displayed. Keybinding emulation is selectable by using the Binding drop-down at the top of the page.  
+   File save, upload and open are all available under the File drop-down and you may be prompted to sign in if you have  
+   not done so.
 
-* File Save (Sign in using email and click file in editor, currently there is a bug on large files)
-* File Open (Sign in using email and click open in editor)
+2. Email authentication may be tested on either of pages listed /signup to create an account and /login to access it later.  
+   There are also links to /login on the main editor page.
 
-* Boxes and Arrows (in-progress, very buggy at ```0.0.0.0:8000/diagram```)
-* Scripts (in editor, needs styling, click on an action after clicking (+))
+3. Boxes and arrows can be tested on ```0.0.0.0:8000```. Clicking on a (+) node allows you to add an action, branch,  
+   selection or iteration. For any of these except iteration, you have the option of clicking a bright green node,  
+   folding all the actions in between into the control structure or choosing the dark green node you already clicked  
+   on, creaating a control structure with one new node. Red (+) nodes are invalid selections. You can change the names  
+   of these control structures with the [...] displayed beside the name which will create a prompt. The various parameters  
+   of an action can be altered using a form displayed when you click on one. The generate PML button will open a new  
+   tab/window with the editor open to PML generated based on your diagram. If the diagram becomes larger than the screen  
+   scrolling is done by clicking and dragging the mouse or by using the arrow keys. [Dialog pop-ups are integral please  
+   do not disable the page from creating them.]
+
+4. There are also some smoke tests available by running "make test". (On clean machines, run twice as there may be errors  
+   reported erroneously.)
 
 ## Dependencies
 * Ubuntu 14.04

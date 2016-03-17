@@ -129,6 +129,8 @@ function draw() {
         translate(0, offsetY);
     }
 
+    keyboardInput();
+
     fill(0);
     line(startX, middle, endX, middle);
     names = [new Name(program.name, startX, middle - 45, [])];
@@ -151,6 +153,54 @@ function draw() {
     for(var i = 0; i < names.length; i++) {
         names[i].draw();
     }
+}
+
+function keyboardInput() {
+    var lastValueX = offsetX, lastValueY = offsetY;
+    var speed = 5;
+    // handle horizontal scrolling if display is wider than screen
+    if(endX + startX > width) {
+        if(keyIsDown(LEFT_ARROW)) {
+            offsetX += speed;
+        }
+        else if(keyIsDown(RIGHT_ARROW)) {
+            offsetX -= speed;
+        }
+
+        if(offsetX > 0) {
+            offsetX = 0;
+        }
+
+        if(offsetX < width - (endX + startX)) {
+            offsetX = width - (endX + startX);
+        }
+    }
+
+    var movementY = 0;
+    if(keyIsDown(UP_ARROW)) {
+        movementY = speed;
+    }
+    else if(keyIsDown(DOWN_ARROW)) {
+        movementY = -speed;
+    }
+
+    var offScreen = false, onScreen = 0;
+    for(var i = 0; i < nodes.length; i++) {
+        if(nodes[i].y + offsetY - (ACTION_WIDTH / 2) < 0 || nodes[i].y + offsetY + (ACTION_WIDTH / 2) > height) {
+            offScreen = true;
+        }
+
+        if(nodes[i].y + offsetY + movementY - (ACTION_WIDTH / 2) > 0 && nodes[i].y + offsetY + movementY + (ACTION_WIDTH / 2) < height) {
+            onScreen++;
+        }
+    }
+
+    if(offScreen && onScreen >= 1) {
+        offsetY += movementY
+    }
+
+    resetMatrix();
+    translate(offsetX, offsetY);
 }
 
 function drawActions(actions, programWidth, index) {
@@ -229,6 +279,9 @@ function sequenceLength(sequence) {
     }
 
     if(sequence.control != FlowControlEnum.branch && sequence.control != FlowControlEnum.selection) {
+        if(sequence.control == FlowControlEnum.iteration) {
+            return length + sequence.actions.length + 2;
+        }
         return length + sequence.actions.length;
     }
     // designate space for the branch and sequence visual elements
@@ -261,6 +314,9 @@ function indexToXY(index) {
     for(var i = 0; i < index.length; i++) {
         if(prog.control != FlowControlEnum.branch && prog.control != FlowControlEnum.selection) {
             x += index[i];
+            if(prog.control == FlowControlEnum.iteration) {
+                x++;//move along to give space for extra node
+            }
         }
         else {
             x++; // move x position past control flow visual element
@@ -550,12 +606,14 @@ function Action(action) {
         } // if this is in an iteration, add nodes to add directly to the control flow structure
         else if(prog.control == FlowControlEnum.iteration) {
             if(index[index.length - 1] == 0) {
-                nodes.push(new Node(xPixels - 10 - ACTION_WIDTH / 2, yPixels, index));
+                var nodeX = (endX - startX) * ((this.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+                nodes.push(new Node(nodeX, yPixels, index));
             }
             if(index[index.length - 1] == prog.actions.length - 1) {
                 var nextIndex = index.slice();
                 nextIndex[index.length - 1] = prog.actions.length;
-                nodes.push(new Node(xPixels + 10 + ACTION_WIDTH / 2, yPixels, nextIndex));
+                var nodeX = (endX - startX) * ((this.x * 2 + 3) / (programWidth * 2 + 2)) + startX;
+                nodes.push(new Node(nodeX, yPixels, nextIndex));
             }
         }// else this action is in the normal process structure or sequence
         else {
@@ -628,8 +686,8 @@ function drawIterationLoop(prog, x, y, index, programWidth) {
 
     rectPositionY = middle + (ACTION_HEIGHT * yTop * 2) - ACTION_HEIGHT;
 
-    startXRectPixels = startXRectPixels - (ACTION_WIDTH / 2) - 10;
-    endXRectPixels = endXRectPixels + (ACTION_WIDTH / 2) + 10;
+    startXRectPixels = startXRectPixels;
+    endXRectPixels = endXRectPixels;
     fill(255, 255, 255, 0);
     rect(startXRectPixels, rectPositionY, endXRectPixels - startXRectPixels, rectHeight, 20, 20, 20, 20);
 
@@ -951,7 +1009,7 @@ function editAction() {
     }
 
     var specRegex = new RegExp("^[a-zA-Z_][a-zA-Z_0-9]*|\"[^\"]*\"$")
-    var predicateRegex = new RegExp('^([a-zA-Z_.]+ *(\|\||\&\&)? *)+[a-zA-Z_.]+$');
+    var predicateRegex = new RegExp('^([a-zA-Z_.]+ *(\|\||\&\&)? *)*[a-zA-Z_.]+$');
 
     var agent = document.getElementById('agent').value;
     if ( !specRegex.test(agent) && agent.length != 0) {
