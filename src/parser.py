@@ -18,7 +18,7 @@ TOKENS = ( (r'[ \n\t]+'   , None)
          , (r'script'     , "SCRIPT")
          , (r'".*"'       , "STRING")
          , (r'[_A-Za-z]+' , "IDENT")
-         , (r'.*'         , "EXPR") #TODO: de-generalize this
+         , (r'[^ ]+'      , "TOK")
          )
 
 class ParserException(Exception): pass
@@ -26,19 +26,28 @@ class ParserException(Exception): pass
 toks = iter([])
 
 def get():
-    return next(toks)
+    '''Get the next token from the token stream'''
+    try:
+        n = next(toks)
+    except StopIteration:
+        raise ParserException('Unexpected EOF') from None
+    return n
 
 def push_back(val):
+    '''Push an unused value back onto the token stream'''
     global toks
     toks = itertools.chain([val], toks)
 
 def expect(tag):
+    '''Lookahead for a given tag and fail if it's not present'''
     (text, _tag) = get()
     if tag != _tag:
         raise ParserException('Expected %s, got "%s"\n' % (tag,text))
     return text
 
 def check(tag):
+    '''Lookahead for a given tag and return false if not present.
+    This doesn't affect the token stream '''
     (text, _tag) = get()
     if tag == _tag:
         return text
@@ -47,10 +56,12 @@ def check(tag):
         return False
 
 def fail(loc):
+    '''Fail, throwing an error message about current location'''
     (text, _tag) = get()
     raise ParserException('Unexpected %s ("%s") while parsing %s'%(_tag, text, loc))
 
 def lex(content, token_exprs):
+    ''' lex :: String -> [Token] '''
     pos = 0
     while pos < len(content):
         for (pattern, tag) in token_exprs:
@@ -66,13 +77,22 @@ def lex(content, token_exprs):
             raise ParserException('Illegal char: "%s"\n' % content[pos])
 
 def parse(content):
+    '''Main entry point to parser functionality
+    - lexes given string and attempts to parse a process '''
+
     global toks
     toks = lex(content, TOKENS)
     res = process()
     return res
 
+def process():
+    expect("PROCESS")
+    ident = expect("IDENT")
+    prims = listOf(prim)
+    return { "actions": prims, "name": ident }
 
 def listOf(pFunc):
+    ''' listOf :: Parser a -> Parse [a] '''
     items = []
     expect("LBRACE")
     while not check("RBRACE"):
@@ -92,9 +112,13 @@ def prim():
         fail("primative")
 
 def control(cont):
-    ident = expect("IDENT")
-    prims = listOf(prim)
-    return { "name": ident, "control": cont, "actions": prims }
+    res = { "control": cont }
+    ident = check("IDENT")
+    if ident:
+        res["name"] = ident
+
+    res["actions"] = listOf(prim)
+    return res
 
 def action():
     ident = expect("IDENT")
@@ -118,6 +142,9 @@ def action():
     return act
 
 def spec():
+    ''' Parse the general form of each of the specifications, returning the result as a tuple to be dealt
+    with elsewhere'''
+
     specType = None
     if check("REQUIRES"):
         specType = "requires"
@@ -133,23 +160,26 @@ def spec():
         fail()
 
     expect("LBRACE")
-    sel = selector()
+    if specType in ["provides", "requires", "agent"]:
+        sel = expr()
+    else:
+        sel = expect("STRING")[1:-1]
     expect("RBRACE")
 
     return (specType, sel)
 
-def selector():
-    st = check("STRING")
-    if st: return st
-    ident = check("IDENT")
-    if ident: return ident
-    exp = check("EXPR")
-    if exp: return exp
-    fail("selector")
+def expr():
+    '''Parse an expression
+    We know an expression will only occur validly in between braces so we just chomp any possibly valid
+    tokens until we hit something else (presumably a brace)
+    '''
+    res = []
+    (text, tag) = get()
+    while tag in ["STRING", "TOK", "IDENT"]:
+        res.append(text)
+        (text, tag) = get()
+    push_back((text, tag))
 
-def process():
-    expect("PROCESS")
-    ident = expect("IDENT")
-    prims = listOf(prim)
-    return { "actions": prims, "name": ident }
+    return ' '.join(res)
+
 
