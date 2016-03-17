@@ -159,8 +159,10 @@ def diagram():
         tempFile = session['tempFile']
         with open(tempFile) as f:
             data = f.read()
-            parsed = parser.parse(data) # TODO: an error message or something in case of bad parse
-            return render_template("diagramEditor.html", data=json.dumps(parsed))
+            try:
+                parsed = parser.parse(data) #TODO: proper error message
+                return render_template("diagramEditor.html", data=json.dumps(parsed)) 
+            except parser.ParserException: pass
 
     return render_template("diagramEditor.html")
 
