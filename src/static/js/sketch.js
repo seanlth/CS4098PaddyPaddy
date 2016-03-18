@@ -565,14 +565,26 @@ function Action(action) {
     this.element.id(this.id + "-action");
 
     // All the PML important details
-    this.name     = action.name     || "New_Action";
-    this.type     = action.type     || "";
-    this.agent    = action.agent    || "";
-    this.script   = action.script   || "";
-    this.tool     = action.tool     || "";
-    this.requires = action.requires || "";
-    this.provides = action.provides || "";
-    this.selected = action.selected || false;
+    if(action) {
+        this.name     = action.name     || "New_Action";
+        this.type     = action.type     || "";
+        this.agent    = action.agent    || "";
+        this.script   = action.script   || "";
+        this.tool     = action.tool     || "";
+        this.requires = action.requires || "";
+        this.provides = action.provides || "";
+        this.selected = action.selected || false;
+    }
+    else {
+        this.name     = "New_Action";
+        this.type     = "";
+        this.agent    = "";
+        this.script   = "";
+        this.tool     = "";
+        this.requires = "";
+        this.provides = "";
+        this.selected = false;
+    }
 
     this.draw = function(index, programWidth) {
         [this.x, this.y] = indexToXY(index);
