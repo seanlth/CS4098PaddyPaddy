@@ -193,8 +193,7 @@ function drawActions(actions, programWidth, index) {
         else {
             var prog = program;
             var nextIndex = index.concat([i]);
-            var x, y;
-            [x, y] = indexToXY(nextIndex);
+            var pos = indexToXY(nextIndex);
 
             for(var j = 0; j < index.length; j++) {
                 prog = prog.actions[index[j]];
@@ -203,12 +202,12 @@ function drawActions(actions, programWidth, index) {
             // if previous control flow was a branch or selection draw a line
             var lastControl = prog.control;
             if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
-                drawLine(prog, x - 1, y, programWidth);
+                drawLine(prog, pos.x - 1, pos.y, programWidth);
             }
             else {
                 // else add leading node
-                var yPixels = (y * ACTION_HEIGHT * 2) + middle;
-                var nodeX = (endX - startX) * ((x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+                var yPixels = (pos.y * ACTION_HEIGHT * 2) + middle;
+                var nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
                 nodes.push(new Node(nodeX, yPixels, index.concat([i])));
             }
 
@@ -216,21 +215,21 @@ function drawActions(actions, programWidth, index) {
             prog = prog.actions[i];
 
             if(prog.control == FlowControlEnum.branch) {
-                drawBranchBars(prog, x, y, nextIndex, programWidth);
+                drawBranchBars(prog, pos.x, pos.y, nextIndex, programWidth);
             }
             if(prog.control == FlowControlEnum.selection) {
-                drawSelectionDiamond(prog, x, y, nextIndex, programWidth);
+                drawSelectionDiamond(prog, pos.x, pos.y, nextIndex, programWidth);
             }
             if(prog.control == FlowControlEnum.iteration) {
-                drawIterationLoop(prog, x, y, nextIndex, programWidth);
+                drawIterationLoop(prog, pos.x, pos.y, nextIndex, programWidth);
             }
 
             drawActions(actions[i].actions, programWidth, nextIndex);
 
             // add trailing node if there are no more actions
             if(i == actions.length - 1 && prog.control != FlowControlEnum.sequence) {
-                x += sequenceLength(prog);
-                nodeX = (endX - startX) * ((x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+                pos.x += sequenceLength(prog);
+                nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
                 nodes.push(new Node(nodeX, yPixels, index.concat([i + 1])));
             }
         }
@@ -340,7 +339,7 @@ function indexToXY(index) {
             prog = prog.actions[index[i]];
         }
     }
-    return [x, y];
+    return {"x": x, "y": y};
 }
 
 function addAction(index) {
@@ -552,7 +551,9 @@ function Action() {
     this.selected = false;
 
     this.draw = function(index, programWidth) {
-        [this.x, this.y] = indexToXY(index);
+        var pos = indexToXY(index);
+        this.x = pos.x;
+        this.y = pos.y;
 
         var prog = program;
         for(var i = 0; i < index.length - 1; i++) {
@@ -640,13 +641,13 @@ Action.prototype.openActionEditor = function(event) {
 function drawLine(prog, x, y, programWidth) {
     var endLineX = sequenceLength(prog) + x;
     var diagramWidth = endX - startX;
-    var startXLinePixels = diagramWidth * ((x + 1) / (programWidth + 1)) + startX;
+    var startLineXPixels = diagramWidth * ((x + 1) / (programWidth + 1)) + startX;
     var endLineXPixels = diagramWidth * (endLineX / (programWidth + 1)) + startX;
 
     var yPixels = (y * ACTION_HEIGHT * 2) + middle;
-    line(startXLinePixels, yPixels, endLineXPixels, yPixels);
+    line(startLineXPixels, yPixels, endLineXPixels, yPixels);
 
-    return [endLineX, startXLinePixels, endLineXPixels, yPixels];
+    return {"startX": startLineXPixels, "endX": endLineXPixels, "y": yPixels};
 }
 
 function drawIterationLoop(prog, x, y, index, programWidth) {
@@ -668,7 +669,7 @@ function drawIterationLoop(prog, x, y, index, programWidth) {
     fill(255, 255, 255, 0);
     rect(startXRectPixels, rectPositionY, endXRectPixels - startXRectPixels, rectHeight, 20, 20, 20, 20);
 
-    names.push(new Name(prog.name, startXRectPixels + (endXRectPixels - startXRectPixels) / 2, rectPositionY - 20, index.slice()));
+    names.push(new Name(prog.name, startXRectPixels + 10, rectPositionY + 20, index.slice()));
 }
 
 function getY(sequence) {
@@ -681,23 +682,25 @@ function getY(sequence) {
 }
 
 function drawBranchBars(prog, x, y, index, programWidth) {
-    var endRectX, startXRectPixels, endRectXPixels, yPixels;
-    [endRectX, startXRectPixels, endRectXPixels, yPixels] = drawLine(prog, x, y, programWidth);
+    var lineDetails = drawLine(prog, x, y, programWidth);
 
-    // var yPixels = (y * ACTION_HEIGHT * 2) + middle;
     var rectPositionYOne, rectPositionYTwo;
 
     if(y == 0) {
         var temp;
-        [temp, rectPositionYOne] = indexToXY(index.concat([prog.actions.length - 1]));
+        temp = indexToXY(index.concat([prog.actions.length - 1]));
+        rectPositionYOne = temp.y;
 
-        [temp, rectPositionYTwo] = indexToXY(index.concat([prog.actions.length - 2]));
+        temp = indexToXY(index.concat([prog.actions.length - 2]));
+        rectPositionYTwo = temp.y;
     }
     else {
         var temp;
-        [temp, rectPositionYOne] = indexToXY(index.concat([0]));
+        temp = indexToXY(index.concat([0]));
+        rectPositionYOne = temp.y;
 
-        [temp, rectPositionYTwo] = indexToXY(index.concat([prog.actions.length - 1]));
+        temp = indexToXY(index.concat([prog.actions.length - 1]));
+        rectPositionYTwo = temp.y;
     }
 
     rectPositionYOne = (rectPositionYOne * ACTION_HEIGHT * 2) + middle;
@@ -716,8 +719,8 @@ function drawBranchBars(prog, x, y, index, programWidth) {
     rectPositionY = rectPositionY - (ACTION_HEIGHT / 2) - 5;
 
     fill(0)
-    rect(startXRectPixels - 5, rectPositionY, 10, rectHeight);
-    rect(endRectXPixels - 5, rectPositionY, 10, rectHeight);
+    rect(lineDetails.startX - 5, rectPositionY, 10, rectHeight);
+    rect(lineDetails.endX - 5, rectPositionY, 10, rectHeight);
 
     var nameY;
     if(rectPositionYOne < rectPositionYTwo) {
@@ -726,39 +729,44 @@ function drawBranchBars(prog, x, y, index, programWidth) {
     else {
         nameY = rectPositionYTwo;
     }
-    names.push(new Name(prog.name, startXRectPixels - 20, nameY - 50, index.slice()));
+    names.push(new Name(prog.name, lineDetails.startX - 20, nameY - 50, index.slice()));
 
     var altIndex = index.slice();
     altIndex.push(prog.actions.length);
-    nodes.push(new Node(startXRectPixels, (y * ACTION_HEIGHT * 2) + middle, altIndex));
+    nodes.push(new Node(lineDetails.startX, (y * ACTION_HEIGHT * 2) + middle, altIndex));
 }
 
 function drawSelectionDiamond(prog, x, y, index, programWidth) {
-    var endLineX, startXLinePixels, endLineXPixels, yPixels;
-    [endLineX, startXLinePixels, endLineXPixels, yPixels] = drawLine(prog, x, y, programWidth);
+    var lineDetails = drawLine(prog, x, y, programWidth);
 
     var linePositionYStart, linePositionYEnd;
 
     if(y == 0) {
         var temp;
-        [temp, linePositionYStart] = indexToXY(index.concat([prog.actions.length - 1]));
+        temp = indexToXY(index.concat([prog.actions.length - 1]));
+        linePositionYStart = temp.y;
 
-        [temp, linePositionYEnd] = indexToXY(index.concat([prog.actions.length - 2]));
+        temp = indexToXY(index.concat([prog.actions.length - 2]));
+        linePositionYEnd = temp.y;
     }
     else {
         var temp;
-        [temp, linePositionYStart] = indexToXY(index.concat([0]));
+        temp = indexToXY(index.concat([0]));
+        linePositionYStart = temp.y;
 
-        [temp, linePositionYEnd] = indexToXY(index.concat([prog.actions.length - 1]));
+        temp = indexToXY(index.concat([prog.actions.length - 1]));
+        linePositionYEnd = temp.y;
     }
 
     linePositionYStart = (linePositionYStart * ACTION_HEIGHT * 2) + middle;
     linePositionYEnd = (linePositionYEnd * ACTION_HEIGHT * 2) + middle;
 
-    line(startXLinePixels, linePositionYStart, startXLinePixels, linePositionYEnd);
-    line(endLineXPixels, linePositionYStart, endLineXPixels, linePositionYEnd);
+    line(lineDetails.startX, linePositionYStart, lineDetails.startX, linePositionYEnd);
+    line(lineDetails.endX, linePositionYStart, lineDetails.endX, linePositionYEnd);
+    fill(0);
+    ellipse(lineDetails.endX, lineDetails.y, 10 , 10);
 
-    translate(startXLinePixels, yPixels - 21);
+    translate(lineDetails.startX, lineDetails.y - 21);
     rotate(PI / 4);
     fill(255);
     rect(0, 0, 30, 30);
@@ -772,11 +780,11 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
     else {
         nameY = linePositionYEnd;
     }
-    names.push(new Name(prog.name, startXLinePixels - 20, nameY - 40, index.slice()));
+    names.push(new Name(prog.name, lineDetails.startX - 20, nameY - 40, index.slice()));
 
     var altIndex = index.slice();
     altIndex.push(prog.actions.length);
-    nodes.push(new Node(startXLinePixels, (y * ACTION_HEIGHT * 2) + middle, altIndex));
+    nodes.push(new Node(lineDetails.startX, (y * ACTION_HEIGHT * 2) + middle, altIndex));
 }
 
 function selectAction(actions, id){
