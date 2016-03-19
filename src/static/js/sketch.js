@@ -23,6 +23,7 @@ var FlowControlEnum = {
 function setup() {
     state = StateEnum.normal;
     canvas = createCanvas(windowWidth, windowHeight);
+    canvas.mousePressed(mousePressedCanvas);
     canvas.id('canvas');
     startX = 40;
     endX = width - 40;
@@ -48,6 +49,7 @@ function setup() {
     generatePML.mousePressed(createPML);
     generatePML.id('generatePML');
 
+    update();
     // noLoop();
 }
 
@@ -83,10 +85,35 @@ function selectEvent() {
 
     selectAdd.selected('Select an option');
     selectAdd.hide();
-    // redraw();
+    update();
 }
 
 function draw() {
+    background(255);
+    keyboardInput();
+
+    fill(0);
+    line(startX, middle, endX, middle);
+    ellipse(startX, middle, 30, 30);
+    fill(255);
+    ellipse(endX, middle, 30, 30);
+    fill(0);
+    ellipse(endX, middle, 20, 20);
+
+    var progWidth = sequenceLength(program)
+
+    drawActions(program, progWidth, []);
+
+    for(var i = 0; i < nodes.length; i++) {
+        nodes[i].draw();
+    }
+
+    for(var i = 0; i < names.length; i++) {
+        names[i].draw();
+    }
+}
+
+function update() {
     background(255);
 
     // check program isn't too crowded and resize if needed
@@ -106,29 +133,11 @@ function draw() {
         translate(0, offsetY);
     }
 
-    keyboardInput();
-
-    fill(0);
-    line(startX, middle, endX, middle);
     names = [new Name(program.name, startX, middle - 45, [])];
-    ellipse(startX, middle, 30, 30);
-    fill(255);
-    ellipse(endX, middle, 30, 30);
-    fill(0);
-    ellipse(endX, middle, 20, 20);
-
     nodes = [];
-    drawActions(program.actions, progWidth, []);
+    updateActions(program, progWidth, []);
     if(program.actions.length == 0) {
         nodes.push(new Node(width / 2, height / 2, [0]));
-    }
-
-    for(var i = 0; i < nodes.length; i++) {
-        nodes[i].draw();
-    }
-
-    for(var i = 0; i < names.length; i++) {
-        names[i].draw();
     }
 }
 
@@ -180,39 +189,28 @@ function keyboardInput() {
     translate(offsetX, offsetY);
 }
 
-function drawActions(actions, programWidth, index) {
-    var i;
-    for(i = 0; i < actions.length; i++) {
-        if(actions[i].constructor == Action) {
-            actions[i].draw(index.concat([i]), programWidth);
-        }
-        else if(actions[i].actions.length == 0) {
-            actions.splice(i, 1);
-            continue;
+function drawActions(sequence, programWidth, index) {
+    for(var i = 0; i < sequence.actions.length; i++) {
+        if(sequence.actions[i].constructor == Action) {
+            // draw the lines connecting "simultaneous" flow actions to the graph
+            if(i != 0 && (sequence.control == FlowControlEnum.branch || sequence.control == FlowControlEnum.selection)) {
+                drawLine(sequence, sequence.actions[i].x - 1, sequence.actions[i].y, programWidth);
+            }
+
+            sequence.actions[i].draw(programWidth);
         }
         else {
-            var prog = program;
             var nextIndex = index.concat([i]);
             var pos = indexToXY(nextIndex);
 
-            for(var j = 0; j < index.length; j++) {
-                prog = prog.actions[index[j]];
-            }
-
             // if previous control flow was a branch or selection draw a line
-            var lastControl = prog.control;
-            if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
-                drawLine(prog, pos.x - 1, pos.y, programWidth);
-            }
-            else {
-                // else add leading node
-                var yPixels = (pos.y * ACTION_HEIGHT * 2) + middle;
-                var nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
-                nodes.push(new Node(nodeX, yPixels, index.concat([i])));
+            var lastControl = sequence.control;
+            if(sequence.control == FlowControlEnum.branch || sequence.control == FlowControlEnum.selection) {
+                drawLine(sequence, pos.x - 1, pos.y, programWidth);
             }
 
             // draw elements of this control flow
-            prog = prog.actions[i];
+            var prog = sequence.actions[i];
 
             if(prog.control == FlowControlEnum.branch) {
                 drawBranchBars(prog, pos.x, pos.y, nextIndex, programWidth);
@@ -224,11 +222,49 @@ function drawActions(actions, programWidth, index) {
                 drawIterationLoop(prog, pos.x, pos.y, nextIndex, programWidth);
             }
 
-            drawActions(actions[i].actions, programWidth, nextIndex);
+            drawActions(prog, programWidth, nextIndex);
+        }
+    }
+}
+
+function updateActions(sequence, programWidth, index) {
+    for(var i = 0; i < sequence.actions.length; i++) {
+        if(sequence.actions[i].constructor == Action) {
+            sequence.actions[i].update(index.concat([i]), programWidth);
+        }
+        else if(sequence.actions[i].actions.length == 0) {
+            sequence.actions.splice(i, 1);
+            update();
+            return;
+        }
+        else {
+            var nextIndex = index.concat([i]);
+            var pos = indexToXY(nextIndex);
+
+
+            var lastControl = sequence.control;
+
+            var yPixels = (pos.y * ACTION_HEIGHT * 2) + middle;
+            var nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+            nodes.push(new Node(nodeX, yPixels, index.concat([i])));
+
+            if(sequence.actions[i].control == FlowControlEnum.branch || sequence.actions[i].control == FlowControlEnum.selection) {
+                nodeX = (endX - startX) * ((pos.x * 2 + 2) / (programWidth * 2 + 2)) + startX;
+                nodes.push(new Node(nodeX, yPixels, index.concat([i, sequence.actions[i].actions.length])));
+            }
+
+            updateActions(sequence.actions[i], programWidth, nextIndex);
+
+            // previous updateActions() call may have removed sequence.actions[i], if it hasn't, add a name tag
+            if(sequence.actions[i]) {
+                var nameX = (endX - startX) * ((pos.x * 2 + 2) / (programWidth * 2 + 2)) + startX;
+                var nameY = middle + (lowestY(sequence.actions[i]) * ACTION_HEIGHT * 2) - ACTION_HEIGHT;
+                names.push(new Name(sequence.actions[i].name, nameX, nameY, index.slice()));
+            }
 
             // add trailing node if there are no more actions
-            if(i == actions.length - 1 && prog.control != FlowControlEnum.sequence) {
-                pos.x += sequenceLength(prog);
+            if(i == sequence.actions.length - 1 && sequence.control != FlowControlEnum.sequence) {
+                pos.x += sequenceLength(sequence.actions[i]);
                 nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
                 nodes.push(new Node(nodeX, yPixels, index.concat([i + 1])));
             }
@@ -432,7 +468,6 @@ function Node(x, y, index) {
         var d = dist(x, y, this.x, this.y);
         if(d < this.radius){
             if(state == StateEnum.normal) {
-                // addAction(index);
                 selectAdd.position(this.x + offsetX, this.y + offsetY);
                 selectAdd.index = this.index;
                 selectAdd.show();
@@ -442,6 +477,7 @@ function Node(x, y, index) {
                     ControlFlow(this.index, controlIndex);
                 }
                 state = StateEnum.normal;
+                update();
             }
 
             return true;
@@ -534,12 +570,6 @@ function Action() {
     this.x;
     this.y;
 
-    // Set up the element
-    this.element = createDiv('New_Action');
-    this.element.class('Action');
-    this.element.mouseClicked(this.openActionEditor);
-    this.element.id(this.id + "-action");
-
     // All the PML important details
     this.name = "New_Action";
     this.type = "";
@@ -550,7 +580,30 @@ function Action() {
     this.provides = "";
     this.selected = false;
 
-    this.draw = function(index, programWidth) {
+    this.press = function(programWidth, x, y) {
+        var yPos = (this.y * ACTION_HEIGHT * 2) + middle - (ACTION_HEIGHT / 2);
+        var xPos = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX - (ACTION_WIDTH / 2);
+
+        if(x > xPos && x <= xPos +  ACTION_WIDTH &&  y > yPos && y < yPos + ACTION_HEIGHT) {
+            state = StateEnum.form;
+            selectedAction = this;
+
+            $("#actionEditor").show();
+
+            document.getElementById('name').value = this.name;
+            document.getElementById('type').value = this.type;
+            document.getElementById('agent').value = this.agent;
+            document.getElementById('script').value = this.script;
+            document.getElementById('tool').value = this.tool;
+            document.getElementById('requires').value = this.requires;
+            document.getElementById('provides').value = this.provides;
+
+            return true;
+        }
+        return false;
+    }
+
+    this.update = function(index, programWidth) {
         var pos = indexToXY(index);
         this.x = pos.x;
         this.y = pos.y;
@@ -558,11 +611,6 @@ function Action() {
         var prog = program;
         for(var i = 0; i < index.length - 1; i++) {
             prog = prog.actions[index[i]];
-        }
-
-        // draw the lines connecting "simultaneous" flow actions to the graph
-        if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
-            drawLine(prog, this.x - 1, this.y, programWidth);
         }
 
         var yPixels = (this.y * ACTION_HEIGHT * 2) + middle;
@@ -598,12 +646,6 @@ function Action() {
             if(index[index.length - 1] == 0) {
                 var nodeX = (endX - startX) * ((this.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
 
-                if(prog.control == FlowControlEnum.sequence) {
-                    var sequenceIndex = index.slice();
-                    sequenceIndex.pop();
-                    names.push(new Name(prog.name, nodeX, yPixels - 15 - ACTION_HEIGHT / 2, sequenceIndex));
-                }
-
                 nodes.push(new Node(nodeX, yPixels, index));
             }
             if(index[index.length - 1] == prog.actions.length - 1) {
@@ -613,28 +655,22 @@ function Action() {
                 nodes.push(new Node(nodeX, yPixels, newIndex));
             }
         }
-
-        this.element.position(xPixels  - (ACTION_WIDTH / 2) + offsetX, yPixels - (ACTION_HEIGHT / 2) + offsetY);
     }
-}
 
-Action.prototype.openActionEditor = function(event) {
-    if(state == StateEnum.normal || state == StateEnum.controlFlow) {
-        state = StateEnum.form;
+    this.draw = function(programWidth) {
+        var yPixels = (this.y * ACTION_HEIGHT * 2) + middle;
+        var xPixels = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX;
 
-        var tag = this.id();
-        var array = splitTokens(tag, '-');
-        var id = array[0];
-        if(!selectAction(program.actions, id)) return;
-
-        $("#actionEditor").show();
-        document.getElementById('name').value = selectedAction.name;
-        document.getElementById('type').value = selectedAction.type;
-        document.getElementById('agent').value = selectedAction.agent;
-        document.getElementById('script').value = selectedAction.script;
-        document.getElementById('tool').value = selectedAction.tool;
-        document.getElementById('requires').value = selectedAction.requires;
-        document.getElementById('provides').value = selectedAction.provides;
+        fill(255);
+        rect(xPixels - (ACTION_WIDTH / 2), yPixels - (ACTION_HEIGHT / 2), ACTION_WIDTH, ACTION_HEIGHT);
+        fill(0);
+        textAlign(CENTER, CENTER);
+        if(this.name.length <= 17) {
+            text(this.name, xPixels, yPixels);
+        }
+        else {
+            text(this.name.substring(0, 14) + '...', xPixels, yPixels);
+        }
     }
 }
 
@@ -668,8 +704,6 @@ function drawIterationLoop(prog, x, y, index, programWidth) {
     endXRectPixels = endXRectPixels;
     fill(255, 255, 255, 0);
     rect(startXRectPixels, rectPositionY, endXRectPixels - startXRectPixels, rectHeight, 20, 20, 20, 20);
-
-    names.push(new Name(prog.name, startXRectPixels + 10, rectPositionY + 20, index.slice()));
 }
 
 function getY(sequence) {
@@ -721,19 +755,6 @@ function drawBranchBars(prog, x, y, index, programWidth) {
     fill(0)
     rect(lineDetails.startX - 5, rectPositionY, 10, rectHeight);
     rect(lineDetails.endX - 5, rectPositionY, 10, rectHeight);
-
-    var nameY;
-    if(rectPositionYOne < rectPositionYTwo) {
-        nameY = rectPositionYOne;
-    }
-    else {
-        nameY = rectPositionYTwo;
-    }
-    names.push(new Name(prog.name, lineDetails.startX - 20, nameY - 50, index.slice()));
-
-    var altIndex = index.slice();
-    altIndex.push(prog.actions.length);
-    nodes.push(new Node(lineDetails.startX, (y * ACTION_HEIGHT * 2) + middle, altIndex));
 }
 
 function drawSelectionDiamond(prog, x, y, index, programWidth) {
@@ -772,19 +793,6 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
     rect(0, 0, 30, 30);
     resetMatrix();
     translate(offsetX, offsetY);
-
-    var nameY;
-    if(linePositionYStart < linePositionYEnd) {
-        nameY = linePositionYStart;
-    }
-    else {
-        nameY = linePositionYEnd;
-    }
-    names.push(new Name(prog.name, lineDetails.startX - 20, nameY - 40, index.slice()));
-
-    var altIndex = index.slice();
-    altIndex.push(prog.actions.length);
-    nodes.push(new Node(lineDetails.startX, (y * ACTION_HEIGHT * 2) + middle, altIndex));
 }
 
 function selectAction(actions, id){
@@ -894,16 +902,16 @@ function Sequence(index, replace){
         {name: 'New_Sequence', control: FlowControlEnum.sequence, actions: sequenceArray});
 }
 
-function mousePressed(event) {
+function mousePressedCanvas(event) {
     if (state == StateEnum.form) return;
 
     var x = event.clientX - offsetX;
     var y = event.clientY - offsetY;
-    var pressed = false;
+    var programwidth = sequenceLength(program);
+    var pressed = pressActions(program.actions, programwidth, x, y);
 
     for(var i = 0; i < nodes.length; i++) {
         if(nodes[i].press(x, y)){
-            // redraw();
             pressed = true;
             break;
         }
@@ -911,40 +919,30 @@ function mousePressed(event) {
 
     for(var i = 0; i < names.length; i++) {
         if(names[i].press(x, y)){
-            // redraw();
             pressed = true;
             break;
         }
     }
 
     if(!pressed && event.movementX == 0 && event.movementY == 0) {
-        if(event.srcElement) {
-            if(event.srcElement.id == 'canvas') {
-                state = StateEnum.normal;
-                selectAdd.hide();
-            }
+        state = StateEnum.normal;
+        selectAdd.hide();
+    }
+}
+
+function pressActions(actions, programwidth, x, y) {
+    for(var i = 0; i < actions.length; i++) {
+        if(actions[i].constructor == Action) {
+            if(actions[i].press(programwidth, x, y)) return true;
         }
-        else if(event.target){
-            if(event.target.id == 'canvas') {
-                state = StateEnum.normal;
-                selectAdd.hide();
-            }
+        else {
+            if(pressActions(actions[i].actions, programwidth, x, y)) return true;
         }
     }
-    // redraw();
 }
 
 function mouseDragged(event) {
-    if(event.srcElement) {
-        if(event.srcElement.id != 'canvas') {
-            return;
-        }
-    }
-    else if(event.target){
-        if(event.target.id != 'canvas') {
-            return;
-        }
-    }
+    if(state == StateEnum.form) return;
 
     var lastValueX = offsetX, lastValueY = offsetY;
     // handle horizontal scrolling if display is wider than screen
@@ -979,7 +977,6 @@ function mouseDragged(event) {
     if(lastValueX != offsetX || lastValueY != offsetY) {
         resetMatrix();
         translate(offsetX, offsetY);
-        // redraw();
     }
 }
 
@@ -1031,11 +1028,9 @@ function editAction() {
     selectedAction.provides = provides;
     selectedAction.selected = false;
 
-    selectedAction.element.html(selectedAction.name);
-
     $("#actionEditor").hide();
     state = StateEnum.normal;
-    // redraw();
+    update();
 }
 
 
@@ -1064,5 +1059,5 @@ function removeAction() {
 
     $("#actionEditor").hide();
     state = StateEnum.normal;
-    // redraw();
+    update();
 }
