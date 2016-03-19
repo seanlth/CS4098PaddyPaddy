@@ -1,6 +1,6 @@
 var canvas, startX, endX, middle;// variables for drawing
 var program, nodes, names; // variables for storing actions in the program and nodes to add them
-var state, selectedAction, selectAdd, controlIndex, currentControlFlow, generatePML; // variables for handling input
+var state, selectedAction, controlIndex, currentControlFlow, generatePML; // variables for handling input
 var offsetX, offsetY;
 
 var ACTION_HEIGHT = 50;
@@ -24,7 +24,9 @@ function setup() {
     state = StateEnum.normal;
     canvas = createCanvas(windowWidth, windowHeight);
     canvas.mousePressed(mousePressedCanvas);
+    canvas.mouseMoved(mouseMovedCanvas);
     canvas.id('canvas');
+
     startX = 40;
     endX = width - 40;
     middle = height / 2;
@@ -34,15 +36,6 @@ function setup() {
 
     program = {name: "new_process", actions: new Array()};
     nodes = new Array();
-
-    selectAdd = createSelect();
-    selectAdd.option('Select an option');
-    selectAdd.option('Action');
-    selectAdd.option('Branch');
-    selectAdd.option('Iteration');
-    selectAdd.option('Selection');
-    selectAdd.changed(selectEvent);
-    selectAdd.hide();
 
     generatePML = createButton('Generate PML');
     generatePML.position(20, 20);
@@ -56,36 +49,6 @@ function setup() {
 function createPML() {
     var pml_code = json_to_pml(program);
 	window.open('/');
-}
-
-function selectEvent() {
-    var selection = selectAdd.value();
-    if(selection === 'Action'){
-        addAction(selectAdd.index);
-    }
-    else {
-        state = StateEnum.controlFlow;
-        controlIndex = selectAdd.index;
-        switch (selection) {
-            case 'Iteration':
-                currentControlFlow = FlowControlEnum.iteration;
-                break;
-
-            case 'Branch':
-                currentControlFlow = FlowControlEnum.branch;
-                break;
-
-            case 'Selection':
-                currentControlFlow = FlowControlEnum.selection;
-                break;
-
-            default:
-        }
-    }
-
-    selectAdd.selected('Select an option');
-    selectAdd.hide();
-    update();
 }
 
 function draw() {
@@ -245,11 +208,13 @@ function updateActions(sequence, programWidth, index) {
             var lastControl = sequence.control;
 
             var yPixels = (pos.y * ACTION_HEIGHT * 2) + middle;
-            var nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
-            nodes.push(new Node(nodeX, yPixels, index.concat([i])));
+            if(sequence.actions[i].control != FlowControlEnum.sequence) {
+                var nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+                nodes.push(new Node(nodeX, yPixels, index.concat([i])));
+            }
 
             if(sequence.actions[i].control == FlowControlEnum.branch || sequence.actions[i].control == FlowControlEnum.selection) {
-                nodeX = (endX - startX) * ((pos.x * 2 + 2) / (programWidth * 2 + 2)) + startX;
+                var nodeX = (endX - startX) * ((pos.x * 2 + 2) / (programWidth * 2 + 2)) + startX;
                 nodes.push(new Node(nodeX, yPixels, index.concat([i, sequence.actions[i].actions.length])));
             }
 
@@ -257,15 +222,35 @@ function updateActions(sequence, programWidth, index) {
 
             // previous updateActions() call may have removed sequence.actions[i], if it hasn't, add a name tag
             if(sequence.actions[i]) {
-                var nameX = (endX - startX) * ((pos.x * 2 + 2) / (programWidth * 2 + 2)) + startX;
-                var nameY = middle + (lowestY(sequence.actions[i]) * ACTION_HEIGHT * 2) - ACTION_HEIGHT;
-                names.push(new Name(sequence.actions[i].name, nameX, nameY, index.slice()));
+                var nameX, nameY;
+                if(sequence.actions[i].control == FlowControlEnum.iteration) {
+                    nameX = (endX - startX) * ((pos.x * 2 + 2) / (programWidth * 2 + 2)) + startX;
+                    nameY = middle + (lowestY(sequence.actions[i]) * ACTION_HEIGHT * 2) - ACTION_HEIGHT;
+                }
+                else if(sequence.actions[i].control != FlowControlEnum.sequence) {
+                    nameX = (endX - startX) * ((pos.x * 2 + 2) / (programWidth * 2 + 2)) + startX;
+                    var lowest = getY(sequence.actions[i].actions[0]);
+
+                    for(var j = 1; j < sequence.actions[i].actions.length; j++) {
+                        var thisY = getY(sequence.actions[i].actions[j])
+                        if(lowest > thisY) {
+                            lowest = thisY;
+                        }
+                    }
+
+                    nameY = middle + (lowest * ACTION_HEIGHT * 2) - ACTION_HEIGHT;
+                }
+                else {
+                    nameY = middle + (pos.y * ACTION_HEIGHT * 2) - ACTION_HEIGHT;
+                    nameX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+                }
+                names.push(new Name(sequence.actions[i].name, nameX, nameY, nextIndex.slice()));
             }
 
             // add trailing node if there are no more actions
-            if(i == sequence.actions.length - 1 && sequence.control != FlowControlEnum.sequence) {
+            if(i == sequence.actions.length - 1 && sequence.actions[i].control != FlowControlEnum.sequence) {
                 pos.x += sequenceLength(sequence.actions[i]);
-                nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+                var nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
                 nodes.push(new Node(nodeX, yPixels, index.concat([i + 1])));
             }
         }
@@ -463,48 +448,107 @@ function Node(x, y, index) {
     this.y = y;
     this.radius = 10;
     this.diameter = this.radius * 2;
+    this.highlighted = false;
 
     this.press = function(x, y) {
-        var d = dist(x, y, this.x, this.y);
-        if(d < this.radius){
-            if(state == StateEnum.normal) {
-                selectAdd.position(this.x + offsetX, this.y + offsetY);
-                selectAdd.index = this.index;
-                selectAdd.show();
-            }
-            else if(state == StateEnum.controlFlow) {
-                if(validControlFlow(this)) {
-                    ControlFlow(this.index, controlIndex);
+        if(state != StateEnum.normal) {
+            var d = dist(x, y, this.x, this.y);
+            if(d < this.radius){
+                if(state == StateEnum.normal) {
+                    selectAdd.position(this.x + offsetX, this.y + offsetY);
+                    selectAdd.index = this.index;
+                    selectAdd.show();
                 }
-                state = StateEnum.normal;
-                update();
+                else if(state == StateEnum.controlFlow) {
+                    if(validControlFlow(this)) {
+                        ControlFlow(this.index, controlIndex);
+                    }
+                    state = StateEnum.normal;
+                    update();
+                }
+
+                return true;
             }
 
+            return false;
+        }
+
+        var d = dist(x, y, this.x, this.y - this.diameter);
+        if(d < this.radius) {
+            addAction(this.index);
+            update();
+            return true;
+        }
+
+        d = dist(x, y, this.x + this.diameter, this.y);
+        if(d < this.radius) {
+            state = StateEnum.controlFlow;
+            controlIndex = this.index;
+            currentControlFlow = FlowControlEnum.branch;
+            return true;
+        }
+
+        d = dist(x, y, this.x, this.y + this.diameter);
+        if(d < this.radius) {
+            state = StateEnum.controlFlow;
+            controlIndex = this.index;
+            currentControlFlow = FlowControlEnum.iteration;
+            return true;
+        }
+
+        d = dist(x, y, this.x - this.diameter, this.y);
+        if(d < this.radius) {
+            state = StateEnum.controlFlow;
+            controlIndex = this.index;
+            currentControlFlow = FlowControlEnum.selection;
             return true;
         }
 
         return false;
     }
 
+    this.mouseOver = function(x, y) {
+        var d = dist(x, y, this.x, this.y);
+        if(this.highlighted && state == StateEnum.normal) d = d / 3;
+        this.highlighted = (d < this.radius);
+        return this.highlighted;
+    }
+
     this.draw = function() {
-        var validCF = validControlFlow(this);
-        if(state != StateEnum.controlFlow) {
+        if(state != StateEnum.controlFlow && this.highlighted) {
+            textAlign(CENTER, CENTER);
             fill(255);
-        }
-        else if(compareArrays(controlIndex, this.index, this.index.length) && validCF) {
-            fill(0, 120, 0);
-        }
-        else if(validCF) {
-            fill(0, 255, 0);
+            ellipse(this.x, this.y - this.diameter, this.diameter, this.diameter);
+            ellipse(this.x + this.diameter, this.y, this.diameter, this.diameter);
+            ellipse(this.x, this.y + this.diameter, this.diameter, this.diameter);
+            ellipse(this.x - this.diameter, this.y, this.diameter, this.diameter);
+
+            fill(0);
+            text('A', this.x, this.y - this.diameter);
+            text('B', this.x + this.diameter, this.y);
+            text('I', this.x, this.y + this.diameter);
+            text('S', this.x - this.diameter, this.y);
         }
         else {
-            fill(255, 0, 0);
-        }
+            var validCF = validControlFlow(this);
+            if(state != StateEnum.controlFlow) {
+                fill(255);
+            }
+            else if(compareArrays(controlIndex, this.index, this.index.length) && validCF) {
+                fill(0, 120, 0);
+            }
+            else if(validCF) {
+                fill(0, 255, 0);
+            }
+            else {
+                fill(255, 0, 0);
+            }
 
-        ellipse(this.x, this.y, this.diameter, this.diameter);
-        fill(0);
-        textAlign(CENTER, CENTER);
-        text('+', this.x, this.y);
+            ellipse(this.x, this.y, this.diameter, this.diameter);
+            fill(0);
+            textAlign(CENTER, CENTER);
+            text('+', this.x, this.y);
+        }
     }
 }
 
@@ -535,6 +579,10 @@ function Name(name, x, y, index) {
             prog.name = newName;
             this.name = newName;
         }
+    }
+
+    this.mouseOver = function(x, y) {
+        return (x > this.x && x < this.x + this.buttonWidth && y > this.y && y < this.y + this.buttonWidth);
     }
 
     this.draw = function() {
@@ -601,6 +649,13 @@ function Action() {
             return true;
         }
         return false;
+    }
+
+    this.mouseOver = function(programWidth, x, y) {
+        var yPos = (this.y * ACTION_HEIGHT * 2) + middle - (ACTION_HEIGHT / 2);
+        var xPos = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX - (ACTION_WIDTH / 2);
+
+        return (x > xPos && x <= xPos +  ACTION_WIDTH &&  y > yPos && y < yPos + ACTION_HEIGHT);
     }
 
     this.update = function(index, programWidth) {
@@ -937,6 +992,47 @@ function pressActions(actions, programwidth, x, y) {
         }
         else {
             if(pressActions(actions[i].actions, programwidth, x, y)) return true;
+        }
+    }
+}
+
+function mouseMovedCanvas(event) {
+    if (state == StateEnum.form) return;
+
+    var x = event.clientX - offsetX;
+    var y = event.clientY - offsetY;
+    var programwidth = sequenceLength(program);
+    var mousedOver = mouseOverActions(program.actions, programwidth, x, y);
+
+    for(var i = 0; i < nodes.length; i++) {
+        if(nodes[i].mouseOver(x, y)){
+            mousedOver = true;
+            break;
+        }
+    }
+
+    for(var i = 0; i < names.length; i++) {
+        if(names[i].mouseOver(x, y)){
+            mousedOver = true;
+            break;
+        }
+    }
+
+    if(mousedOver) {
+        cursor(HAND);
+    }
+    else {
+        cursor(ARROW);
+    }
+}
+
+function mouseOverActions(actions, programwidth, x, y) {
+    for(var i = 0; i < actions.length; i++) {
+        if(actions[i].constructor == Action) {
+            if(actions[i].mouseOver(programwidth, x, y)) return true;
+        }
+        else {
+            if(mouseOverActions(actions[i].actions, programwidth, x, y)) return true;
         }
     }
 }
