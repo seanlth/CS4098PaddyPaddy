@@ -454,12 +454,7 @@ function Node(x, y, index) {
         if(state != StateEnum.normal) {
             var d = dist(x, y, this.x, this.y);
             if(d < this.radius){
-                if(state == StateEnum.normal) {
-                    selectAdd.position(this.x + offsetX, this.y + offsetY);
-                    selectAdd.index = this.index;
-                    selectAdd.show();
-                }
-                else if(state == StateEnum.controlFlow) {
+                if(state == StateEnum.controlFlow) {
                     if(validControlFlow(this)) {
                         ControlFlow(this.index, controlIndex);
                     }
@@ -981,7 +976,6 @@ function mousePressedCanvas(event) {
 
     if(!pressed && event.movementX == 0 && event.movementY == 0) {
         state = StateEnum.normal;
-        selectAdd.hide();
     }
 }
 
