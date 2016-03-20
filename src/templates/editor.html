@@ -72,9 +72,11 @@
         <ul class="nav navbar-nav navbar-right">
           <li>
             {% if not 'email' in session %}
-            <a href="/login"><r>Login</r></a>
+              <a href="/login"><r>Login</r></a>
+            {% elif not 'social' in session %}
+              <a href="/login"><r>Login</r></a>
             {% else %}
-            <a href="/logout"><r>Logout</r></a>
+              <a href="/logout"><r>Logout</r></a>
             {% endif %}
           </li>
         </ul>

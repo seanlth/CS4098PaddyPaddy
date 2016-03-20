@@ -10,6 +10,13 @@ def query_user(email):
 	session = DBSession()
 	return session.query(User).filter(User.email==email).first()
 
+def query_social_user(social):
+    engine = create_engine('sqlite:///pml.db')
+    Base.metadata.bind = engine
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+    return session.query(User).filter(User.social==social).first()
+
 def number_of_users():
 	engine = create_engine('sqlite:///pml.db')
 	Base.metadata.bind = engine

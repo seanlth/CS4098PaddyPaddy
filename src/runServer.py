@@ -1,13 +1,13 @@
-from flask import Flask, request, render_template
-from flask import redirect, url_for, send_from_directory
-from flask import session, flash
-
+from flask import Flask, redirect, url_for, render_template,request, session, flash
+from flask.ext.sqlalchemy import SQLAlchemy
+from flask.ext.login import LoginManager, UserMixin, login_user, logout_user, current_user
+from oauth import OAuthSignIn
 from subprocess import check_output, STDOUT, CalledProcessError
 from werkzeug import generate_password_hash, check_password_hash, secure_filename
 
 from database.database_create import Base, User
-from database.database_insert import insert_user
-from database.database_query import query_user, number_of_users
+from database.database_insert import insert_user, insert_social_user
+from database.database_query import query_user,query_social_user, number_of_users
 
 import base64
 import os
@@ -15,8 +15,20 @@ import shutil
 import tempfile
 
 
-DEBUG = False
+DEBUG = True
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
+app.config['OAUTH_CREDENTIALS'] = {
+    'facebook': {
+        'id': '604820106335654',
+        'secret': '5eb3f15f84c722df9cbc577206557cc8'
+    },
+    'twitter': {
+        'id': 'cGFr2WV93py7an7FrGXXNDS6p',
+        'secret': 'U9ufkrhicVHrj5CGojmQ7ZCxSwytoShSgM0t9WCq0HbqcfKwL8'
+    }
+}
 app.secret_key = 'fe2917b485cc985c47071f3e38273348' # echo team paddy paddy | md5sum
 app.config['UPLOAD_FOLDER'] = 'userFiles/'
 app.config['ALLOWED_EXTENSIONS'] = set(['pml'])
@@ -143,7 +155,7 @@ def saveFile(fname=None):
 
             saveFilePath = os.path.join(savepath, name)
             tempFilePath = session.pop("tempFile", None)
-           
+
             if tempFilePath:
                 shutil.copy(tempFilePath, saveFilePath)
                 return redirect('/?filename=%s'%name)
@@ -213,12 +225,14 @@ def loginButton():
 
 @app.route("/logout")
 def logout():
-    session.pop('email', None)
+    if 'email' in session:
+        session.pop('email', None)
+    if 'social' in session:
+        session.pop('social', None)
     if session.get('tempFile') is not None:
         session['tempFile'] = ""
 
     return redirect('/')
-
 
 @app.route("/tmp", methods=["POST"])
 def tmp():
@@ -237,6 +251,27 @@ def resetCurrent():
         session['currentFile'].pop()
 
     return ""
+@app.route('/authorize/<provider>')
+def oauth_authorize(provider):
+    # if not current_user.is_anonymous:
+    #     return redirect(url_for('_login'))
+    oauth = OAuthSignIn.get_provider(provider)
+    return oauth.authorize()
 
+
+@app.route('/callback/<provider>')
+def oauth_callback(provider):
+    # if not current_user.is_anonymous:
+    #     return redirect(url_for('_login'))
+    oauth = OAuthSignIn.get_provider(provider)
+    social, username, email = oauth.callback()
+    if social is None:
+        flash('Authentication failed.')
+        return redirect(url_for('login'))
+    user = query_social_user(social);
+    if user is None:
+        insert_social_user(social)
+        session['social'] = social
+    return redirect('/')
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", port=8000, debug=DEBUG)
+	app.run(host="localhost", port=8000, debug=DEBUG)
