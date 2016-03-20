@@ -111,7 +111,12 @@ function add_primitives(primitives, current_indentation) {
 	for ( var i = 0; i < primitives.length; i++ ) {
 		var primitive = primitives[i];
 		var node = add_primitive(primitive, current_indentation);
-		primitives_string += node + "\n";
+		if ( i < primitives.length - 1 ) {
+			primitives_string += node + "\n";
+		}
+		else {
+			primitives_string += node;
+		}
 	}
 	return primitives_string;
 }
@@ -122,7 +127,7 @@ function json_to_pml(program) {
 	PML_code += add_primitives(program.actions, "    ") + "\n";
 	PML_code += "}"
 
-    save_generated_pml(PML_code, function(response) {  } );
+    save_generated_pml(PML_code, function(response) { window.open('/') } );
 
 	return PML_code;
 }
