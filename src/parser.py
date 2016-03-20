@@ -2,6 +2,7 @@ import re
 import itertools
 
 TOKENS = ( (r'[ \n\t]+'   , None)
+         , (r'/\*.*\*/'   , None) # ignore comments
          , (r'process'    , "PROCESS")
          , (r'sequence'   , "SEQUENCE")
          , (r'iteration'  , "ITERATION")
