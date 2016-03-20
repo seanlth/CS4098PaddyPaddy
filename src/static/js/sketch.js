@@ -53,7 +53,6 @@ function setup() {
 
 function createPML() {
     var pml_code = json_to_pml(program);
-	window.open('/');
 }
 
 function selectEvent() {
