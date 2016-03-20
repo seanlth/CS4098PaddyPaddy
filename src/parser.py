@@ -131,14 +131,9 @@ def action():
     else:
         type_ = ""
 
-    act = { "name": ident, "control": "action", "type" : type_, "requirements": [], "provisions": []}
+    act = { "name": ident, "control": "action", "type" : type_ }
     for (specType, sel) in listOf(spec):
-        if specType == "requires":
-            act["requirements"].append(sel)
-        elif specType == "provides":
-            act["provisions"].append(sel)
-        else:
-            act[specType] = sel
+        act[specType] = sel
 
     return act
 
@@ -182,5 +177,4 @@ def expr():
     push_back((text, tag))
 
     return ' '.join(res)
-
 
