@@ -1,5 +1,4 @@
 var canvas, startX, endX, middle;// variables for drawing
-var program, nodes, names; // variables for storing actions in the program and nodes to add them
 var state, selectedAction, controlIndex, currentControlFlow, generatePML; // variables for handling input
 var offsetX, offsetY;
 
@@ -34,8 +33,7 @@ function setup() {
     offsetY = 0;
     controlIndex = [];
 
-    // program = {name: "new_process", actions: new Array()};
-    program = { name : "poop", actions : new Array() };
+    program = {name: "new_process", actions: new Array()};
     nodes = new Array();
 
     generatePML = createButton('Generate PML');
