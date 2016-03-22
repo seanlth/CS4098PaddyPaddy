@@ -68,6 +68,10 @@
             <li>
                 <a href="javascript:run_hook()">Run </a>
             </li>
+
+            <li>
+                <a href="javascript:parse_hook()">Parse </a>
+            </li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li>
@@ -125,6 +129,12 @@
 	function undo_hook(){ console.log("undo pressed"); editor && editor.undo();}
 	function redo_hook(){ console.log("redo pressed"); editor && editor.redo();}
 
+    function parse_hook() {
+      console.log("parse pressed");
+      pushTemp(function(response){
+        window.location.href = "/diagram?useParsed=True";
+      });
+    }
 
     function new_hook() {
       console.log("new pressed");

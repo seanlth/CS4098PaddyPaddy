@@ -10,10 +10,12 @@ from database.database_insert import insert_user
 from database.database_query import query_user, number_of_users
 
 import base64
+import json
 import os
 import shutil
 import tempfile
 
+import parser
 
 DEBUG = False
 app = Flask(__name__)
@@ -84,9 +86,9 @@ def openFile():
         os.makedirs(userpath, exist_ok=True)
     return render_template('openFile.html', files=files)
 
-def uploadFile():
-    if not 'email' in session:
-        return redirect('/login?return_url=openFile')
+# def uploadFile():
+#     if not 'email' in session:
+#         return redirect('/login?return_url=openFile')
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -153,6 +155,15 @@ def saveFile(fname=None):
 
 @app.route("/diagram")
 def diagram():
+    if 'useParsed' in request.args and 'tempFile' in session:
+        tempFile = session['tempFile']
+        with open(tempFile) as f:
+            data = f.read()
+            try:
+                parsed = parser.parse(data) #TODO: proper error message
+                return render_template("diagramEditor.html", data=json.dumps(parsed)) 
+            except parser.ParserException: pass
+
     return render_template("diagramEditor.html")
 
 @app.route("/signup")

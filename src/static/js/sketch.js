@@ -1,5 +1,4 @@
 var canvas, startX, endX, middle;// variables for drawing
-var program, nodes, names; // variables for storing actions in the program and nodes to add them
 var state, selectedAction, controlIndex, currentControlFlow, generatePML; // variables for handling input
 var offsetX, offsetY;
 
@@ -48,6 +47,29 @@ function setup() {
 
 function createPML() {
     var pml_code = json_to_pml(program);
+}
+
+function drawJSON(json) {
+    numActions = 0;
+    $('.Action').remove();
+
+    function addActions(acts){
+      if (acts){
+        for (var i = 0; i < acts.length; i++){
+          if (acts[i].control == "action"){
+            acts[i] = new Action(acts[i]);
+            // acts[i].element.html(acts[i].name);
+          } else {
+            addActions(acts[i].actions);
+          }
+
+        }
+      }
+    }
+
+    addActions(json.actions);
+    program = json;
+    update();
 }
 
 function draw() {
@@ -391,7 +413,7 @@ function addNodesRec(actions, index, progWidth) {
     for(var i = 0; i < actions.length; i++) {
         nodes.push(new Node(index.concat([i]), progWidth));
 
-        if(actions[i].constructor != Action) {
+        if(actions[i].control != FlowControlEnum.action) {
             addNodesRec(actions[i].actions, index.concat([i]), progWidth);
         }
     }
@@ -607,20 +629,33 @@ function compareArrays(array1, array2, length) {
     return true;
 }
 
-function Action() {
+function Action(action) {
     this.id = numActions++;
     this.x;
     this.y;
 
     // All the PML important details
-    this.name = "New_Action";
-    this.type = "";
-    this.agent = "";
-    this.script = "";
-    this.tool = "";
-    this.requires = "";
-    this.provides = "";
-    this.selected = false;
+    if(action) {
+        this.name     = action.name     || "New_Action";
+        this.type     = action.type     || "";
+        this.agent    = action.agent    || "";
+        this.script   = action.script   || "";
+        this.tool     = action.tool     || "";
+        this.requires = action.requires || "";
+        this.provides = action.provides || "";
+        this.selected = action.selected || false;
+    }
+    else {
+        this.name     = "New_Action";
+        this.type     = "";
+        this.agent    = "";
+        this.script   = "";
+        this.tool     = "";
+        this.requires = "";
+        this.provides = "";
+        this.selected = false;
+    }
+
 
     this.press = function(programWidth, x, y) {
         var yPos = (this.y * ACTION_HEIGHT * 2) + middle - (ACTION_HEIGHT / 2);
@@ -846,7 +881,7 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
 
 function selectAction(actions, id){
     for(var i = 0; i < actions.length; i++) {
-        if(actions[i].constructor == Action) {
+        if(actions[i].control == FlowControlEnum.action) {
             if(actions[i].id == id) {
                 selectedAction = actions[i];
                 return true;
