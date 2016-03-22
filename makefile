@@ -4,7 +4,7 @@ all: run
 
 build: buildDeps
 
-test:
+test: env
 	env/bin/python3 src/tests.py
 
 install: buildDeps
@@ -17,7 +17,7 @@ install: buildDeps
 	cd peos/pml/ && make && \
 	mv check/pmlcheck ../../
 	chmod u+x start.sh
-	# stack install purescript
+	mkdir -p userFiles
 
 verify: #TODO
 	:
@@ -29,11 +29,12 @@ distclean: clean
 
 buildDeps:
 	hash pip3 2>/dev/null || sudo apt-get install python3-pip
-	# hash stack 2>/dev/null || sudo apt-get install stack
 	hash virtualenv 2>/dev/null || sudo pip3 install virtualenv
 	hash bison 2>/dev/null || sudo apt-get install bison
 	hash check 2>/dev/null || sudo apt-get install check
 	hash flex 2>/dev/null || sudo apt-get install flex
+
+env: install
 
 run:
 	./start.sh
