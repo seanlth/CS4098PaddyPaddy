@@ -1128,7 +1128,6 @@ function deleteAction(prog, id) {
     for(var i = 0; i < prog.actions.length; i++) {
         if(prog.actions[i].constructor == Action) {
             if(prog.actions[i].id == id) {
-                prog.actions[i].element.remove()
                 prog.actions.splice(i, 1);
                 return true;
             }
