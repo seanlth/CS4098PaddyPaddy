@@ -24,6 +24,7 @@ verify: #TODO
 
 clean:
 	-rm -rf env
+	-rm -rf userFiles
 
 distclean: clean
 
