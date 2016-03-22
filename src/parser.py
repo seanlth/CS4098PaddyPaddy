@@ -153,7 +153,7 @@ def spec():
     elif check("TOOL"):
         specType = "tool"
     else:
-        fail()
+        fail("specification")
 
     expect("LBRACE")
     if specType in ["provides", "requires", "agent"]:
