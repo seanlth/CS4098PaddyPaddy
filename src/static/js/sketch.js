@@ -1019,7 +1019,7 @@ function mousePressedCanvas(event) {
         }
     }
 
-    if(!pressed && event.movementX == 0 && event.movementY == 0) {
+    if(!pressed) {
         state = StateEnum.normal;
     }
 }
@@ -1082,7 +1082,12 @@ function mouseDragged(event) {
     var lastValueX = offsetX, lastValueY = offsetY;
     // handle horizontal scrolling if display is wider than screen
     if(endX + startX > width) {
-        offsetX += event.movementX;
+        if(event.movementX) {
+            offsetX += event.movementX;
+        }
+        else if(event.mozMovementX) {
+            offsetX += event.mozMovementX;
+        }
 
         if(offsetX > 0) {
             offsetX = 0;
@@ -1093,19 +1098,26 @@ function mouseDragged(event) {
         }
     }
 
+    var movementY = 0;
+    if(event.movementY) {
+        movementY = event.movementY;
+    }
+    else if(event.mozMovementY) {
+        movementY = event.mozMovementY;
+    }
     var offScreen = false, onScreen = 0;
     for(var i = 0; i < nodes.length; i++) {
         if(nodes[i].y + offsetY - (ACTION_WIDTH / 2) < 0 || nodes[i].y + offsetY + (ACTION_WIDTH / 2) > height) {
             offScreen = true;
         }
 
-        if(nodes[i].y + offsetY + event.movementY - (ACTION_WIDTH / 2) > 0 && nodes[i].y + offsetY + event.movementY + (ACTION_WIDTH / 2) < height) {
+        if(nodes[i].y + offsetY +movementY - (ACTION_WIDTH / 2) > 0 && nodes[i].y + offsetY +movementY + (ACTION_WIDTH / 2) < height) {
             onScreen++;
         }
     }
 
     if(offScreen && onScreen >= 1) {
-        offsetY += event.movementY;
+        offsetY +=movementY;
     }
 
     // only redraw with change
