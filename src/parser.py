@@ -1,25 +1,25 @@
 import re
 import itertools
 
-TOKENS = ( (r'[ \n\t]+'   , None)
-         , (r'/\*.*\*/'   , None) # ignore comments
-         , (r'process'    , "PROCESS")
-         , (r'sequence'   , "SEQUENCE")
-         , (r'iteration'  , "ITERATION")
-         , (r'branch'     , "BRANCH")
-         , (r'action'     , "ACTION")
-         , (r'manual'     , "MANUAL")
-         , (r'executable' , "EXECUTABLE")
-         , (r'{'          , "LBRACE")
-         , (r'}'          , "RBRACE")
-         , (r'requires'   , "REQUIRES")
-         , (r'provides'   , "PROVIDES")
-         , (r'tool'       , "TOOL")
-         , (r'agent'      , "AGENT")
-         , (r'script'     , "SCRIPT")
-         , (r'"[^"]*"'    , "STRING")
-         , (r'[_A-Za-z]+' , "IDENT")
-         , (r'[^ ]+'      , "TOK")
+TOKENS = ( (r'[ \n\t]+'    , None)
+         , (r'"[^"]*"'     , "STRING")
+         , (r'/\*.*\*/'    , None) # ignore comments
+         , (r'script'      , "SCRIPT")
+         , (r'process'     , "PROCESS")
+         , (r'sequence'    , "SEQUENCE")
+         , (r'iteration'   , "ITERATION")
+         , (r'branch'      , "BRANCH")
+         , (r'action'      , "ACTION")
+         , (r'manual'      , "MANUAL")
+         , (r'executable'  , "EXECUTABLE")
+         , (r'{'           , "LBRACE")
+         , (r'}'           , "RBRACE")
+         , (r'requires'    , "REQUIRES")
+         , (r'provides'    , "PROVIDES")
+         , (r'tool'        , "TOOL")
+         , (r'agent'       , "AGENT")
+         , (r'[_A-Za-z]+'  , "IDENT")
+         , (r'[^ ]+'          , "TOK")
          )
 
 class ParserException(Exception): pass
@@ -66,7 +66,7 @@ def lex(content, token_exprs):
     pos = 0
     while pos < len(content):
         for (pattern, tag) in token_exprs:
-            regex = re.compile(pattern)
+            regex = re.compile(pattern, flags=re.DOTALL)
             match = regex.match(content, pos)
             if match:
                 text = match.group(0)
