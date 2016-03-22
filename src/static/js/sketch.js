@@ -127,7 +127,7 @@ function update() {
 
 function keyboardInput() {
     var lastValueX = offsetX, lastValueY = offsetY;
-    var speed = 5;
+    var speed = 10;
     // handle horizontal scrolling if display is wider than screen
     if(endX + startX > width) {
         if(keyIsDown(LEFT_ARROW)) {
@@ -265,6 +265,17 @@ function updateActions(sequence, programWidth, index) {
                     nameY = middle + (pos.y * ACTION_HEIGHT * 2) - ACTION_HEIGHT;
                     nameX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
                 }
+                var overlap = false;
+                do {
+                    overlap = false;
+                    for(var j = 0; j < names.length; j++) {
+                        if(nameY == names[j].y && nameX == names[j].x) {
+                            nameX -= 20;
+                            nameY -= 20;
+                        }
+                    }
+                } while (overlap)
+
                 names.push(new Name(sequence.actions[i].name, nameX, nameY, nextIndex.slice()));
             }
 
