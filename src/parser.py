@@ -6,6 +6,7 @@ TOKENS = ( (r'[ \n\t]+'              , None)
          , (r'/\*[^(\*/)]*\*/'       , None) # ignore comments
          , (r'script'                , "SCRIPT")
          , (r'process'               , "PROCESS")
+         , (r'select(ion)?'          , "SELECTION")
          , (r'sequence'              , "SEQUENCE")
          , (r'iteration'             , "ITERATION")
          , (r'branch'                , "BRANCH")
@@ -103,6 +104,8 @@ def listOf(pFunc):
 def prim():
     if check("SEQUENCE"):
         return control("sequence")
+    elif check("SELECTION"):
+        return control("selection")
     elif check("ITERATION"):
         return control("iteration")
     elif check("BRANCH"):
