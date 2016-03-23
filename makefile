@@ -19,8 +19,10 @@ install: buildDeps
 	chmod u+x start.sh
 	mkdir -p userFiles
 
-verify: #TODO
-	:
+verify:
+	[ -e pmlcheck ]
+	[ -e env/bin/pip3 ]
+	[ -e env/bin/python3 ]
 
 clean:
 	-rm -rf env
