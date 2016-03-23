@@ -13,6 +13,7 @@ install: buildDeps
 	virtualenv env
 	env/bin/pip3 install Flask
 	env/bin/pip3 install SQLAlchemy
+	env/bin/pip3 install Flask-OAuth
 	sudo apt-get install libncurses5-dev
 	cd peos/pml/ && make && \
 	mv check/pmlcheck ../../

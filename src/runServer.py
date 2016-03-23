@@ -8,16 +8,19 @@ from subprocess import check_output, STDOUT, CalledProcessError
 from werkzeug import generate_password_hash, check_password_hash, secure_filename
 
 from database.database_create import Base, User
-from database.database_insert import insert_user, insert_social_user
+from database.database_insert import insert_user, insert_social_user, insert_g_user
 from database.database_query import query_user,query_social_user, number_of_users
-
-import base64
+from flask_oauth import OAuth
+from urllib.request import Request, urlopen
+from urllib.error import URLError
+import base64, json
 import os
 import shutil
 import tempfile
 
-
+REDIRECT_URI = '/oauth'
 DEBUG = True
+oauth = OAuth()
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
@@ -31,6 +34,18 @@ app.config['OAUTH_CREDENTIALS'] = {
         'secret': 'U9ufkrhicVHrj5CGojmQ7ZCxSwytoShSgM0t9WCq0HbqcfKwL8'
     }
 }
+google = oauth.remote_app('google',
+                          base_url='https://www.google.com/accounts/',
+                          authorize_url='https://accounts.google.com/o/oauth2/auth',
+                          request_token_url=None,
+                          request_token_params={'scope': 'https://www.googleapis.com/auth/userinfo.email',
+                                                'response_type': 'code'},
+                          access_token_url='https://accounts.google.com/o/oauth2/token',
+                          access_token_method='POST',
+                          access_token_params={'grant_type': 'authorization_code'},
+                          consumer_key='305205879982-13behoi7hr2h9fnqd1t5sslgn43i972m.apps.googleusercontent.com',
+                          consumer_secret='YdyrpHBahzLJ0qlPni6hy95d')
+
 app.secret_key = 'fe2917b485cc985c47071f3e38273348' # echo team paddy paddy | md5sum
 app.config['UPLOAD_FOLDER'] = 'userFiles/'
 app.config['ALLOWED_EXTENSIONS'] = set(['pml'])
@@ -44,8 +59,6 @@ app.jinja_env.globals['get_resource_as_string'] = get_resource_as_string
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
-
-
 
 @app.route("/", methods=["POST"])
 def my_form_post():
@@ -70,8 +83,11 @@ def editor(filename = ""):
 
     if 'filename' in request.args or filename != "":
         filename = filename if filename else request.args['filename']
-        if 'email' in session:
-            email = session['email']
+        if ('email' in session) or ('social' in session):
+            if 'email' in session:
+                email = session['email']
+            elif 'social' in session:
+                email = session['social']
             userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
             filepath = os.path.join(userpath, filename)
             session['currentFile'] = filename
@@ -87,11 +103,14 @@ def editor(filename = ""):
 
 @app.route('/openFile')
 def openFile():
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
         return redirect('/login?return_url=openFile')
 
     files = []
-    email = session['email']
+    if 'email' in session:
+        email = session['email']
+    elif 'social' in session:
+        email = session['social']
     userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
     try:
         files = os.listdir(userpath)
@@ -100,15 +119,17 @@ def openFile():
     return render_template('openFile.html', files=files)
 
 def uploadFile():
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
         return redirect('/login?return_url=openFile')
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
         return "", 401 # not authorised
-
-    email = session['email']
+    if 'email' in session:
+        email = session['email']
+    elif 'social' in session:
+        email = session['social']
     file = request.files['file']
     filename = ""
     if file and allowed_file(file.filename):
@@ -124,8 +145,8 @@ def upload():
 
 @app.route('/save')
 def save():
-    print(session)
-    if not 'email' in session:
+    # print(session)
+    if (not 'email' in session) and (not 'social' in session):
         return redirect('/login?return_url=saveAs')
     if 'currentFile' in session:
         return saveFile(session['currentFile'])
@@ -133,18 +154,16 @@ def save():
 
 @app.route('/saveAs')
 def saveAs():
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
         return redirect('/login?return_url=saveAs')
     else:
         return render_template('saveFile.html')
 
-
 @app.route('/saveAs', methods=['POST'])
 @app.route('/save', methods=['POST'])
 def saveFile(fname=None):
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
         return "", 401 # not authorised
-
     name = fname if fname else request.form['filename']
     if name:
         if name[-4:] != ".pml": # check for '.pml' extension
@@ -152,7 +171,10 @@ def saveFile(fname=None):
 
         if allowed_file(name):
             session['currentFile'] = name
-            email = session['email']
+            if 'email' in session:
+                email = session['email']
+            elif 'social' in session:
+                email = session['social']
             savepath = os.path.join(app.config['UPLOAD_FOLDER'], email)
             os.makedirs(savepath, exist_ok=True) # make the users save dir if it doesn't already exist
 
@@ -225,10 +247,9 @@ def loginButton():
 
 @app.route("/logout")
 def logout():
-
     if 'email' in session:
         session.pop('email', None)
-    else:
+    elif 'social' in session:
         session.pop('social', None)
     if session.get('tempFile') is not None:
         session['tempFile'] = ""
@@ -256,7 +277,6 @@ def oauth_authorize(provider):
     oauth = OAuthSignIn.get_provider(provider)
     return oauth.authorize()
 
-
 @app.route('/callback/<provider>')
 def oauth_callback(provider):
     oauth = OAuthSignIn.get_provider(provider)
@@ -269,5 +289,46 @@ def oauth_callback(provider):
     if user is None:
         insert_social_user(social)
     return redirect('/')
+
+@app.route('/google')
+def _index():
+    access_token = session.get('access_token')
+    if access_token is None:
+        return redirect(url_for('googleLogin'))
+    access_token = access_token[0]
+    headers = {'Authorization': 'OAuth '+access_token}
+    req = Request('https://www.googleapis.com/oauth2/v1/userinfo', None, headers)
+    try:
+        res = urlopen(req)
+    except URLError as e:
+        if e.code == 401:
+            session.pop('access_token', None)
+            return redirect(url_for('googleLogin'))
+        return redirect('/')
+    data = res.read().decode('utf-8')
+    decoded = json.loads(data)
+    email = decoded['email']
+    user = query_user(email)
+    session['email'] = email
+    if user is None:
+        insert_g_user(email)
+    return redirect('/')
+
+@app.route('/googleLogin')
+def googleLogin():
+    callback=url_for('_authorized', _external=True)
+    return google.authorize(callback=callback)
+
+@app.route(REDIRECT_URI)
+@google.authorized_handler
+def _authorized(resp):
+    access_token = resp['access_token']
+    session['access_token'] = access_token, ''
+    return redirect(url_for('_index'))
+
+@google.tokengetter
+def get_access_token():
+    return session.get('access_token')
+
 if __name__ == "__main__":
 	app.run(host="localhost", port=8000, debug=DEBUG)
