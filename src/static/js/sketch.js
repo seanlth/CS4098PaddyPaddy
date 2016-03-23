@@ -1070,7 +1070,7 @@ function mouseDragged(event) {
 }
 
 function editAction() {
-    var variableRegex = new RegExp('^[a-zA-Z_][a-zA-Z_0-9]*$')
+    var variableRegex = new RegExp('^ *([a-zA-Z_][a-zA-Z_0-9]*) *$')
     var name = document.getElementById('name').value;
     if (!variableRegex.test(name)) {
         alert(  "The name " + name + " of the Action is invalid, "
@@ -1079,11 +1079,12 @@ function editAction() {
         return
     }
 
-    var specRegex = new RegExp("^[a-zA-Z_][a-zA-Z_0-9]*|\"[^\"]*\"$")
-    var predicateRegex = new RegExp('^([a-zA-Z_.]+ *(\|\||\&\&)? *)*[a-zA-Z_.]+$');
+    var specRegex = new RegExp("^ *([a-zA-Z_][a-zA-Z_0-9]*|\"[^\"]*\") *$")
+    var predicateRegex = new RegExp('^ *(([a-zA-Z_.0-9]+)( *([|][|]|&&) *[a-zA-Z_.0-9]+)*) *$');
 
     var agent = document.getElementById('agent').value;
-    if ( !specRegex.test(agent) && agent.length != 0) {
+	console.log( !predicateRegex.test("|") );
+    if ( !predicateRegex.test(agent) && agent.length != 0) {
         alert(  "The agent " + agent + " of the Action is invalid, "
               + "agents must be be strings or start with an underscore or letter and contain "
               + "only letters, numbers and underscrores.");
@@ -1093,7 +1094,8 @@ function editAction() {
     var tool = document.getElementById('tool').value;
 
     var requires = document.getElementById('requires').value
-    if(!predicateRegex.test(requires) && requires.length != 0) {
+    
+	if(!predicateRegex.test(requires) && requires.length != 0) {
         alert(  "The requirement \"" + requires + "\" of the Action is invalid, "
               + "requirements must start with an underscore or letter and contain "
               + "only letters, numbers and underscrores.");
@@ -1108,13 +1110,13 @@ function editAction() {
         return
     }
 
-    selectedAction.name = name;
+    selectedAction.name = variableRegex.exec(name)[1];
     selectedAction.type = document.getElementById('type').value;
-    selectedAction.agent = agent;
+    selectedAction.agent = predicateRegex.exec(agent)[1];
     selectedAction.script = document.getElementById('script').value;
     selectedAction.tool = tool;
-    selectedAction.requires = requires;
-    selectedAction.provides = provides;
+    selectedAction.requires = predicateRegex.exec(requires)[1];
+    selectedAction.provides = predicateRegex.exec(provides)[1];
     selectedAction.selected = false;
 
     $("#actionEditor").hide();
