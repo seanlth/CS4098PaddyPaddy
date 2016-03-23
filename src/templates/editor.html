@@ -71,16 +71,16 @@
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li>
-            {% if not 'email' in session %}
-              <a href="/login"><r>Login</r></a>
-            {% elif not 'social' in session %}
-              <a href="/login"><r>Login</r></a>
-            {% else %}
+            {% if 'social' in session %}
               <a href="/logout"><r>Logout</r></a>
+            {% elif 'email' in session %}
+                <a href="/logout"><r>Logout</r></a>
+            {% else %}
+              <a href="/login"><r>Login</r></a>
             {% endif %}
           </li>
         </ul>
-    </div><!-- /.navbar-collapse -->
+    </div>
 </nav>
 <div class="container" id="editor">{{editor_content}}</div>
 

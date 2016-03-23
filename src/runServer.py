@@ -1,6 +1,8 @@
 from flask import Flask, redirect, url_for, render_template,request, session, flash
 from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.login import LoginManager, UserMixin, login_user, logout_user, current_user
+from flask.ext.login import LoginManager, UserMixin, login_user, logout_user,\
+    current_user
+
 from oauth import OAuthSignIn
 from subprocess import check_output, STDOUT, CalledProcessError
 from werkzeug import generate_password_hash, check_password_hash, secure_filename
@@ -32,6 +34,7 @@ app.config['OAUTH_CREDENTIALS'] = {
 app.secret_key = 'fe2917b485cc985c47071f3e38273348' # echo team paddy paddy | md5sum
 app.config['UPLOAD_FOLDER'] = 'userFiles/'
 app.config['ALLOWED_EXTENSIONS'] = set(['pml'])
+
 
 def get_resource_as_string(name, charset='utf-8'):
     with app.open_resource(name) as f:
@@ -200,7 +203,6 @@ def signUpButton():
 def login():
     if 'return_url' in request.args:
         session['return_url'] = request.args['return_url']
-
     return render_template("login.html")
 
 
@@ -209,7 +211,6 @@ def loginButton():
     email = request.form["email"]
     password = request.form["password"]
     user = query_user(email)
-
     if user != None:
         if check_password_hash(user.password, password):
             session['email'] = email
@@ -222,16 +223,15 @@ def loginButton():
     return "Incorrect/Invalid e-mail and/or password<br/>", 401
 
 
-
 @app.route("/logout")
 def logout():
+
     if 'email' in session:
         session.pop('email', None)
-    if 'social' in session:
+    else:
         session.pop('social', None)
     if session.get('tempFile') is not None:
         session['tempFile'] = ""
-
     return redirect('/')
 
 @app.route("/tmp", methods=["POST"])
@@ -253,25 +253,21 @@ def resetCurrent():
     return ""
 @app.route('/authorize/<provider>')
 def oauth_authorize(provider):
-    # if not current_user.is_anonymous:
-    #     return redirect(url_for('_login'))
     oauth = OAuthSignIn.get_provider(provider)
     return oauth.authorize()
 
 
 @app.route('/callback/<provider>')
 def oauth_callback(provider):
-    # if not current_user.is_anonymous:
-    #     return redirect(url_for('_login'))
     oauth = OAuthSignIn.get_provider(provider)
     social, username, email = oauth.callback()
     if social is None:
         flash('Authentication failed.')
         return redirect(url_for('login'))
     user = query_social_user(social);
+    session['social'] = social
     if user is None:
         insert_social_user(social)
-        session['social'] = social
     return redirect('/')
 if __name__ == "__main__":
 	app.run(host="localhost", port=8000, debug=DEBUG)
