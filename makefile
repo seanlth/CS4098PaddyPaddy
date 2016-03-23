@@ -32,8 +32,8 @@ buildDeps:
 	hash pip3 2>/dev/null || sudo apt-get install python3-pip
 	hash virtualenv 2>/dev/null || sudo pip3 install virtualenv
 	hash bison 2>/dev/null || sudo apt-get install bison
-	hash check 2>/dev/null || sudo apt-get install check
 	hash flex 2>/dev/null || sudo apt-get install flex
+	[ -e /usr/include/check.h ] || sudo apt-get install check
 
 env: install
 
