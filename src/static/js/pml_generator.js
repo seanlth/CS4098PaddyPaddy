@@ -127,7 +127,10 @@ function json_to_pml(program) {
 	PML_code += add_primitives(program.actions, "    ") + "\n";
 	PML_code += "}"
 
-    save_generated_pml(PML_code, function(response) { window.open('/') } );
+    save_generated_pml(PML_code, function(response) {
+      window.onbeforeunload = function () {};
+      window.location.href = "/";
+    } );
 
 	return PML_code;
 }

@@ -68,6 +68,7 @@ form{
     background-color: #272822 !important;
     margin-bottom:0 !important;
     min-height:28px !important;
+    border-radius: 0px !important;
 }
 
 #output {
