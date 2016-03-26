@@ -1,6 +1,7 @@
 var canvas, startX, endX, middle;// variables for drawing
-var state, selectedAction, controlIndex, currentControlFlow, generatePML; // variables for handling input
+var state, selectedAction, selectedIndex, currentControlFlow, generatePML; // variables for handling input
 var offsetX, offsetY;
+var clipBoard;
 
 var ACTION_HEIGHT = 50;
 var ACTION_WIDTH = 120;
@@ -31,7 +32,8 @@ function setup() {
     middle = height / 2;
     offsetX = 0;
     offsetY = 0;
-    controlIndex = [];
+    selectedIndex = [];
+    clipBoard = [];
 
     program = {name: "new_process", actions: new Array()};
     nodes = new Array();
@@ -205,6 +207,9 @@ function drawActions(sequence, programWidth, index) {
             if(prog.control == FlowControlEnum.iteration) {
                 drawIterationLoop(prog, pos.x, pos.y, nextIndex, programWidth);
             }
+            if(prog.control == FlowControlEnum.sequence) {
+                drawSequenceBox(prog, pos.x, pos.y, nextIndex, programWidth);
+            }
 
             drawActions(prog, programWidth, nextIndex);
         }
@@ -229,9 +234,14 @@ function updateActions(sequence, programWidth, index) {
             var lastControl = sequence.control;
 
             var yPixels = (pos.y * ACTION_HEIGHT * 2) + middle;
-            if(sequence.actions[i].control != FlowControlEnum.sequence) {
+            if(sequence.actions[i].control) {
                 var nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
-                nodes.push(new Node(nodeX, yPixels, index.concat([i])));
+                if(sequence.control == FlowControlEnum.branch || sequence.control == FlowControlEnum.selection) {
+                    nodes.push(new Node(nodeX, yPixels, index.concat([i, -1])));
+                }
+                else {
+                    nodes.push(new Node(nodeX, yPixels, index.concat([i])));
+                }
             }
 
             if(sequence.actions[i].control == FlowControlEnum.branch || sequence.actions[i].control == FlowControlEnum.selection) {
@@ -244,11 +254,11 @@ function updateActions(sequence, programWidth, index) {
             // previous updateActions() call may have removed sequence.actions[i], if it hasn't, add a name tag
             if(sequence.actions[i]) {
                 var nameX, nameY;
-                if(sequence.actions[i].control == FlowControlEnum.iteration) {
+                if(sequence.actions[i].control == FlowControlEnum.iteration || sequence.actions[i].control == FlowControlEnum.sequence) {
                     nameX = (endX - startX) * ((pos.x * 2 + 2) / (programWidth * 2 + 2)) + startX;
                     nameY = middle + (lowestY(sequence.actions[i]) * ACTION_HEIGHT * 2) - ACTION_HEIGHT;
                 }
-                else if(sequence.actions[i].control != FlowControlEnum.sequence) {
+                else {
                     nameX = (endX - startX) * ((pos.x * 2 + 2) / (programWidth * 2 + 2)) + startX;
                     var lowest = getY(sequence.actions[i].actions[0]);
 
@@ -261,10 +271,7 @@ function updateActions(sequence, programWidth, index) {
 
                     nameY = middle + (lowest * ACTION_HEIGHT * 2) - ACTION_HEIGHT;
                 }
-                else {
-                    nameY = middle + (pos.y * ACTION_HEIGHT * 2) - ACTION_HEIGHT;
-                    nameX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
-                }
+
                 var overlap = false;
                 do {
                     overlap = false;
@@ -280,10 +287,15 @@ function updateActions(sequence, programWidth, index) {
             }
 
             // add trailing node if there are no more actions
-            if(i == sequence.actions.length - 1 && sequence.actions[i].control != FlowControlEnum.sequence) {
+            if(i == sequence.actions.length - 1) {
                 pos.x += sequenceLength(sequence.actions[i]);
                 var nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
-                nodes.push(new Node(nodeX, yPixels, index.concat([i + 1])));
+                if(sequence.control == FlowControlEnum.branch || sequence.control == FlowControlEnum.selection) {
+                    nodes.push(new Node(nodeX, yPixels, index.concat([i, -2])));
+                }
+                else {
+                    nodes.push(new Node(nodeX, yPixels, index.concat([i + 1])));
+                }
             }
         }
     }
@@ -308,7 +320,7 @@ function sequenceLength(sequence) {
     }
 
     if(sequence.control != FlowControlEnum.branch && sequence.control != FlowControlEnum.selection) {
-        if(sequence.control == FlowControlEnum.iteration) {
+        if(sequence.control == FlowControlEnum.iteration || sequence.control == FlowControlEnum.sequence) {
             return length + sequence.actions.length + 2;
         }
         return length + sequence.actions.length;
@@ -320,19 +332,22 @@ function sequenceLength(sequence) {
 function sequenceHeight(sequence, start, incrementor) {
     start = start || 0;
     incrementor = incrementor || 1;
-    var height = 0;
+    var height = 0, maxHeight = 0;
 
     for(var i = 0; i < sequence.actions.length; i += incrementor) {
         if(sequence.actions[i].constructor != Action){
-            height += sequenceHeight(sequence.actions[i]) - 1;
+            height = sequenceHeight(sequence.actions[i]) - 1;
+            if(maxHeight < height) {
+                maxHeight = height;
+            }
         }
     }
 
     if(sequence.control == FlowControlEnum.branch || sequence.control == FlowControlEnum.selection) {
-        return height + sequence.actions.length;
+        return maxHeight + sequence.actions.length;
     }
 
-    return height + 1;
+    return maxHeight + 1;
 }
 
 function indexToXY(index) {
@@ -343,7 +358,7 @@ function indexToXY(index) {
     for(var i = 0; i < index.length; i++) {
         if(prog.control != FlowControlEnum.branch && prog.control != FlowControlEnum.selection) {
             x += index[i];
-            if(prog.control == FlowControlEnum.iteration) {
+            if(prog.control == FlowControlEnum.iteration || prog.control == FlowControlEnum.sequence) {
                 x++;//move along to give space for extra node
             }
         }
@@ -478,9 +493,18 @@ function Node(x, y, index) {
 
     this.x = x;
     this.y = y;
+
     this.radius = 10;
     this.diameter = this.radius * 2;
     this.highlighted = false;
+
+    var angle = clipBoard.length == 0 ? 360 / 5 : 360 / 6;
+    this.positionAct = pointOnCircle(this.x, this.y, this.diameter, -90);
+    this.positionIte = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 1);
+    this.positionBra = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 2);
+    this.positionSel = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 3);
+    this.positionSeq = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 4);
+    this.positionPaste = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 5);
 
     this.press = function(x, y) {
         if(state != StateEnum.normal) {
@@ -488,7 +512,7 @@ function Node(x, y, index) {
             if(d < this.radius){
                 if(state == StateEnum.controlFlow) {
                     if(validControlFlow(this)) {
-                        ControlFlow(this.index, controlIndex);
+                        ControlFlow(this.index, selectedIndex);
                     }
                     state = StateEnum.normal;
                     update();
@@ -500,35 +524,72 @@ function Node(x, y, index) {
             return false;
         }
 
-        var d = dist(x, y, this.x, this.y - this.diameter);
+        var d = dist(x, y, this.positionAct.x, this.positionAct.y);
         if(d < this.radius) {
             addAction(this.index);
             update();
             return true;
         }
 
-        d = dist(x, y, this.x + this.diameter, this.y);
+        d = dist(x, y, this.positionBra.x, this.positionBra.y);
         if(d < this.radius) {
             state = StateEnum.controlFlow;
-            controlIndex = this.index;
+            selectedIndex = this.index;
             currentControlFlow = FlowControlEnum.branch;
             return true;
         }
 
-        d = dist(x, y, this.x, this.y + this.diameter);
+        d = dist(x, y, this.positionIte.x, this.positionIte.y);
         if(d < this.radius) {
             state = StateEnum.controlFlow;
-            controlIndex = this.index;
+            selectedIndex = this.index;
             currentControlFlow = FlowControlEnum.iteration;
             return true;
         }
 
-        d = dist(x, y, this.x - this.diameter, this.y);
+        d = dist(x, y, this.positionSel.x, this.positionSel.y);
         if(d < this.radius) {
             state = StateEnum.controlFlow;
-            controlIndex = this.index;
+            selectedIndex = this.index;
             currentControlFlow = FlowControlEnum.selection;
             return true;
+        }
+
+        d = dist(x, y, this.positionSeq.x, this.positionSeq.y);
+        if(d < this.radius) {
+            state = StateEnum.controlFlow;
+            selectedIndex = this.index;
+            currentControlFlow = FlowControlEnum.sequence;
+            return true;
+        }
+
+        if(clipBoard.length > 0) {
+            d = dist(x, y, this.positionPaste.x, this.positionPaste.y);
+            if(d < this.radius) {
+                var prog = program;
+                var offset = this.index[this.index.length - 1] >= 0 ? 1 : 2;
+
+                for(var i = 0; i < this.index.length - offset; i++) {
+                    prog = prog.actions[this.index[i]];
+                }
+
+                if(offset == 1) {
+                    prog.actions.splice(this.index[this.index.length - 1], 0, clipBoard.pop());
+                }//create a sequence because its pasting into a branch/selection single position
+                else {
+                    var action = prog.actions.splice(this.index[this.index.length - 2], 1);
+                    if(this.index[this.index.length - 1] == -1) {
+                        prog.actions.splice(this.index[this.index.length - 2], 0,
+                            {name: 'New_Sequence', control: FlowControlEnum.sequence, actions: [clipBoard.pop()].concat(action)});
+                    }
+                    else {
+                        prog.actions.splice(this.index[this.index.length - 2], 0,
+                            {name: 'New_Sequence', control: FlowControlEnum.sequence, actions: action.concat([clipBoard.pop()])});
+                    }
+                }
+
+                update();
+            }
         }
 
         return false;
@@ -543,25 +604,34 @@ function Node(x, y, index) {
 
     this.draw = function() {
         if(state != StateEnum.controlFlow && this.highlighted) {
-            textAlign(CENTER, CENTER);
             fill(255);
-            ellipse(this.x, this.y - this.diameter, this.diameter, this.diameter);
-            ellipse(this.x + this.diameter, this.y, this.diameter, this.diameter);
-            ellipse(this.x, this.y + this.diameter, this.diameter, this.diameter);
-            ellipse(this.x - this.diameter, this.y, this.diameter, this.diameter);
+            ellipse(this.positionAct.x, this.positionAct.y, this.diameter, this.diameter);
+            ellipse(this.positionIte.x, this.positionIte.y, this.diameter, this.diameter);
+            ellipse(this.positionBra.x, this.positionBra.y, this.diameter, this.diameter);
+            ellipse(this.positionSel.x, this.positionSel.y, this.diameter, this.diameter);
+            ellipse(this.positionSeq.x, this.positionSeq.y, this.diameter, this.diameter);
 
+            textAlign(CENTER, CENTER);
             fill(0);
-            text('A', this.x, this.y - this.diameter);
-            text('B', this.x + this.diameter, this.y);
-            text('I', this.x, this.y + this.diameter);
-            text('S', this.x - this.diameter, this.y);
+            text('A', this.positionAct.x, this.positionAct.y);
+            text('I', this.positionIte.x, this.positionIte.y);
+            text('B', this.positionBra.x, this.positionBra.y);
+            text('Sl', this.positionSel.x, this.positionSel.y);
+            text('Sq', this.positionSeq.x, this.positionSeq.y);
+
+            if(clipBoard.length > 0) {
+                fill(255);
+                ellipse(this.positionPaste.x, this.positionPaste.y, this.diameter, this.diameter);
+                fill(0);
+                text('P', this.positionPaste.x, this.positionPaste.y);
+            }
         }
         else {
             var validCF = validControlFlow(this);
             if(state != StateEnum.controlFlow) {
                 fill(255);
             }
-            else if(compareArrays(controlIndex, this.index, this.index.length) && validCF) {
+            else if(compareArrays(selectedIndex, this.index, this.index.length) && validCF) {
                 fill(0, 120, 0);
             }
             else if(validCF) {
@@ -579,6 +649,12 @@ function Node(x, y, index) {
     }
 }
 
+function pointOnCircle(x, y, radius, angle) {
+    var theta = angle * PI / 180.0;
+    return {'x': x + (radius * Math.cos(theta)),
+            'y': y + (radius * Math.sin(theta))}
+}
+
 function Name(name, x, y, index) {
     this.index = index;
 
@@ -594,17 +670,30 @@ function Name(name, x, y, index) {
                 prog = prog.actions[index[i]];
             }
 
-            var control = prog.control || 'process';
-            var newName = prompt('Input the new name for this ' + control, prog.name) || prog.name;
-            var variableRegex = new RegExp('^[a-zA-Z_][a-zA-Z_0-9]*$');
-            while(!variableRegex.test(newName)) {
-                newName = prompt('\"' + newName + '\" is invalid, it must start with\
-                    a letter or an underscore and contain only these and numbers.',
-                    prog.name) || prog.name;
-            }
+            if(prog.control) {
+                state = StateEnum.form;
+                selectedAction = prog;
+                selectedIndex = this.index;
 
-            prog.name = newName;
-            this.name = newName;
+                $("#flowEditor").show();
+
+                document.getElementById('flowName').value = prog.name;
+                document.getElementById('flowType').value = prog.control;
+
+                return true;
+            }
+            else {
+                var newName = prompt('Input the new name for this process', prog.name) || prog.name;
+                var variableRegex = new RegExp('^[a-zA-Z_][a-zA-Z_0-9]*$');
+                while(!variableRegex.test(newName)) {
+                    newName = prompt('\"' + newName + '\" is invalid, it must start with\
+                        a letter or an underscore and contain only these and numbers.',
+                        prog.name) || prog.name;
+                }
+
+                prog.name = newName;
+                this.name = newName;
+            }
         }
     }
 
@@ -624,9 +713,9 @@ function Name(name, x, y, index) {
 }
 
 function validControlFlow(node) {
-    if(controlIndex.length != node.index.length) return false;
+    if(selectedIndex.length != node.index.length) return false;
 
-    return compareArrays(controlIndex, node.index, controlIndex.length - 1);
+    return compareArrays(selectedIndex, node.index, selectedIndex.length - 1);
 }
 
 //compare 2 arrays up to length specified
@@ -794,11 +883,54 @@ function drawIterationLoop(prog, x, y, index, programWidth) {
     var rectHeight = loopHeight * ACTION_HEIGHT * 2;
 
     rectPositionY = middle + (ACTION_HEIGHT * yTop * 2) - ACTION_HEIGHT;
+    var offset = nestedBoxes(prog) * 5;
 
     startXRectPixels = startXRectPixels;
     endXRectPixels = endXRectPixels;
     fill(255, 255, 255, 0);
-    rect(startXRectPixels, rectPositionY, endXRectPixels - startXRectPixels, rectHeight, 20, 20, 20, 20);
+    rect(startXRectPixels, rectPositionY - offset, endXRectPixels - startXRectPixels, rectHeight + offset * 2, 20, 20, 20, 20);
+}
+
+function drawSequenceBox(prog, x, y, index, programWidth) {
+    var diagramWidth = endX - startX;
+    var startXRectPixels = diagramWidth * ((x + 1) / (programWidth + 1)) + startX;
+    var endLineX = sequenceLength(prog) + x;
+    var endXRectPixels = diagramWidth * (endLineX / (programWidth + 1)) + startX;
+
+    var yPixels = (y * ACTION_HEIGHT * 2) + middle;
+
+    var yTop = lowestY(prog);
+    var loopHeight = sequenceHeight(prog);
+    var rectHeight = loopHeight * ACTION_HEIGHT * 2;
+
+    rectPositionY = middle + (ACTION_HEIGHT * yTop * 2) - ACTION_HEIGHT;
+    var offset = nestedBoxes(prog) * 5;
+
+    startXRectPixels = startXRectPixels;
+    endXRectPixels = endXRectPixels;
+    fill(255, 255, 255, 0);
+    rect(startXRectPixels, rectPositionY - offset, endXRectPixels - startXRectPixels, rectHeight + offset * 2);
+}
+
+function nestedBoxes(prog) {
+    if(prog.constructor == Action) return 0;
+
+    var temp, max = 0;
+    for(var i = 0; i < prog.actions.length; i++) {
+        temp = 0;
+        if(prog.actions[i].constructor != Action) {
+            temp = nestedBoxes(prog.actions[i]);
+            if(prog.actions[i].control == FlowControlEnum.iteration || prog.actions[i].control == FlowControlEnum.sequence) {
+                temp = temp + 1;
+            }
+        }
+
+        if(max < temp) {
+            max = temp;
+        }
+    }
+
+    return max;
 }
 
 function getY(sequence) {
@@ -944,7 +1076,7 @@ function ControlFlow(firstIndex, secondIndex) {
     //selected same node twice, add iteration with new Action
     if(start[length - 1] == end[length - 1]) {
         var blankControlFlow =  {name: 'New_' + currentControlFlow, control: currentControlFlow, actions: [new Action()]};
-        // if the new action is to be in a branch/selection, surre=ound it in a sequence
+        // if the new action is to be in a branch/selection, surround it in a sequence
         if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
             array.splice(start[length - 1], 0,
                 {name: "New_Sequence", control: FlowControlEnum.sequence, actions: [blankControlFlow]});
@@ -970,7 +1102,9 @@ function Sequence(index, replace){
     var newAction;
     if(state == StateEnum.controlFlow) {
         if(replace) {
-            newAction = {name: 'New_' + currentControlFlow, control: currentControlFlow, actions: [array[index[index.length - 2]]]};
+            array.splice(index[index.length - 2], 1,
+                {name: 'New_' + currentControlFlow, control: currentControlFlow, actions: [array[index[index.length - 2]]]});
+            return;
         }
         else {
             newAction = {name: 'New_' + currentControlFlow, control: currentControlFlow, actions: [new Action()]};
@@ -982,10 +1116,7 @@ function Sequence(index, replace){
 
     var sequenceArray;
     //start with new node
-    if(replace) {
-        sequenceArray = [newAction];
-    }
-    else if(index[index.length - 1] == -1) {
+    if(index[index.length - 1] == -1) {
         sequenceArray = [newAction, array[index[index.length - 2]]];
     }//end with old node
     else {
@@ -1180,13 +1311,13 @@ function editAction() {
     update();
 }
 
-
 // deletes an action with matching id from program prog
 function deleteAction(prog, id) {
     for(var i = 0; i < prog.actions.length; i++) {
         if(prog.actions[i].constructor == Action) {
             if(prog.actions[i].id == id) {
                 prog.actions.splice(i, 1);
+                update();
                 return true;
             }
         }
@@ -1206,4 +1337,61 @@ function removeAction() {
     $("#actionEditor").hide();
     state = StateEnum.normal;
     update();
+}
+
+function cutAction() {
+    editAction();
+    clipBoard.push(selectedAction);
+
+    deleteAction(program, selectedAction.id);
+
+    $('#actionEditor').hide();
+    state = StateEnum.normal;
+    update();
+}
+
+function editSequence() {
+    var name = document.getElementById('flowName').value;
+    var variableRegex = new RegExp('^[a-zA-Z_][a-zA-Z_0-9]*$');
+    if(!variableRegex.test(name)) {
+        alert('\"' + name + '\" is invalid, it must start with\
+                a letter or an underscore and contain only these and numbers.');
+                return;
+    }
+
+    selectedAction.name = name;
+    selectedAction.control = document.getElementById('flowType').value;
+    $('#flowEditor').hide();
+    state = StateEnum.normal;
+
+    update();
+}
+
+function deleteSequence() {
+    var prog = program;
+    for(var i = 0; i < selectedIndex.length - 1; i++) {
+        prog = program.actions[selectedIndex[i]];
+    }
+
+    prog.actions.splice(selectedIndex[selectedIndex.length - 1], 1)
+}
+
+function removeSequence() {
+    if(!confirm("Are you sure you wish to delete  this control flow?")) return;
+
+    deleteSequence();
+    update();
+
+    $('#flowEditor').hide();
+    state = StateEnum.normal;
+}
+
+function cutSequence() {
+    editSequence();
+    clipBoard.push(selectedAction);
+    deleteSequence();
+    update();
+
+    $('#flowEditor').hide();
+    state = StateEnum.normal;
 }
