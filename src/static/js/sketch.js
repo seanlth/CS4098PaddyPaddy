@@ -23,7 +23,7 @@ var FlowControlEnum = {
 
 function setup() {
     state = StateEnum.normal;
-    canvas = createCanvas(windowWidth, windowHeight);
+    canvas = createCanvas(windowWidth, windowHeight - 50);
     canvas.mousePressed(mousePressedCanvas);
     canvas.mouseMoved(mouseMovedCanvas);
     canvas.id('canvas');
@@ -43,12 +43,13 @@ function setup() {
     program = {name: "new_process", actions: new Array()};
     nodes = new Array();
 
-    generatePML = createButton('Generate PML');
-    generatePML.position(20, 20);
-    generatePML.mousePressed(createPML);
-    generatePML.id('generatePML');
-
     update();
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  middle = height / 2;
+  update();
 }
 
 function createPML() {
@@ -86,23 +87,7 @@ function draw() {
     actionHeight = ACTION_HEIGHT * scaleY;
     actionWidth = ACTION_WIDTH * scaleX;
 
-    // check program isn't too crowded and resize if needed
-    var progWidth = sequenceLength(program);
-    var prefferedSize = progWidth * actionWidth * 1.4;
-
-    if(prefferedSize > endX - startX) {
-        endX = prefferedSize + startX;
-    }
-    else if(prefferedSize < endX - startX) {
-        endX = prefferedSize + startX;
-    }
-
-    if(endX < width - 40) {
-        endX = width - 40;
-        offsetX = 0;
-        resetMatrix();
-        translate(0, offsetY);
-    }
+    resizeScreen();
 
     if(scaleX != lastScaleX || scaleY != lastScaleY) {
         update();
@@ -133,11 +118,33 @@ function update() {
     background(255);
     var progWidth = sequenceLength(program);
 
+    resizeScreen();
+
     names = [new Name(program.name, startX, middle - 45, [])];
     nodes = [];
     updateActions(program, progWidth, []);
     if(program.actions.length == 0) {
         nodes.push(new Node(width / 2, height / 2, [0]));
+    }
+}
+
+// check program isn't too crowded and resize if needed
+function resizeScreen() {
+    var progWidth = sequenceLength(program);
+    var prefferedSize = progWidth * actionWidth * 1.4;
+
+    if(prefferedSize > endX - startX) {
+        endX = prefferedSize + startX;
+    }
+    else if(prefferedSize < endX - startX) {
+        endX = prefferedSize + startX;
+    }
+
+    if(endX < width - 40) {
+        endX = width - 40;
+        offsetX = 0;
+        resetMatrix();
+        translate(0, offsetY);
     }
 }
 
@@ -1153,8 +1160,8 @@ function Sequence(index, replace){
 function mousePressedCanvas(event) {
     if (state == StateEnum.form) return;
 
-    var x = event.clientX - offsetX;
-    var y = event.clientY - offsetY;
+    var x = mouseX - offsetX;
+    var y = mouseY - offsetY;
     var programwidth = sequenceLength(program);
     var pressed = false;
 
@@ -1189,8 +1196,8 @@ function pressActions(actions, programwidth, x, y) {
 function mouseMovedCanvas(event) {
     if (state == StateEnum.form) return;
 
-    var x = event.clientX - offsetX;
-    var y = event.clientY - offsetY;
+    var x = mouseX - offsetX;
+    var y = mouseY - offsetY;
     var programwidth = sequenceLength(program);
     var mousedOver = mouseOverActions(program.actions, programwidth, x, y);
 

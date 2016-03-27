@@ -53,8 +53,9 @@ form{
   padding-right: 7px !important;
 }
 
-.navbar-collapse {
+.navbar-collapse{
     padding-left: 3px !important;
+    height: 50px !important;
 }
 
 .navbar {
