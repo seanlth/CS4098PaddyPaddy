@@ -110,7 +110,6 @@ def upload():
 
 @app.route('/save')
 def save():
-    print(session)
     if not 'email' in session:
         return redirect('/login?return_url=saveAs')
     if 'currentFile' in session:
@@ -222,10 +221,7 @@ def loginButton():
 
 @app.route("/logout")
 def logout():
-    session.pop('email', None)
-    if session.get('tempFile') is not None:
-        session['tempFile'] = ""
-
+    session.clear()
     return redirect('/')
 
 
@@ -239,12 +235,7 @@ def tmp():
 
 @app.route("/resetCurrent")
 def resetCurrent():
-    if session.get('tempFile') is not None:
-        session['tempFile'] = ""
-
-    if session.get('currentFile') is not None:
-        session['currentFile'].pop()
-
+    session.pop('currentFile', None)
     return ""
 
 if __name__ == "__main__":
