@@ -3,7 +3,7 @@ import itertools
 
 TOKENS = ( (r'[ \n\t]+'              , None)
          , (r'"[^"]*"'               , "STRING")
-         , (r'/\*[^(\*/)]*\*/'       , None) # ignore comments
+         , (r'/\*((?!(\*/)).)*\*/'   , None) # ignore comments
          , (r'script[ \n\t{]'        , "SCRIPT")
          , (r'process[ \n\t{]'       , "PROCESS")
          , (r'select(ion)?[ \n\t{]'  , "SELECTION")
