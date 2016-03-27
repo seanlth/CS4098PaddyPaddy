@@ -1,10 +1,11 @@
 var canvas, startX, endX, middle;// variables for drawing
 var state, selectedAction, selectedIndex, currentControlFlow, generatePML; // variables for handling input
-var offsetX, offsetY;
+var offsetX, offsetY, scaleX, scaleY, actionHeight, actionWidth;
 var clipBoard;
 
 var ACTION_HEIGHT = 50;
 var ACTION_WIDTH = 120;
+
 var numActions = 0;
 
 var StateEnum = {
@@ -32,6 +33,10 @@ function setup() {
     middle = height / 2;
     offsetX = 0;
     offsetY = 0;
+    scaleX = 1;
+    scaleY = 1;
+    actionHeight = ACTION_HEIGHT;
+    actionWidth = ACTION_WIDTH;
     selectedIndex = [];
     clipBoard = [];
 
@@ -44,7 +49,6 @@ function setup() {
     generatePML.id('generatePML');
 
     update();
-    // noLoop();
 }
 
 function createPML() {
@@ -76,35 +80,16 @@ function drawJSON(json) {
 
 function draw() {
     background(255);
+    var lastScaleX = scaleX;
+    var lastScaleY = scaleY;
     keyboardInput();
-
-    fill(0);
-    line(startX, middle, endX, middle);
-    ellipse(startX, middle, 30, 30);
-    fill(255);
-    ellipse(endX, middle, 30, 30);
-    fill(0);
-    ellipse(endX, middle, 20, 20);
-
-    var progWidth = sequenceLength(program)
-
-    drawActions(program, progWidth, []);
-
-    for(var i = 0; i < nodes.length; i++) {
-        nodes[i].draw();
-    }
-
-    for(var i = 0; i < names.length; i++) {
-        names[i].draw();
-    }
-}
-
-function update() {
-    background(255);
+    actionHeight = ACTION_HEIGHT * scaleY;
+    actionWidth = ACTION_WIDTH * scaleX;
 
     // check program isn't too crowded and resize if needed
     var progWidth = sequenceLength(program);
-    var prefferedSize = progWidth * ACTION_WIDTH * 2;
+    var prefferedSize = progWidth * actionWidth * 1.4;
+
     if(prefferedSize > endX - startX) {
         endX = prefferedSize + startX;
     }
@@ -118,6 +103,35 @@ function update() {
         resetMatrix();
         translate(0, offsetY);
     }
+
+    if(scaleX != lastScaleX || scaleY != lastScaleY) {
+        update();
+    }
+
+    fill(0);
+    line(startX, middle, endX, middle);
+    ellipse(startX, middle, 30, 30);
+    fill(255);
+    ellipse(endX, middle, 30, 30);
+    fill(0);
+    ellipse(endX, middle, 20, 20);
+
+    var progWidth = sequenceLength(program);
+
+    drawActions(program, progWidth, []);
+
+    for(var i = 0; i < names.length; i++) {
+        names[i].draw();
+    }
+
+    for(var i = 0; i < nodes.length; i++) {
+        nodes[i].draw();
+    }
+}
+
+function update() {
+    background(255);
+    var progWidth = sequenceLength(program);
 
     names = [new Name(program.name, startX, middle - 45, [])];
     nodes = [];
@@ -158,11 +172,11 @@ function keyboardInput() {
 
     var offScreen = false, onScreen = 0;
     for(var i = 0; i < nodes.length; i++) {
-        if(nodes[i].y + offsetY - (ACTION_WIDTH / 2) < 0 || nodes[i].y + offsetY + (ACTION_WIDTH / 2) > height) {
+        if(nodes[i].y + offsetY - (actionWidth / 2) < 0 || nodes[i].y + offsetY + (actionWidth / 2) > height) {
             offScreen = true;
         }
 
-        if(nodes[i].y + offsetY + movementY - (ACTION_WIDTH / 2) > 0 && nodes[i].y + offsetY + movementY + (ACTION_WIDTH / 2) < height) {
+        if(nodes[i].y + offsetY + movementY - (actionWidth / 2) > 0 && nodes[i].y + offsetY + movementY + (actionWidth / 2) < height) {
             onScreen++;
         }
     }
@@ -170,6 +184,25 @@ function keyboardInput() {
     if(offScreen && onScreen >= 1) {
         offsetY += movementY
     }
+
+    // zoooooooooooom
+    if(key == '+') {
+        if(keyIsDown(SHIFT)) {
+            scaleY = scaleY < 2 ? scaleY + 0.02 : 2;
+        }
+        else {
+            scaleX = scaleX < 2 ? scaleX + 0.02 : 2;
+        }
+    }
+    else if(key == '-') {
+        if(keyIsDown(SHIFT)) {
+            scaleY = scaleY > 0.3 ? scaleY - 0.02 : 0.3;
+        }
+        else {
+            scaleX = scaleX > 0.3 ? scaleX - 0.02 : 0.3;
+        }
+    }
+
 
     resetMatrix();
     translate(offsetX, offsetY);
@@ -233,7 +266,7 @@ function updateActions(sequence, programWidth, index) {
 
             var lastControl = sequence.control;
 
-            var yPixels = (pos.y * ACTION_HEIGHT * 2) + middle;
+            var yPixels = (pos.y * actionHeight * 2) + middle;
             if(sequence.actions[i].control) {
                 var nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
                 if(sequence.control == FlowControlEnum.branch || sequence.control == FlowControlEnum.selection) {
@@ -256,7 +289,7 @@ function updateActions(sequence, programWidth, index) {
                 var nameX, nameY;
                 if(sequence.actions[i].control == FlowControlEnum.iteration || sequence.actions[i].control == FlowControlEnum.sequence) {
                     nameX = (endX - startX) * ((pos.x * 2 + 2) / (programWidth * 2 + 2)) + startX;
-                    nameY = middle + (lowestY(sequence.actions[i]) * ACTION_HEIGHT * 2) - ACTION_HEIGHT;
+                    nameY = middle + (lowestY(sequence.actions[i]) * actionHeight * 2) - actionHeight * 0.7;
                 }
                 else {
                     nameX = (endX - startX) * ((pos.x * 2 + 2) / (programWidth * 2 + 2)) + startX;
@@ -269,19 +302,8 @@ function updateActions(sequence, programWidth, index) {
                         }
                     }
 
-                    nameY = middle + (lowest * ACTION_HEIGHT * 2) - ACTION_HEIGHT;
+                    nameY = middle + (lowest * actionHeight * 2) - actionHeight;
                 }
-
-                var overlap = false;
-                do {
-                    overlap = false;
-                    for(var j = 0; j < names.length; j++) {
-                        if(nameY == names[j].y && nameX == names[j].x) {
-                            nameX -= 20;
-                            nameY -= 20;
-                        }
-                    }
-                } while (overlap)
 
                 names.push(new Name(sequence.actions[i].name, nameX, nameY, nextIndex.slice()));
             }
@@ -499,11 +521,11 @@ function Node(x, y, index) {
     this.highlighted = false;
 
     var angle = clipBoard.length == 0 ? 360 / 5 : 360 / 6;
-    this.positionAct = pointOnCircle(this.x, this.y, this.diameter, -90);
-    this.positionIte = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 1);
-    this.positionBra = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 2);
-    this.positionSel = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 3);
-    this.positionSeq = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 4);
+    this.positionAction = pointOnCircle(this.x, this.y, this.diameter, -90);
+    this.positionIterate = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 1);
+    this.positionBranch = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 2);
+    this.positionSelect = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 3);
+    this.positionSequence = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 4);
     this.positionPaste = pointOnCircle(this.x, this.y, this.diameter, -90 + angle * 5);
 
     this.press = function(x, y) {
@@ -524,14 +546,14 @@ function Node(x, y, index) {
             return false;
         }
 
-        var d = dist(x, y, this.positionAct.x, this.positionAct.y);
+        var d = dist(x, y, this.positionAction.x, this.positionAction.y);
         if(d < this.radius) {
             addAction(this.index);
             update();
             return true;
         }
 
-        d = dist(x, y, this.positionBra.x, this.positionBra.y);
+        d = dist(x, y, this.positionBranch.x, this.positionBranch.y);
         if(d < this.radius) {
             state = StateEnum.controlFlow;
             selectedIndex = this.index;
@@ -539,7 +561,7 @@ function Node(x, y, index) {
             return true;
         }
 
-        d = dist(x, y, this.positionIte.x, this.positionIte.y);
+        d = dist(x, y, this.positionIterate.x, this.positionIterate.y);
         if(d < this.radius) {
             state = StateEnum.controlFlow;
             selectedIndex = this.index;
@@ -547,7 +569,7 @@ function Node(x, y, index) {
             return true;
         }
 
-        d = dist(x, y, this.positionSel.x, this.positionSel.y);
+        d = dist(x, y, this.positionSelect.x, this.positionSelect.y);
         if(d < this.radius) {
             state = StateEnum.controlFlow;
             selectedIndex = this.index;
@@ -555,7 +577,7 @@ function Node(x, y, index) {
             return true;
         }
 
-        d = dist(x, y, this.positionSeq.x, this.positionSeq.y);
+        d = dist(x, y, this.positionSequence.x, this.positionSequence.y);
         if(d < this.radius) {
             state = StateEnum.controlFlow;
             selectedIndex = this.index;
@@ -605,19 +627,19 @@ function Node(x, y, index) {
     this.draw = function() {
         if(state != StateEnum.controlFlow && this.highlighted) {
             fill(255);
-            ellipse(this.positionAct.x, this.positionAct.y, this.diameter, this.diameter);
-            ellipse(this.positionIte.x, this.positionIte.y, this.diameter, this.diameter);
-            ellipse(this.positionBra.x, this.positionBra.y, this.diameter, this.diameter);
-            ellipse(this.positionSel.x, this.positionSel.y, this.diameter, this.diameter);
-            ellipse(this.positionSeq.x, this.positionSeq.y, this.diameter, this.diameter);
+            ellipse(this.positionAction.x, this.positionAction.y, this.diameter, this.diameter);
+            ellipse(this.positionIterate.x, this.positionIterate.y, this.diameter, this.diameter);
+            ellipse(this.positionBranch.x, this.positionBranch.y, this.diameter, this.diameter);
+            ellipse(this.positionSelect.x, this.positionSelect.y, this.diameter, this.diameter);
+            ellipse(this.positionSequence.x, this.positionSequence.y, this.diameter, this.diameter);
 
             textAlign(CENTER, CENTER);
             fill(0);
-            text('A', this.positionAct.x, this.positionAct.y);
-            text('I', this.positionIte.x, this.positionIte.y);
-            text('B', this.positionBra.x, this.positionBra.y);
-            text('Sl', this.positionSel.x, this.positionSel.y);
-            text('Sq', this.positionSeq.x, this.positionSeq.y);
+            text('A', this.positionAction.x, this.positionAction.y);
+            text('I', this.positionIterate.x, this.positionIterate.y);
+            text('B', this.positionBranch.x, this.positionBranch.y);
+            text('Sl', this.positionSelect.x, this.positionSelect.y);
+            text('Sq', this.positionSequence.x, this.positionSequence.y);
 
             if(clipBoard.length > 0) {
                 fill(255);
@@ -758,10 +780,10 @@ function Action(action) {
 
 
     this.press = function(programWidth, x, y) {
-        var yPos = (this.y * ACTION_HEIGHT * 2) + middle - (ACTION_HEIGHT / 2);
-        var xPos = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX - (ACTION_WIDTH / 2);
+        var yPos = (this.y * actionHeight * 2) + middle - (actionHeight / 2);
+        var xPos = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX - (actionWidth / 2);
 
-        if(x > xPos && x <= xPos +  ACTION_WIDTH &&  y > yPos && y < yPos + ACTION_HEIGHT) {
+        if(x > xPos && x <= xPos +  actionWidth &&  y > yPos && y < yPos + actionHeight) {
             state = StateEnum.form;
             selectedAction = this;
 
@@ -781,10 +803,10 @@ function Action(action) {
     }
 
     this.mouseOver = function(programWidth, x, y) {
-        var yPos = (this.y * ACTION_HEIGHT * 2) + middle - (ACTION_HEIGHT / 2);
-        var xPos = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX - (ACTION_WIDTH / 2);
+        var yPos = (this.y * actionHeight * 2) + middle - (actionHeight / 2);
+        var xPos = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX - (actionWidth / 2);
 
-        return (x > xPos && x <= xPos +  ACTION_WIDTH &&  y > yPos && y < yPos + ACTION_HEIGHT);
+        return (x > xPos && x <= xPos +  actionWidth &&  y > yPos && y < yPos + actionHeight);
     }
 
     this.update = function(index, programWidth) {
@@ -797,7 +819,7 @@ function Action(action) {
             prog = prog.actions[index[i]];
         }
 
-        var yPixels = (this.y * ACTION_HEIGHT * 2) + middle;
+        var yPixels = (this.y * actionHeight * 2) + middle;
         var xPixels = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX;
 
         // if action isn't the first action in a horixaontal control structure, add a node between this and the last action
@@ -842,18 +864,18 @@ function Action(action) {
     }
 
     this.draw = function(programWidth) {
-        var yPixels = (this.y * ACTION_HEIGHT * 2) + middle;
+        var yPixels = (this.y * actionHeight * 2) + middle;
         var xPixels = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX;
 
         fill(255);
-        rect(xPixels - (ACTION_WIDTH / 2), yPixels - (ACTION_HEIGHT / 2), ACTION_WIDTH, ACTION_HEIGHT);
+        rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
         fill(0);
         textAlign(CENTER, CENTER);
-        if(this.name.length <= 17) {
+        if(this.name.length <= 17 * scaleX) {
             text(this.name, xPixels, yPixels);
         }
         else {
-            text(this.name.substring(0, 14) + '...', xPixels, yPixels);
+            text(this.name.substring(0, 14 * scaleX) + '...', xPixels, yPixels);
         }
     }
 }
@@ -864,7 +886,7 @@ function drawLine(prog, x, y, programWidth) {
     var startLineXPixels = diagramWidth * ((x + 1) / (programWidth + 1)) + startX;
     var endLineXPixels = diagramWidth * (endLineX / (programWidth + 1)) + startX;
 
-    var yPixels = (y * ACTION_HEIGHT * 2) + middle;
+    var yPixels = (y * actionHeight * 2) + middle;
     line(startLineXPixels, yPixels, endLineXPixels, yPixels);
 
     return {"startX": startLineXPixels, "endX": endLineXPixels, "y": yPixels};
@@ -876,13 +898,13 @@ function drawIterationLoop(prog, x, y, index, programWidth) {
     var endLineX = sequenceLength(prog) + x;
     var endXRectPixels = diagramWidth * (endLineX / (programWidth + 1)) + startX;
 
-    var yPixels = (y * ACTION_HEIGHT * 2) + middle;
+    var yPixels = (y * actionHeight * 2) + middle;
 
     var yTop = lowestY(prog);
     var loopHeight = sequenceHeight(prog);
-    var rectHeight = loopHeight * ACTION_HEIGHT * 2;
+    var rectHeight = (loopHeight - 1) * actionHeight * 2 + actionHeight * 1.4;
 
-    rectPositionY = middle + (ACTION_HEIGHT * yTop * 2) - ACTION_HEIGHT;
+    rectPositionY = middle + (actionHeight * yTop * 2) - actionHeight * 0.7;
     var offset = nestedBoxes(prog) * 5;
 
     startXRectPixels = startXRectPixels;
@@ -897,13 +919,13 @@ function drawSequenceBox(prog, x, y, index, programWidth) {
     var endLineX = sequenceLength(prog) + x;
     var endXRectPixels = diagramWidth * (endLineX / (programWidth + 1)) + startX;
 
-    var yPixels = (y * ACTION_HEIGHT * 2) + middle;
+    var yPixels = (y * actionHeight * 2) + middle;
 
     var yTop = lowestY(prog);
     var loopHeight = sequenceHeight(prog);
-    var rectHeight = loopHeight * ACTION_HEIGHT * 2;
+    var rectHeight = (loopHeight - 1) * actionHeight * 2 + actionHeight * 1.4;
 
-    rectPositionY = middle + (ACTION_HEIGHT * yTop * 2) - ACTION_HEIGHT;
+    rectPositionY = middle + (actionHeight * yTop * 2) - actionHeight * 0.7;
     var offset = nestedBoxes(prog) * 5;
 
     startXRectPixels = startXRectPixels;
@@ -964,10 +986,10 @@ function drawBranchBars(prog, x, y, index, programWidth) {
         rectPositionYTwo = temp.y;
     }
 
-    rectPositionYOne = (rectPositionYOne * ACTION_HEIGHT * 2) + middle;
-    rectPositionYTwo = (rectPositionYTwo * ACTION_HEIGHT * 2) + middle;
+    rectPositionYOne = (rectPositionYOne * actionHeight * 2) + middle;
+    rectPositionYTwo = (rectPositionYTwo * actionHeight * 2) + middle;
 
-    var rectHeight = Math.abs(rectPositionYOne - rectPositionYTwo) + ACTION_HEIGHT + 10;
+    var rectHeight = Math.abs(rectPositionYOne - rectPositionYTwo) + actionHeight + 10;
     var rectPositionY;
 
     if(rectPositionYOne < rectPositionYTwo) {
@@ -977,7 +999,7 @@ function drawBranchBars(prog, x, y, index, programWidth) {
         rectPositionY = rectPositionYTwo;
     }
 
-    rectPositionY = rectPositionY - (ACTION_HEIGHT / 2) - 5;
+    rectPositionY = rectPositionY - (actionHeight / 2) - 5;
 
     fill(0)
     rect(lineDetails.startX - 5, rectPositionY, 10, rectHeight);
@@ -1006,8 +1028,8 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
         linePositionYEnd = temp.y;
     }
 
-    linePositionYStart = (linePositionYStart * ACTION_HEIGHT * 2) + middle;
-    linePositionYEnd = (linePositionYEnd * ACTION_HEIGHT * 2) + middle;
+    linePositionYStart = (linePositionYStart * actionHeight * 2) + middle;
+    linePositionYEnd = (linePositionYEnd * actionHeight * 2) + middle;
 
     line(lineDetails.startX, linePositionYStart, lineDetails.startX, linePositionYEnd);
     line(lineDetails.endX, linePositionYStart, lineDetails.endX, linePositionYEnd);
@@ -1134,20 +1156,18 @@ function mousePressedCanvas(event) {
     var x = event.clientX - offsetX;
     var y = event.clientY - offsetY;
     var programwidth = sequenceLength(program);
-    var pressed = pressActions(program.actions, programwidth, x, y);
+    var pressed = false;
 
-    for(var i = 0; i < nodes.length; i++) {
-        if(nodes[i].press(x, y)){
-            pressed = true;
-            break;
-        }
+    for(var i = 0; i < nodes.length && !pressed; i++) {
+        pressed = nodes[i].press(x, y);
     }
 
-    for(var i = 0; i < names.length; i++) {
-        if(names[i].press(x, y)){
-            pressed = true;
-            break;
-        }
+    for(var i = 0; i < names.length && !pressed; i++) {
+        pressed = names[i].press(x, y);
+    }
+
+    if(!pressed) {
+        pressed = pressActions(program.actions, programwidth, x, y);
     }
 
     if(!pressed) {
@@ -1238,11 +1258,11 @@ function mouseDragged(event) {
     }
     var offScreen = false, onScreen = 0;
     for(var i = 0; i < nodes.length; i++) {
-        if(nodes[i].y + offsetY - (ACTION_WIDTH / 2) < 0 || nodes[i].y + offsetY + (ACTION_WIDTH / 2) > height) {
+        if(nodes[i].y + offsetY - (actionWidth / 2) < 0 || nodes[i].y + offsetY + (actionWidth / 2) > height) {
             offScreen = true;
         }
 
-        if(nodes[i].y + offsetY +movementY - (ACTION_WIDTH / 2) > 0 && nodes[i].y + offsetY +movementY + (ACTION_WIDTH / 2) < height) {
+        if(nodes[i].y + offsetY +movementY - (actionWidth / 2) > 0 && nodes[i].y + offsetY +movementY + (actionWidth / 2) < height) {
             onScreen++;
         }
     }
@@ -1392,6 +1412,12 @@ function cutSequence() {
     deleteSequence();
     update();
 
+    $('#flowEditor').hide();
+    state = StateEnum.normal;
+}
+
+function cancel() {
+    $('#actionEditor').hide();
     $('#flowEditor').hide();
     state = StateEnum.normal;
 }

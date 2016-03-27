@@ -44,6 +44,9 @@
       <p align="center">
         <button type="button" value="enter" onClick="cutAction()">Cut Action</button>
       </p>
+      <p align="center">
+        <button type="button" value="enter" onClick="cancel()">Cancel</button>
+      </p>
       </table>
     </form>
     <form id="flowEditor">
@@ -52,6 +55,7 @@
         <p> Type:
           <select id="flowType" name="flowType">
             <option value="branch">Branch</option>
+            <option value="iteration">Iteration</option>
             <option value="selection">Selection</option>
             <option value="sequence">Sequence</option>
           </select>
@@ -64,6 +68,9 @@
         </p>
         <p align="center">
           <button type="button" value="enter" onClick="cutSequence()">Cut</button>
+        </p>
+        <p align="center">
+          <button type="button" value="enter" onClick="cancel()">Cancel</button>
         </p>
         </table>
       </form>
