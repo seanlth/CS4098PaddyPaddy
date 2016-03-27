@@ -4,7 +4,13 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Editor</title>
+
+{% if 'currentFile' in session%}
+  <title>{{session['currentFile']}}</title>
+{%else%}
+  <title>Editor</title>
+{% endif %}
+
 <style type=text/css>{{ get_resource_as_string('static/editor.css') }}</style>
 </head>
 <body>
@@ -39,8 +45,15 @@
                             document.getElementById('upload-file').onchange = function() {
                                 document.getElementById("fileUpload").submit();
                             }
+
                           </script>
                           <a1 onclick="$('input[id=upload-file]').click();">Upload</a1>
+                          <script>
+
+                          // $('input').change(function(){
+                          //    $(this).attr('title',($(this).val()));
+                          // });
+                          </script>
                         {% endif %}
                       </form>
                     </li>
@@ -67,6 +80,10 @@
             </li>
             <li>
                 <a href="javascript:run_hook()">Run </a>
+            </li>
+
+            <li>
+                <a href="javascript:parse_hook()">Parse </a>
             </li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
@@ -127,6 +144,12 @@
 	function undo_hook(){ console.log("undo pressed"); editor && editor.undo();}
 	function redo_hook(){ console.log("redo pressed"); editor && editor.redo();}
 
+    function parse_hook() {
+      console.log("parse pressed");
+      pushTemp(function(response){
+        window.location.href = "/diagram?useParsed=True";
+      });
+    }
 
     function new_hook() {
       console.log("new pressed");
@@ -149,6 +172,7 @@
     }
     function open_hook() {
       console.log("open pressed");
+      // document.title ="blah";
       window.location.href = 'openFile';
     }
     function upload_hook() {

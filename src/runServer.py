@@ -12,10 +12,12 @@ from database.database_insert import insert_user, insert_social_user
 from database.database_query import query_user,query_social_user, number_of_users
 
 import base64
+import json
 import os
 import shutil
 import tempfile
 
+import parser
 
 DEBUG = True
 app = Flask(__name__)
@@ -44,8 +46,6 @@ app.jinja_env.globals['get_resource_as_string'] = get_resource_as_string
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
-
-
 
 @app.route("/", methods=["POST"])
 def my_form_post():
@@ -97,11 +97,12 @@ def openFile():
         files = os.listdir(userpath)
     except: # userpath doesn't exist yet; create it and assume empty
         os.makedirs(userpath, exist_ok=True)
+    # print ("CURRENT file: ", session['currentFile'])
     return render_template('openFile.html', files=files)
 
-def uploadFile():
-    if not 'email' in session:
-        return redirect('/login?return_url=openFile')
+# def uploadFile():
+#     if not 'email' in session:
+#         return redirect('/login?return_url=openFile')
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -168,6 +169,15 @@ def saveFile(fname=None):
 
 @app.route("/diagram")
 def diagram():
+    if 'useParsed' in request.args and 'tempFile' in session:
+        tempFile = session['tempFile']
+        with open(tempFile) as f:
+            data = f.read()
+            try:
+                parsed = parser.parse(data) #TODO: proper error message
+                return render_template("diagramEditor.html", data=json.dumps(parsed))
+            except parser.ParserException: pass
+
     return render_template("diagramEditor.html")
 
 @app.route("/signup")
