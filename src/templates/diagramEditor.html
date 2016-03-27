@@ -179,7 +179,10 @@
 
     function new_hook() {
       console.log("new pressed");
-      setup();
+      selectedIndex = [];
+      clipBoard = [];
+      program = {name: "new_process", actions: new Array()};
+      update();
       $.ajax("/resetCurrent");
     }
 
