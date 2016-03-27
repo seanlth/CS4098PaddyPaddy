@@ -4,13 +4,13 @@ import itertools
 TOKENS = ( (r'[ \n\t]+'              , None)
          , (r'"[^"]*"'               , "STRING")
          , (r'/\*[^(\*/)]*\*/'       , None) # ignore comments
-         , (r'script'                , "SCRIPT")
-         , (r'process'               , "PROCESS")
-         , (r'select(ion)?'          , "SELECTION")
-         , (r'sequence'              , "SEQUENCE")
-         , (r'iteration'             , "ITERATION")
-         , (r'branch'                , "BRANCH")
-         , (r'action'                , "ACTION")
+         , (r'script[ \n\t{]'        , "SCRIPT")
+         , (r'process[ \n\t{]'       , "PROCESS")
+         , (r'select(ion)?[ \n\t{]'  , "SELECTION")
+         , (r'sequence[ \n\t{]'      , "SEQUENCE")
+         , (r'iteration[ \n\t{]'     , "ITERATION")
+         , (r'branch[ \n\t{]'        , "BRANCH")
+         , (r'action[ \n\t{]'        , "ACTION")
          , (r'manual'                , "MANUAL")
          , (r'executable'            , "EXECUTABLE")
          , (r'{'                     , "LBRACE")
@@ -67,7 +67,7 @@ def lex(content, token_exprs):
     pos = 0
     while pos < len(content):
         for (pattern, tag) in token_exprs:
-            regex = re.compile(pattern, flags=re.DOTALL)
+            regex = re.compile(pattern, flags=re.MULTILINE | re.DOTALL)
             match = regex.match(content, pos)
             if match:
                 text = match.group(0)
