@@ -194,22 +194,25 @@ function keyboardInput() {
 
     // zoooooooooooom
     if(key == '+') {
-        if(keyIsDown(SHIFT)) {
-            scaleY = scaleY < 2 ? scaleY + 0.02 : 2;
-        }
-        else {
-            scaleX = scaleX < 2 ? scaleX + 0.02 : 2;
-        }
+        scaleY = scaleY < 2 ? scaleY + 0.02 : 2;
+        scaleX = scaleX < 2 ? scaleX + 0.02 : 2;
     }
     else if(key == '-') {
-        if(keyIsDown(SHIFT)) {
-            scaleY = scaleY > 0.3 ? scaleY - 0.02 : 0.3;
-        }
-        else {
-            scaleX = scaleX > 0.3 ? scaleX - 0.02 : 0.3;
-        }
+        scaleY = scaleY > 0.3 ? scaleY - 0.02 : 0.3;
+        scaleX = scaleX > 0.3 ? scaleX - 0.02 : 0.3;
     }
-
+    else if(key == 'j') {
+        scaleX = scaleX > 0.3 ? scaleX - 0.02 : 0.3;
+    }
+    else if(key == 'l') {
+        scaleX = scaleX < 2 ? scaleX + 0.02 : 2;
+    }
+    else if(key == 'i') {
+        scaleY = scaleY < 2 ? scaleY + 0.02 : 2;
+    }
+    else if(key == 'k') {
+        scaleY = scaleY > 0.3 ? scaleY - 0.02 : 0.3;
+    }
 
     resetMatrix();
     translate(offsetX, offsetY);
