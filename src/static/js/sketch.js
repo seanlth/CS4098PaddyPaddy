@@ -1090,6 +1090,12 @@ function editAction() {
               + "only letters, numbers and underscrores.");
         return
     }
+	if ( agent.length == 0 ) {
+		agent = "";
+	}
+	else {
+		agent = predicateRegex.exec(agent)[1];
+	}
 
     var tool = document.getElementById('tool').value;
 
@@ -1101,6 +1107,13 @@ function editAction() {
               + "only letters, numbers and underscrores.");
         return
     }
+	if ( requires.length == 0 ) {
+		requires = "";
+	}
+	else {
+		requires = predicateRegex.exec(requires)[1];
+	}
+
 
     var provides = document.getElementById('provides').value;
     if(!predicateRegex.test(provides) && provides.length != 0) {
@@ -1109,14 +1122,21 @@ function editAction() {
               + "only letters, numbers and underscrores.");
         return
     }
+	if ( provides.length == 0 ) {
+		provides = "";
+	}
+	else {
+		provides = predicateRegex.exec(provides)[1];
+	}
+
 
     selectedAction.name = variableRegex.exec(name)[1];
     selectedAction.type = document.getElementById('type').value;
-    selectedAction.agent = predicateRegex.exec(agent)[1];
+    selectedAction.agent = agent
     selectedAction.script = document.getElementById('script').value;
     selectedAction.tool = tool;
-    selectedAction.requires = predicateRegex.exec(requires)[1];
-    selectedAction.provides = predicateRegex.exec(provides)[1];
+    selectedAction.requires = requires;
+    selectedAction.provides = provides;
     selectedAction.selected = false;
 
     $("#actionEditor").hide();
