@@ -70,8 +70,11 @@ def editor(filename = ""):
 
     if 'filename' in request.args or filename != "":
         filename = filename if filename else request.args['filename']
-        if 'email' in session:
-            email = session['email']
+        if ('email' in session) or ('social' in session):
+            if 'email' in session:
+                email = session['email']
+            elif 'social' in session:
+                email = session['social']
             userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
             filepath = os.path.join(userpath, filename)
             session['currentFile'] = filename
@@ -87,11 +90,14 @@ def editor(filename = ""):
 
 @app.route('/openFile')
 def openFile():
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
         return redirect('/login?return_url=openFile')
 
     files = []
-    email = session['email']
+    if 'email' in session:
+        email = session['email']
+    elif 'social' in session:
+        email = session['social']
     userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
     try:
         files = os.listdir(userpath)
@@ -106,10 +112,12 @@ def openFile():
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
         return "", 401 # not authorised
-
-    email = session['email']
+    if 'email' in session:
+        email = session['email']
+    elif 'social' in session:
+        email = session['social']
     file = request.files['file']
     filename = ""
     if file and allowed_file(file.filename):
@@ -125,8 +133,8 @@ def upload():
 
 @app.route('/save')
 def save():
-    print(session)
-    if not 'email' in session:
+    # print(session)
+    if (not 'email' in session) and (not 'social' in session):
         return redirect('/login?return_url=saveAs')
     if 'currentFile' in session:
         return saveFile(session['currentFile'])
@@ -134,7 +142,7 @@ def save():
 
 @app.route('/saveAs')
 def saveAs():
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
         return redirect('/login?return_url=saveAs')
     else:
         return render_template('saveFile.html')
@@ -143,7 +151,7 @@ def saveAs():
 @app.route('/saveAs', methods=['POST'])
 @app.route('/save', methods=['POST'])
 def saveFile(fname=None):
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
         return "", 401 # not authorised
 
     name = fname if fname else request.form['filename']
@@ -153,7 +161,10 @@ def saveFile(fname=None):
 
         if allowed_file(name):
             session['currentFile'] = name
-            email = session['email']
+            if 'email' in session:
+                email = session['email']
+            elif 'social' in session:
+                email = session['social']
             savepath = os.path.join(app.config['UPLOAD_FOLDER'], email)
             os.makedirs(savepath, exist_ok=True) # make the users save dir if it doesn't already exist
 
@@ -238,7 +249,7 @@ def logout():
 
     if 'email' in session:
         session.pop('email', None)
-    else:
+    elif 'social' in session:
         session.pop('social', None)
     if session.get('tempFile') is not None:
         session['tempFile'] = ""
