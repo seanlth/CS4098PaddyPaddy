@@ -526,7 +526,7 @@ function Node(x, y, index) {
     this.x = x;
     this.y = y;
 
-    this.radius = 10;
+    this.radius = 12;
     this.diameter = this.radius * 2;
     this.highlighted = false;
 
@@ -649,8 +649,8 @@ function Node(x, y, index) {
             text('A', this.positionAction.x, this.positionAction.y);
             text('I', this.positionIterate.x, this.positionIterate.y);
             text('B', this.positionBranch.x, this.positionBranch.y);
-            text('Sl', this.positionSelect.x, this.positionSelect.y);
-            text('Sq', this.positionSequence.x, this.positionSequence.y);
+            text('Sel', this.positionSelect.x, this.positionSelect.y);
+            text('Seq', this.positionSequence.x, this.positionSequence.y);
 
             if(clipBoard.length > 0) {
                 fill(255);
@@ -1309,7 +1309,7 @@ function editAction() {
     }
 
     var predicateRegex = new RegExp('^ *((([a-zA-Z_.0-9]+|\"[^\"]*\")( *([|][|]|&&) *([a-zA-Z_.0-9]+|\"[^\"]*\"))*))| * *$');
-	
+
 	// agent regex stuff here
     var agent = document.getElementById('agent').value;
     if ( !predicateRegex.test(agent) && agent.length != 0) {
@@ -1325,11 +1325,11 @@ function editAction() {
 	else {
 		agent = agentResult[1];
 	}
-	
+
 	// tool regex stuff here
 	var toolRegex = new RegExp('^ *([^\"]*) *$');
     var tool = document.getElementById('tool').value;
-	
+
 	if ( !toolRegex.test(tool) && tool.length != 0) {
         alert(  "The tool " + tool + " of the Action is invalid, "
               + "the tool must not contain \" characters.");
