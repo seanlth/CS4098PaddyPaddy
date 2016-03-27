@@ -621,6 +621,7 @@ function Node(x, y, index) {
                 }
 
                 update();
+                return true;
             }
         }
 
@@ -1407,7 +1408,7 @@ function editSequence() {
 function deleteSequence() {
     var prog = program;
     for(var i = 0; i < selectedIndex.length - 1; i++) {
-        prog = program.actions[selectedIndex[i]];
+        prog = prog.actions[selectedIndex[i]];
     }
 
     prog.actions.splice(selectedIndex[selectedIndex.length - 1], 1)
