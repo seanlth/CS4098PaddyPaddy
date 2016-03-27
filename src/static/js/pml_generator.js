@@ -69,11 +69,11 @@ function add_type(type) {
 // builds the action string
 function add_action(action, current_indentation) {
 	var node = "";
-	if ( action.requires != "" || 
+	if ( action.requires != "" ||
 		 action.provides != "" ||
-		 action.agent != "" || 
+		 action.agent != "" ||
 		 action.tool != ""||
-		 action.script != "" ) {  
+		 action.script != "" ) {
 		node = current_indentation + "action " + action.name + add_type(action.type) + " { \n";
 		node += add_requirements(action.requires, current_indentation + "    ");
 		node += add_provisions(action.provides, current_indentation + "    ");
@@ -122,7 +122,7 @@ function add_primitives(primitives, current_indentation) {
 	return primitives_string;
 }
 
-function json_to_pml(program) {
+function json_to_pml_redirect(program) {
 	var PML_code = "process " + program.name + " { \n";
 
 	PML_code += add_primitives(program.actions, "    ") + "\n";
@@ -132,6 +132,15 @@ function json_to_pml(program) {
       window.onbeforeunload = function () {};
       window.location.href = "/";
     } );
+
+	return PML_code;
+}
+
+function json_to_pml(program) {
+	var PML_code = "process " + program.name + " { \n";
+
+	PML_code += add_primitives(program.actions, "    ") + "\n";
+	PML_code += "}"
 
 	return PML_code;
 }

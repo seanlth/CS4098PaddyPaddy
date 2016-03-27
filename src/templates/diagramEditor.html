@@ -32,7 +32,7 @@
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">File </a>
                   <ul class="dropdown-menu">
                       <li><a href="javascript:new_hook()">New</a></li>
-                      <li><a href="javascript:open_hook()">Open</a></li>
+                      <!-- <li><a href="javascript:open_hook()">Open</a></li>
                       <li>
                         <form action="upload" method="post" enctype="multipart/form-data" id ="fileUpload">
                           {% if not 'email' in session %}
@@ -56,32 +56,17 @@
                         </form>
                       </li>
                       <li><a href="javascript:save_hook()">Save</a></li>
-                      <li><a href="javascript:saveAs_hook()">Save As</a></li>
+                      <li><a href="javascript:saveAs_hook()">Save As</a></li> -->
                       <!-- <li class="divider"></li> -->
                       <!-- <li><a href="#">Separated link</a></li> -->
                   </ul>
               </li>
-              <li class="dropdown">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Edit</a>
-                  <ul class="dropdown-menu">
-                      <li><a href="javascript:undo_hook()">Undo</a></li>
-                      <li><a href="javascript:redo_hook()">Redo</a></li>
-                  </ul>
-              </li>
-              <li class="dropdown">
-                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Bindings </a>
-                  <ul class="dropdown-menu">
-                      <li><a href="javascript:changeBindings('ace')">Ace</a></li>
-                      <li><a href="javascript:changeBindings('vim')">Vim</a></li>
-                      <li><a href="javascript:changeBindings('emacs')">Emacs</a></li>
-                  </ul>
-              </li>
               <li>
-                  <a href="javascript:run_hook()">Run </a>
+                  <a href="javascript:run_hook()">Analyse </a>
               </li>
 
               <li>
-                  <a href="javascript:parse_hook()">Parse </a>
+                  <a href="javascript:parse_hook()">Geneate PML </a>
               </li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
@@ -175,6 +160,7 @@
         </table>
       </form>
   </body>
+  <textarea id="outputPanel" disabled="disabled">Output</textarea>
   <script type="text/javascript">
     {% if data %}
       $(window).load(function(){
@@ -187,19 +173,13 @@
         return "Any progress you made on the diagram will be lost.";
     };
 
-    function undo_hook(){ console.log("undo pressed"); editor && editor.undo();}
-	function redo_hook(){ console.log("redo pressed"); editor && editor.redo();}
-
     function parse_hook() {
-      console.log("parse pressed");
-      pushTemp(function(response){
-        window.location.href = "/diagram?useParsed=True";
-      });
+      createPML();
     }
 
     function new_hook() {
       console.log("new pressed");
-      editor && editor.setValue("");
+      setup();
       $.ajax("/resetCurrent");
     }
 
@@ -224,6 +204,27 @@
     function upload_hook() {
       console.log("open pressed");
       window.location.href = 'openFile';
+    }
+
+    function run_hook() {
+        var pml = json_to_pml(program);
+
+        $.ajax({
+            url: '/',
+            data: { program: pml },
+            type: 'POST',
+            success: function(response) {
+                document.getElementById("outputPanel").innerHTML = response;
+                console.log(response);
+            },
+            error: function(error) {
+                alert(error.responseText);
+                document.getElementById("outputPanel").innerHTML = response;
+                highlight_error(error.responseText);
+            }
+        });
+
+        $("#outputPanel").show();
     }
     </script>
 </html>

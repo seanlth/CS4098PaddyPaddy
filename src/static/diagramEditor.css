@@ -10,28 +10,17 @@ element.style {
     position: fixed;
 }
 
-.Action {
-    position: fixed !important;
-    font-family: 'Orbitron';
-    background:#FFFFFF;
-    color:#000000;
-    font-size:10pt;
-    padding: 0;
-    text-align: center;
-    z-index: 1;
-    width: 120px;
-    height: 50px;
-    border: 1px solid #000;
-    overflow: hidden;
-}
-
-.Action:hover {
-    cursor: pointer;
-}
-
-.IterationButt {
-    position: fixed !important;
-    z-index: 1;
+#outputPanel {
+    display: none;
+    z-index: 5;
+    margin-top: 0;
+    padding: 0px;
+    border: 0px;
+    left: 15%;
+    top: 15%;
+    width: 70%;
+    height: 70%;
+    position: fixed;
 }
 
 select {

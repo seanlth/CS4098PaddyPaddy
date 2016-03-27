@@ -22,24 +22,13 @@
     color: #FFFFFF !important;
 }
 
-a:hover {
-    color: #FFFFFF !important;
-}
-
 a:focus {
     color: #777 !important;
 }
 
-a1:hover {
-    color: #FFFFFF !important;
-}
-
-a1:focus {
-    color: #777 !important;
-}
 form:hover{
   background-color: #f2f2f2;
-  color: #FFFFFF !important;
+  color: #000000 !important;
   cursor: pointer;
 }
 form{

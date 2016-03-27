@@ -53,7 +53,7 @@ function windowResized() {
 }
 
 function createPML() {
-    var pml_code = json_to_pml(program);
+    var pml_code = json_to_pml_redirect(program);
 }
 
 function drawJSON(json) {
@@ -309,7 +309,7 @@ function updateActions(sequence, programWidth, index) {
                         }
                     }
 
-                    nameY = middle + (lowest * actionHeight * 2) - actionHeight;
+                    nameY = middle + (lowest * actionHeight * 2) - actionHeight * 0.75;
                 }
 
                 names.push(new Name(sequence.actions[i].name, nameX, nameY, nextIndex.slice()));
@@ -737,7 +737,12 @@ function Name(name, x, y, index) {
         textAlign(CENTER, CENTER);
         text('...', this.x + this.buttonWidth / 2, this.y + this.buttonWidth / 2);
         textAlign(LEFT, TOP);
-        text(this.name, this.x + this.buttonWidth + 3, this.y);
+        if(this.name.length < 22 * scaleX) {
+            text(this.name, this.x + this.buttonWidth + 3, this.y);
+        }
+        else {
+            text(this.name.substring(0, 19 * scaleX) + '...', this.x + this.buttonWidth + 3, this.y);
+        }
     }
 }
 
@@ -1158,7 +1163,9 @@ function Sequence(index, replace){
 }
 
 function mousePressedCanvas(event) {
-    if (state == StateEnum.form) return;
+    $('#actionEditor').hide();
+    $('#flowEditor').hide();
+    $('#outputPanel').hide();
 
     var x = mouseX - offsetX;
     var y = mouseY - offsetY;
