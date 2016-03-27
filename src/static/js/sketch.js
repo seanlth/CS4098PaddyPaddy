@@ -193,24 +193,24 @@ function keyboardInput() {
     }
 
     // zoooooooooooom
-    if(key == '+') {
+    if(keyIsDown(107)) {
         scaleY = scaleY < 2 ? scaleY + 0.02 : 2;
         scaleX = scaleX < 2 ? scaleX + 0.02 : 2;
     }
-    else if(key == '-') {
+    else if(keyIsDown(109)) {
         scaleY = scaleY > 0.3 ? scaleY - 0.02 : 0.3;
         scaleX = scaleX > 0.3 ? scaleX - 0.02 : 0.3;
     }
-    else if(key == 'j') {
+    else if(keyIsDown(74)) {
         scaleX = scaleX > 0.3 ? scaleX - 0.02 : 0.3;
     }
-    else if(key == 'l') {
+    else if(keyIsDown(76)) {
         scaleX = scaleX < 2 ? scaleX + 0.02 : 2;
     }
-    else if(key == 'i') {
+    else if(keyIsDown(73)) {
         scaleY = scaleY < 2 ? scaleY + 0.02 : 2;
     }
-    else if(key == 'k') {
+    else if(keyIsDown(75)) {
         scaleY = scaleY > 0.3 ? scaleY - 0.02 : 0.3;
     }
 
