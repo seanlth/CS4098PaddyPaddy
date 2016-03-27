@@ -1128,7 +1128,9 @@ function mouseDragged(event) {
 }
 
 function editAction() {
-    var variableRegex = new RegExp('^[a-zA-Z_][a-zA-Z_0-9]*$')
+
+	// variable regex stuff here
+    var variableRegex = new RegExp('^ *([a-zA-Z_][a-zA-Z_0-9]*) *$')
     var name = document.getElementById('name').value;
     if (!variableRegex.test(name)) {
         alert(  "The name " + name + " of the Action is invalid, "
@@ -1137,27 +1139,58 @@ function editAction() {
         return
     }
 
-    var specRegex = new RegExp("^[a-zA-Z_][a-zA-Z_0-9]*|\"[^\"]*\"$")
-    var predicateRegex = new RegExp('^([a-zA-Z_.]+ *(\|\||\&\&)? *)*[a-zA-Z_.]+$');
-
+    var predicateRegex = new RegExp('^ *((([a-zA-Z_.0-9]+|\"[^\"]*\")( *([|][|]|&&) *([a-zA-Z_.0-9]+|\"[^\"]*\"))*))| * *$');
+	
+	// agent regex stuff here
     var agent = document.getElementById('agent').value;
-    if ( !specRegex.test(agent) && agent.length != 0) {
+    if ( !predicateRegex.test(agent) && agent.length != 0) {
         alert(  "The agent " + agent + " of the Action is invalid, "
               + "agents must be be strings or start with an underscore or letter and contain "
               + "only letters, numbers and underscrores.");
         return
     }
-
+	var agentResult = predicateRegex.exec(agent);
+	if  ( agentResult[1] == null || agent.length == 0 ) {
+		agent = "";
+	}
+	else {
+		agent = agentResult[1];
+	}
+	
+	// tool regex stuff here
+	var toolRegex = new RegExp('^ *([^\"]*) *$');
     var tool = document.getElementById('tool').value;
+	
+	if ( !toolRegex.test(tool) && tool.length != 0) {
+        alert(  "The tool " + tool + " of the Action is invalid, "
+              + "the tool must not contain \" characters.");
+        return
+    }
+	var toolResult = toolRegex.exec(tool);
+	if ( toolResult[1] == null || toolResult.length == 0 ) {
+		tool = "";
+	}
+	else {
+		tool = toolResult[1];
+	}
 
+	// requires regex stuff here
     var requires = document.getElementById('requires').value
-    if(!predicateRegex.test(requires) && requires.length != 0) {
+	if(!predicateRegex.test(requires) && requires.length != 0) {
         alert(  "The requirement \"" + requires + "\" of the Action is invalid, "
               + "requirements must start with an underscore or letter and contain "
               + "only letters, numbers and underscrores.");
         return
     }
+	var requiresResult = predicateRegex.exec(requires);
+	if ( requiresResult[1] == null || requiresResult.length == 0 ) {
+		requires = "";
+	}
+	else {
+		requires = requiresResult[1];
+	}
 
+	// provides regex stuff here
     var provides = document.getElementById('provides').value;
     if(!predicateRegex.test(provides) && provides.length != 0) {
         alert(  "The provision \"" + provides + "\" of the Action is invalid, "
@@ -1165,10 +1198,18 @@ function editAction() {
               + "only letters, numbers and underscrores.");
         return
     }
+	var providesResult = predicateRegex.exec(provides);
+	if ( providesResult[1] == null || providesResult.legnth == 0 ) {
+		provides = "";
+	}
+	else {
+		provides = providesResult[1];
+	}
 
-    selectedAction.name = name;
+
+    selectedAction.name = variableRegex.exec(name)[1];
     selectedAction.type = document.getElementById('type').value;
-    selectedAction.agent = agent;
+    selectedAction.agent = agent
     selectedAction.script = document.getElementById('script').value;
     selectedAction.tool = tool;
     selectedAction.requires = requires;
