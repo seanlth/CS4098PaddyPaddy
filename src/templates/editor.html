@@ -152,7 +152,9 @@
     function new_hook() {
       console.log("new pressed");
       editor && editor.setValue("");
-      $.ajax("/resetCurrent");
+      $.ajax({url:"/resetCurrent", success:function(){
+        window.location.href = "/";
+      }});
     }
 
 	function save_hook(){
