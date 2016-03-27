@@ -1081,7 +1081,7 @@ function editAction() {
         return
     }
 
-    var predicateRegex = new RegExp('^ *(\"[^\"]*\"|(([a-zA-Z_.0-9]+)( *([|][|]|&&) *[a-zA-Z_.0-9]+)*))| * *$');
+    var predicateRegex = new RegExp('^ *((([a-zA-Z_.0-9]+|\"[^\"]*\")( *([|][|]|&&) *([a-zA-Z_.0-9]+|\"[^\"]*\"))*))| * *$');
 	
 	// agent regex stuff here
     var agent = document.getElementById('agent').value;
