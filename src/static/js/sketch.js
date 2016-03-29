@@ -2,6 +2,7 @@ var canvas, startX, endX, middle;// variables for drawing
 var state, selectedAction, selectedIndex, currentControlFlow, generatePML; // variables for handling input
 var offsetX, offsetY, scaleX, scaleY, actionHeight, actionWidth;
 var clipBoard;
+var sequenceNum, selectionNum, iterationNum, branchNum, actionNum;
 
 var ACTION_HEIGHT = 50;
 var ACTION_WIDTH = 120;
@@ -44,6 +45,13 @@ function setup() {
     nodes = new Array();
 
     update();
+}
+
+function whatControlAction(){
+    if(currentControlFlow == FlowControlEnum.sequence){return sequenceNum++}
+    else if(currentControlFlow == FlowControlEnum.iteration){return iterationNum++}
+    else if(currentControlFlow == FlowControlEnum.branch){return branchNum++}
+    else if(currentControlFlow == FlowControlEnum.selection){return selectionNum++}    
 }
 
 function windowResized() {
@@ -612,11 +620,11 @@ function Node(x, y, index) {
                     var action = prog.actions.splice(this.index[this.index.length - 2], 1);
                     if(this.index[this.index.length - 1] == -1) {
                         prog.actions.splice(this.index[this.index.length - 2], 0,
-                            {name: 'New_Sequence', control: FlowControlEnum.sequence, actions: [clipBoard.pop()].concat(action)});
+                            {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: [clipBoard.pop()].concat(action)});
                     }
                     else {
                         prog.actions.splice(this.index[this.index.length - 2], 0,
-                            {name: 'New_Sequence', control: FlowControlEnum.sequence, actions: action.concat([clipBoard.pop()])});
+                            {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: action.concat([clipBoard.pop()])});
                     }
                 }
 
@@ -774,7 +782,7 @@ function Action(action) {
 
     // All the PML important details
     if(action) {
-        this.name     = action.name     || "New_Action";
+        this.name     = action.name     || "Action"+numActions;
         this.type     = action.type     || "";
         this.agent    = action.agent    || "";
         this.script   = action.script   || "";
@@ -784,7 +792,7 @@ function Action(action) {
         this.selected = action.selected || false;
     }
     else {
-        this.name     = "New_Action";
+        this.name     = "Action"+numActions;
         this.type     = "";
         this.agent    = "";
         this.script   = "";
@@ -1113,21 +1121,22 @@ function ControlFlow(firstIndex, secondIndex) {
 
     //selected same node twice, add iteration with new Action
     if(start[length - 1] == end[length - 1]) {
-        var blankControlFlow =  {name: 'New_' + currentControlFlow, control: currentControlFlow, actions: [new Action()]};
+        var flowType = whatControlAction();
+        var blankControlFlow =  {name: '' + currentControlFlow+ flowType, control: currentControlFlow, actions: [new Action()]};
         // if the new action is to be in a branch/selection, surround it in a sequence
         if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
             array.splice(start[length - 1], 0,
-                {name: "New_Sequence", control: FlowControlEnum.sequence, actions: [blankControlFlow]});
+                {name: "Sequence"+sequenceNum++, control: FlowControlEnum.sequence, actions: [blankControlFlow]});
             return;
         }
 
         array.splice(start[length - 1], 0, blankControlFlow);
         return;
     }
-
+    var controlType = whatControlAction();
     //adds a control flow to program
     array.splice(start[length - 1], end[length - 1] - start[length - 1],
-        {name: "New_" + currentControlFlow, control: currentControlFlow, actions: array.slice(start[length - 1], end[length - 1])});
+        {name: "" + currentControlFlow+ controlType, control: currentControlFlow, actions: array.slice(start[length - 1], end[length - 1])});
 }
 
 function Sequence(index, replace){
@@ -1140,12 +1149,14 @@ function Sequence(index, replace){
     var newAction;
     if(state == StateEnum.controlFlow) {
         if(replace) {
+            var flowType = whatControlAction();
             array.splice(index[index.length - 2], 1,
-                {name: 'New_' + currentControlFlow, control: currentControlFlow, actions: [array[index[index.length - 2]]]});
+                {name: '' + currentControlFlow+ flowType, control: currentControlFlow, actions: [array[index[index.length - 2]]]});
             return;
         }
         else {
-            newAction = {name: 'New_' + currentControlFlow, control: currentControlFlow, actions: [new Action()]};
+            var controlType = whatControlAction();
+            newAction = {name: '' + currentControlFlow+ controlType, control: currentControlFlow, actions: [new Action()]};
         }
     }
     else {
@@ -1163,7 +1174,7 @@ function Sequence(index, replace){
 
     //adds a sequence to program.actions
     array.splice(index[index.length - 2], 1,
-        {name: 'New_Sequence', control: FlowControlEnum.sequence, actions: sequenceArray});
+        {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: sequenceArray});
 }
 
 function mousePressedCanvas(event) {
