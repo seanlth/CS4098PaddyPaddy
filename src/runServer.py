@@ -21,7 +21,7 @@ import parser
 
 DEBUG = True
 app = Flask(__name__)
-REDIRECT_URI = '/oauth'
+# REDIRECT_URI = '/oauth'
 app.config['SECRET_KEY'] = 'secret'
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 # oauth = OAuth()
@@ -340,20 +340,20 @@ def oauth_callback(provider):
 #     return session.get('access_token')
 
 
-def oauthRedirect(user_data,next_url):
-
-    email = user_data["email"]
-    print('EMAIL', email)
-    user = query_user(email)
-    session['email'] = email
-
-    if user == None:
-        insert_user(email)
-    else:
-        flash('Authentication failed.')
-        return redirect(url_for('login'))
-
-    return redirect(next_url)
+# def oauthRedirect(user_data,next_url):
+#
+#     email = user_data["email"]
+#     print('EMAIL', email)
+#     user = query_user(email)
+#     session['email'] = email
+#
+#     if user == None:
+#         insert_user(email)
+#     else:
+#         flash('Authentication failed.')
+#         return redirect(url_for('login'))
+#
+#     return redirect(next_url)
 
 # @google.tokengetter
 # def get_access_token():
