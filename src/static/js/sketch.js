@@ -754,11 +754,13 @@ function Name(name, x, y, index) {
         textAlign(CENTER, CENTER);
         text('...', this.x + this.buttonWidth / 2, this.y + this.buttonWidth / 2);
         textAlign(LEFT, TOP);
-        if(this.name.length < 22 * scaleX) {
-            text(this.name, this.x + this.buttonWidth + 3, this.y);
-        }
-        else {
-            text(this.name.substring(0, 19 * scaleX) + '...', this.x + this.buttonWidth + 3, this.y);
+        if(this.name) {
+            if(this.name.length < 22 * scaleX) {
+                text(this.name, this.x + this.buttonWidth + 3, this.y);
+            }
+            else {
+                text(this.name.substring(0, 19 * scaleX) + '...', this.x + this.buttonWidth + 3, this.y);
+            }
         }
     }
 }
