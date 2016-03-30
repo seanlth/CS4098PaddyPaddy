@@ -3,7 +3,7 @@ from flask.ext.sqlalchemy import SQLAlchemy
 # from flask.ext.login import LoginManager, UserMixin, login_user, logout_user,\
     # current_user
 # from flask_oauth import OAuth
-# from oauth import OAuthSignIn
+from oauth import OAuthSignIn
 from subprocess import check_output, STDOUT, CalledProcessError
 from werkzeug import generate_password_hash, check_password_hash, secure_filename
 
