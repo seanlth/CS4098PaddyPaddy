@@ -259,6 +259,7 @@
           editor.resize();
       });
 
+      history.pushState(null, "", location.href.split("?")[0]);
       $(window).resize(resizeAce);
       resizeAce();
     });
