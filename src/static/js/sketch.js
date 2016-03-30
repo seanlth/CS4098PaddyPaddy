@@ -41,6 +41,11 @@ function setup() {
     selectedIndex = [];
     clipBoard = [];
 
+    sequenceNum = 1;
+    selectionNum = 1;
+    iterationNum = 1;
+    branchNum = 1;
+
     program = {name: "new_process", actions: new Array()};
     nodes = new Array();
 
