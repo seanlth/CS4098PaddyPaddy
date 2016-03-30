@@ -32,8 +32,6 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
 
-
-
 @app.route("/", methods=["POST"])
 def my_form_post():
     with tempfile.NamedTemporaryFile(mode='w+t', suffix='.pml') as f:
@@ -84,6 +82,7 @@ def openFile():
         files = os.listdir(userpath)
     except: # userpath doesn't exist yet; create it and assume empty
         os.makedirs(userpath, exist_ok=True)
+    # print ("CURRENT file: ", session['currentFile'])
     return render_template('openFile.html', files=files)
 
 # def uploadFile():
@@ -111,7 +110,6 @@ def upload():
 
 @app.route('/save')
 def save():
-    print(session)
     if not 'email' in session:
         return redirect('/login?return_url=saveAs')
     if 'currentFile' in session:
@@ -145,7 +143,7 @@ def saveFile(fname=None):
 
             saveFilePath = os.path.join(savepath, name)
             tempFilePath = session.pop("tempFile", None)
-           
+
             if tempFilePath:
                 shutil.copy(tempFilePath, saveFilePath)
                 return redirect('/?filename=%s'%name)
@@ -161,7 +159,7 @@ def diagram():
             data = f.read()
             try:
                 parsed = parser.parse(data) #TODO: proper error message
-                return render_template("diagramEditor.html", data=json.dumps(parsed)) 
+                return render_template("diagramEditor.html", data=json.dumps(parsed))
             except parser.ParserException: pass
 
     return render_template("diagramEditor.html")
@@ -221,13 +219,9 @@ def loginButton():
     return "Incorrect/Invalid e-mail and/or password<br/>", 401
 
 
-
 @app.route("/logout")
 def logout():
-    session.pop('email', None)
-    if session.get('tempFile') is not None:
-        session['tempFile'] = ""
-
+    session.clear()
     return redirect('/')
 
 
@@ -241,12 +235,7 @@ def tmp():
 
 @app.route("/resetCurrent")
 def resetCurrent():
-    if session.get('tempFile') is not None:
-        session['tempFile'] = ""
-
-    if session.get('currentFile') is not None:
-        session['currentFile'].pop()
-
+    session.pop('currentFile', None)
     return ""
 
 if __name__ == "__main__":

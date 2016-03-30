@@ -14,9 +14,7 @@ function save_generated_pml(pml, callback){
 
 function add_requirements(requirements, current_indentation) {
     if ( requirements != "" ) {
-	    var requirements_string = current_indentation + "requires { \n";
-        requirements_string += current_indentation + "    " + requirements + "\n";
-        requirements_string += current_indentation + "} \n";
+	    var requirements_string = current_indentation + "requires { " + requirements + " }\n";
 
         return requirements_string;
     }
@@ -25,9 +23,7 @@ function add_requirements(requirements, current_indentation) {
 
 function add_provisions(provides, current_indentation) {
     if ( provides != "" ) {
-	    var provides_string = current_indentation + "provides { \n";
-        provides_string += current_indentation + "    " + provides + "\n";
-        provides_string += current_indentation + "} \n";
+	    var provides_string = current_indentation + "provides { " + provides + " }\n";
 
         return provides_string;
     }
@@ -36,9 +32,7 @@ function add_provisions(provides, current_indentation) {
 
 function add_spec(spec, type, current_indentation) {
     if ( spec != "" ) {
-	    var spec_string = current_indentation + type + " { \n";
-        spec_string += current_indentation + "    " + spec + "\n";
-        spec_string += current_indentation + "} \n";
+	    var spec_string = current_indentation + type + " { " + spec + " }\n";
 
         return spec_string;
     }
@@ -58,9 +52,7 @@ function add_script(script, current_indentation) {
 
 function add_tool(tool, current_indentation) {
     if ( tool != "" ) {
-	    var tool_string = current_indentation + "tool { \n";
-        tool_string += current_indentation + "    " + "\"" + tool + "\"" + "\n";
-        tool_string += current_indentation + "} \n";
+	    var tool_string = current_indentation + "tool { \"" + tool + "\"" + " }\n" ;
 
         return tool_string;
     }
@@ -76,15 +68,24 @@ function add_type(type) {
 
 // builds the action string
 function add_action(action, current_indentation) {
-	node = current_indentation + "action " + action.name + add_type(action.type) + " { \n";
-	node += add_requirements(action.requires, current_indentation + "    ");
-	node += add_provisions(action.provides, current_indentation + "    ");
- 	node += add_spec(action.agent, "agent", current_indentation + "    ");
-	node += add_tool(action.tool, current_indentation + "    ");
- 	node += add_script(action.script, current_indentation + "    ");
-	node += current_indentation + "}";
-
-	return node;
+	var node = "";
+	if ( action.requires != "" ||
+		 action.provides != "" ||
+		 action.agent != "" ||
+		 action.tool != ""||
+		 action.script != "" ) {
+		node = current_indentation + "action " + action.name + add_type(action.type) + " { \n";
+		node += add_requirements(action.requires, current_indentation + "    ");
+		node += add_provisions(action.provides, current_indentation + "    ");
+ 		node += add_spec(action.agent, "agent", current_indentation + "    ");
+		node += add_tool(action.tool, current_indentation + "    ");
+ 		node += add_script(action.script, current_indentation + "    ");
+		node += current_indentation + "}";
+	}
+	else {
+		node = current_indentation + "action " + action.name + " { }"
+	}
+	return node
 }
 
 // returns a single primative
@@ -121,13 +122,25 @@ function add_primitives(primitives, current_indentation) {
 	return primitives_string;
 }
 
-function json_to_pml(program) {
+function json_to_pml_redirect(program) {
 	var PML_code = "process " + program.name + " { \n";
 
 	PML_code += add_primitives(program.actions, "    ") + "\n";
 	PML_code += "}"
 
-    save_generated_pml(PML_code, function(response) { window.open('/') } );
+    save_generated_pml(PML_code, function(response) {
+      window.onbeforeunload = function () {};
+      window.location.href = "/";
+    } );
+
+	return PML_code;
+}
+
+function json_to_pml(program) {
+	var PML_code = "process " + program.name + " { \n";
+
+	PML_code += add_primitives(program.actions, "    ") + "\n";
+	PML_code += "}"
 
 	return PML_code;
 }
