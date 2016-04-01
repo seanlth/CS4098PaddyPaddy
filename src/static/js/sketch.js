@@ -272,6 +272,55 @@ function drawActions(sequence, programWidth, index) {
     }
 }
 
+// adds the actions positional information to an agent array 
+// if the array doesn't exist it creates it
+function addToAgentArray(agentArray, action) {
+	var foundAgentArray = false;
+	var index = -1;
+	
+	// search for the array with the same agent 
+	for ( var i = 0; i < agentArray.length; i++ ) {
+		var array = agentArray[i];
+		
+		// found the array
+		if ( array.agent == action.agent ) {
+			foundAgentArray = true;
+			index = i;
+			break;
+		}
+	}
+	
+	// add to or create the array
+	if ( foundAgentArray == true ) {
+		var p = {x: action.xPixelPosition, y: action.yPixelPosition};  
+		agentArray[index].positions.push(p);
+	}
+	else {
+		var p = {x: action.xPixelPosition, y: action.yPixelPosition};  
+		var newArray = {agent: action.agent, positions: [p]};
+		agentArray.push(newArray);
+	}
+}
+
+// takes all the actions 
+// returns arrays of locatiosn 
+// each actions in an array share an agent
+function createAgentFlowLines(agentArray, actions) {
+	
+	// should be using for-each but js is too spooky for me
+	for ( var i = 0; i < actions.length; i++ ) {
+		var primitive = actions[i];
+
+		if ( primitive.hasOwnProperty('control') ) {
+			createAgentFlowLines(agentArray, primitive.actions);	
+		}
+		else {
+			addToAgentArray(agentArray, primitive);
+		}
+	}
+	console.log(agentArray);
+}
+
 function updateActions(sequence, programWidth, index) {
     for(var i = 0; i < sequence.actions.length; i++) {
         if(sequence.actions[i].constructor == Action) {
@@ -786,6 +835,8 @@ function Action(action) {
     this.id = numActions++;
     this.x;
     this.y;
+	this.xPixelPosition;
+	this.yPixelPosition;
 
     // All the PML important details
     if(action) {
@@ -897,6 +948,9 @@ function Action(action) {
     this.draw = function(programWidth) {
         var yPixels = (this.y * actionHeight * 2) + middle;
         var xPixels = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX;
+		
+		this.xPixelPosition = xPixels;
+		this.yPixelPosition = yPixels;
 
         fill(255);
         rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
