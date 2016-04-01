@@ -146,12 +146,8 @@ def upload():
 
 @app.route('/save')
 def save():
-<<<<<<< HEAD
     # print(session)
     if (not 'email' in session) and (not 'social' in session):
-=======
-    if not 'email' in session:
->>>>>>> master
         return redirect('/login?return_url=saveAs')
     if 'currentFile' in session:
         return saveFile(session['currentFile'])
@@ -263,7 +259,6 @@ def loginButton():
 
 @app.route("/logout")
 def logout():
-<<<<<<< HEAD
 
     if 'email' in session:
         session.pop('email', None)
@@ -271,9 +266,8 @@ def logout():
         session.pop('social', None)
     if session.get('tempFile') is not None:
         session['tempFile'] = ""
-=======
     session.clear()
->>>>>>> master
+
     return redirect('/')
 
 @app.route("/tmp", methods=["POST"])
