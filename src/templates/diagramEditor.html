@@ -106,20 +106,12 @@
           <option value="executable">Executable</option>
         </select>
       </p>
-      <p> Agent:
-        <input type="text" id="agent" name="agent"/>
-      </p>
+      <p> Agent: <span id="agent" name="agent">&lt;None&gt;</span> <a href="#" id="agent-edit" class="btn btn-sm btn-default">edit <span class="glyphicon glyphicon-edit"></span></a> </p>
+      <p> Tool: <span id="tool" name="tool">&lt;None&gt;</span> <a href="#" id="tool-edit" class="btn btn-sm btn-default">edit <span class="glyphicon glyphicon-edit"></span></a> </p>
+      <p> Requires: <span id="requires" name="requires">&lt;None&gt;</span> <a href="#" id="requires-edit" class="btn btn-sm btn-default">edit <span class="glyphicon glyphicon-edit"></span></a> </p>
+      <p> Provides: <span id="provides" name="provides">&lt;None&gt;</span> <a href="#" id="provides-edit" class="btn btn-sm btn-default">edit <span class="glyphicon glyphicon-edit"></span></a> </p>
       <p> Script: </p>
       <textarea id="script" name="script"></textarea>
-      <p> Tool:
-        <input type="text" id="tool" name="tool"/>
-      </p>
-      <p> Requires:
-        <input type="text" id="requires" name="tool"/>
-      </p>
-      <p> Provides:
-        <input type="text" id="provides" name="tool"/>
-      </p>
       <p align="center">
         <button type="button" value="enter" onClick="editAction()">Done</button>
       </p>
@@ -159,6 +151,12 @@
         </p>
         </table>
       </form>
+    <form id="predicateEditor">
+      <p align="center">
+        <p>Field: <Input type="text" name="field" id="field"/></p>
+      </p>
+      <button type="button" value="enter" onClick="exitPredicateEditor()">Cancel</button>
+    </form>
   </body>
   <textarea id="outputPanel" disabled="disabled">Output</textarea>
   <script type="text/javascript">
@@ -172,6 +170,13 @@
     {
         return "Any progress you made on the diagram will be lost.";
     };
+
+    $(function(){
+      $("#agent-edit").on('click',    editAgent);
+      $("#tool-edit").on('click',     editTool);
+      $("#requires-edit").on('click', editRequires);
+      $("#provides-edit").on('click', editProvides);
+    });
 
     function parse_hook() {
       createPML();

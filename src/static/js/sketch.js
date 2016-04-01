@@ -790,7 +790,7 @@ function Action(action) {
     // All the PML important details
     if(action) {
         this.name     = action.name     || "Action"+numActions;
-        this.type     = action.type     || "";
+        this.type     = action.type     || "none";
         this.agent    = action.agent    || "";
         this.script   = action.script   || "";
         this.tool     = action.tool     || "";
@@ -800,7 +800,7 @@ function Action(action) {
     }
     else {
         this.name     = "Action"+numActions;
-        this.type     = "";
+        this.type     = "none";
         this.agent    = "";
         this.script   = "";
         this.tool     = "";
@@ -820,13 +820,14 @@ function Action(action) {
 
             $("#actionEditor").show();
 
-            document.getElementById('name').value = this.name;
-            document.getElementById('type').value = this.type;
-            document.getElementById('agent').value = this.agent;
-            document.getElementById('script').value = this.script;
-            document.getElementById('tool').value = this.tool;
-            document.getElementById('requires').value = this.requires;
-            document.getElementById('provides').value = this.provides;
+            $('#name').val(this.name);
+            $('#type').val(this.type);
+            $('#script').val(this.script);
+
+            if (this.agent != "") $('#agent').html(this.agent);
+            if (this.tool != "") $('#tool').html(this.tool);
+            if (this.requires != "") $('#requires').html(this.requires);
+            if (this.provides != "") $('#provides').html(this.provides);
 
             return true;
         }
@@ -1187,6 +1188,7 @@ function Sequence(index, replace){
 function mousePressedCanvas(event) {
     $('#actionEditor').hide();
     $('#flowEditor').hide();
+    $('#predicateEditor').hide();
     $('#outputPanel').hide();
 
     var x = mouseX - offsetX;
@@ -1315,92 +1317,13 @@ function mouseDragged(event) {
 }
 
 function editAction() {
-
-	// variable regex stuff here
-    var variableRegex = new RegExp('^ *([a-zA-Z_][a-zA-Z_0-9]*) *$')
-    var name = document.getElementById('name').value;
-    if (!variableRegex.test(name)) {
-        alert(  "The name " + name + " of the Action is invalid, "
-              + "Action names must start with an underscore or letter and contain"
-              + " only letters, numbers and underscrores.");
-        return
-    }
-
-    var predicateRegex = new RegExp('^ *((([a-zA-Z_.0-9]+|\"[^\"]*\")( *([|][|]|&&) *([a-zA-Z_.0-9]+|\"[^\"]*\"))*))| * *$');
-
-	// agent regex stuff here
-    var agent = document.getElementById('agent').value;
-    if ( !predicateRegex.test(agent) && agent.length != 0) {
-        alert(  "The agent " + agent + " of the Action is invalid, "
-              + "agents must be be strings or start with an underscore or letter and contain "
-              + "only letters, numbers and underscrores.");
-        return
-    }
-	var agentResult = predicateRegex.exec(agent);
-	if  ( agentResult[1] == null || agent.length == 0 ) {
-		agent = "";
-	}
-	else {
-		agent = agentResult[1];
-	}
-
-	// tool regex stuff here
-	var toolRegex = new RegExp('^ *([^\"]*) *$');
-    var tool = document.getElementById('tool').value;
-
-	if ( !toolRegex.test(tool) && tool.length != 0) {
-        alert(  "The tool " + tool + " of the Action is invalid, "
-              + "the tool must not contain \" characters.");
-        return
-    }
-	var toolResult = toolRegex.exec(tool);
-	if ( toolResult[1] == null || toolResult.length == 0 ) {
-		tool = "";
-	}
-	else {
-		tool = toolResult[1];
-	}
-
-	// requires regex stuff here
-    var requires = document.getElementById('requires').value
-	if(!predicateRegex.test(requires) && requires.length != 0) {
-        alert(  "The requirement \"" + requires + "\" of the Action is invalid, "
-              + "requirements must start with an underscore or letter and contain "
-              + "only letters, numbers and underscrores.");
-        return
-    }
-	var requiresResult = predicateRegex.exec(requires);
-	if ( requiresResult[1] == null || requiresResult.length == 0 ) {
-		requires = "";
-	}
-	else {
-		requires = requiresResult[1];
-	}
-
-	// provides regex stuff here
-    var provides = document.getElementById('provides').value;
-    if(!predicateRegex.test(provides) && provides.length != 0) {
-        alert(  "The provision \"" + provides + "\" of the Action is invalid, "
-              + "provisions must start with an underscore or  letter and contain "
-              + "only letters, numbers and underscrores.");
-        return
-    }
-	var providesResult = predicateRegex.exec(provides);
-	if ( providesResult[1] == null || providesResult.legnth == 0 ) {
-		provides = "";
-	}
-	else {
-		provides = providesResult[1];
-	}
-
-
-    selectedAction.name = variableRegex.exec(name)[1];
-    selectedAction.type = document.getElementById('type').value;
-    selectedAction.agent = agent
-    selectedAction.script = document.getElementById('script').value;
-    selectedAction.tool = tool;
-    selectedAction.requires = requires;
-    selectedAction.provides = provides;
+    selectedAction.name     = $('#name').val();
+    selectedAction.type     = $('#type').val();
+    selectedAction.agent    = $('#agent').val();
+    selectedAction.script   = $('#script').val();
+    selectedAction.tool     = $('#tool').val();
+    selectedAction.requires = $('#requires').val();
+    selectedAction.provides = $('#provides').val();
     selectedAction.selected = false;
 
     $("#actionEditor").hide();
@@ -1497,4 +1420,32 @@ function cancel() {
     $('#actionEditor').hide();
     $('#flowEditor').hide();
     state = StateEnum.normal;
+}
+
+function editAgent(){
+  var agent = selectedAction.agent;
+  $('#field').val(agent);
+  $('#predicateEditor').show();
+}
+
+function editTool(){
+  var tool = selectedAction.tool;
+  $('#field').val(tool);
+  $('#predicateEditor').show();
+}
+
+function editRequires(){
+  var requires = selectedAction.requires;
+  $('#requires').val(requires);
+  $('#predicateEditor').show();
+}
+
+function editProvides(){
+  var provides = selectedAction.provides;
+  $('#provides').val(provides);
+  $('#predicateEditor').show();
+}
+
+function exitPredicateEditor(){
+  $('#predicateEditor').hide();
 }
