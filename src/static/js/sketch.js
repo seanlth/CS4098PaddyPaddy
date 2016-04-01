@@ -3,6 +3,7 @@ var state, selectedAction, selectedIndex, currentControlFlow, generatePML; // va
 var offsetX, offsetY, scaleX, scaleY, actionHeight, actionWidth;
 var clipBoard;
 var sequenceNum, selectionNum, iterationNum, branchNum, actionNum;
+var actionColour;
 
 var ACTION_HEIGHT = 50;
 var ACTION_WIDTH = 120;
@@ -22,6 +23,12 @@ var FlowControlEnum = {
     sequence: "sequence"
 };
 
+var ActionColourEnum = {
+    none: 0,
+    analysis: 1,
+    agent: 2
+}
+
 function setup() {
     state = StateEnum.normal;
     canvas = createCanvas(windowWidth, windowHeight - 50);
@@ -40,6 +47,7 @@ function setup() {
     actionWidth = ACTION_WIDTH;
     selectedIndex = [];
     clipBoard = [];
+    actionColour = ActionColourEnum.none;
 
     sequenceNum = 1;
     selectionNum = 1;
@@ -56,7 +64,7 @@ function whatControlAction(){
     if(currentControlFlow == FlowControlEnum.sequence){return sequenceNum++}
     else if(currentControlFlow == FlowControlEnum.iteration){return iterationNum++}
     else if(currentControlFlow == FlowControlEnum.branch){return branchNum++}
-    else if(currentControlFlow == FlowControlEnum.selection){return selectionNum++}    
+    else if(currentControlFlow == FlowControlEnum.selection){return selectionNum++}
 }
 
 function windowResized() {
@@ -898,9 +906,57 @@ function Action(action) {
         var yPixels = (this.y * actionHeight * 2) + middle;
         var xPixels = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX;
 
-        fill(255);
-        rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
-        fill(0);
+        if(actionColour == ActionColourEnum.none) {
+            fill(255);
+            rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+            fill(0);
+        }
+        else if(actionColour == ActionColourEnum.analysis) {
+            var requiresIdentifiers = this.requires.split(/[\s,&&,==,||]+/);
+            var providesIdentifiers = this.provides.split(/[\s,&&,==,||]+/);
+
+            var transforms = true;
+            for(var i = 0; i < providesIdentifiers.length; i++) {
+                var p = providesIdentifiers[i].split(/[.]+/)[0];
+                var match = false;
+                for(var j = 0; j < requiresIdentifiers.length; j++) {
+                    if(p == requiresIdentifiers[j].split(/[.]+/)[0]) {
+                        match = true;
+                    }
+                }
+                transforms = transforms && !match;
+            }
+
+            if(this.requires.length == 0 && this.provides.length == 0) {
+                //empty
+                fill(255, 255, 0);
+                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                fill(0);
+            }
+            else if(this.provides.length == 0) {
+                //blackhole
+                fill(0);
+                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                fill(255);
+            }
+            else if(this.requires.length == 0) {
+                //miracle
+                fill(0, 255, 255);
+                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                fill(0);
+            }
+            else if(transforms) {
+                //tranforms
+                fill(0, 255, 0);
+                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                fill(0);
+            }
+            else {
+                fill(255);
+                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                fill(0);
+            }
+        }
         textAlign(CENTER, CENTER);
         if(this.name.length <= 17 * scaleX) {
             text(this.name, xPixels, yPixels);
