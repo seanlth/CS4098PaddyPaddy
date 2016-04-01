@@ -28,7 +28,7 @@
           <span class="icon-bar"></span>
         </button>
     </div>
-    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+    <div class="navbar-collapse" id="bs-example-navbar-collapse-1">
         <ul class="nav navbar-nav">
             <li class="dropdown">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">File </a>
@@ -72,11 +72,11 @@
                 </ul>
             </li>
             <li>
-                <a href="javascript:run_hook()">Run </a>
+                <a href="javascript:run_hook()">Analyse </a>
             </li>
 
             <li>
-                <a href="javascript:parse_hook()">Parse </a>
+                <a href="javascript:parse_hook()">View </a>
             </li>
         </ul>
         <ul class="nav navbar-nav navbar-right">
@@ -147,7 +147,9 @@
     function new_hook() {
       console.log("new pressed");
       editor && editor.setValue("");
-      $.ajax("/resetCurrent");
+      $.ajax({url:"/resetCurrent", success:function(){
+        window.location.href = "/";
+      }});
     }
 
 	function save_hook(){
