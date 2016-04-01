@@ -36,7 +36,8 @@
                     <li><a href="javascript:new_hook()">New</a></li>
                     <li><a href="javascript:open_hook()">Open</a></li>
                     <li>
-                      <form action="upload" method="post" enctype="multipart/form-data" id ="fileUpload">
+
+                      <form action="upload" method="post" enctype="multipart/form-data" class="uploadForm" id ="fileUpload">
                         {% if not 'email' in session %}
                           <a href="/login" style="color: #333333;">Upload</a>
                         {% else %}

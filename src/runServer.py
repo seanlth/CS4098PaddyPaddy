@@ -22,6 +22,7 @@ app = Flask(__name__)
 app.secret_key = 'fe2917b485cc985c47071f3e38273348' # echo team paddy paddy | md5sum
 app.config['UPLOAD_FOLDER'] = 'userFiles/'
 app.config['ALLOWED_EXTENSIONS'] = set(['pml'])
+app.config['ALLOWED_EXTENSIONS_IMG'] = set(['png'])
 
 def get_resource_as_string(name, charset='utf-8'):
     with app.open_resource(name) as f:
@@ -31,8 +32,9 @@ app.jinja_env.globals['get_resource_as_string'] = get_resource_as_string
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS']
-
-@app.route("/", methods=["POST"])
+def allowed_file_img(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1] in app.config['ALLOWED_EXTENSIONS_IMG']@app.route("/", methods=["POST"])
 def my_form_post():
     with tempfile.NamedTemporaryFile(mode='w+t', suffix='.pml') as f:
         fname = f.name
@@ -116,12 +118,27 @@ def save():
         return saveFile(session['currentFile'])
     return saveAs()
 
+@app.route('/saveImg')
+def saveImg():
+    if not 'email' in session:
+        return redirect('/login?return_url=saveAsImg')
+    if 'currentFile' in session:
+        return saveFileImg(session['currentFile'])
+    return saveAsImg()
+
 @app.route('/saveAs')
 def saveAs():
     if not 'email' in session:
         return redirect('/login?return_url=saveAs')
     else:
         return render_template('saveFile.html')
+
+@app.route('/saveAsImg')
+def saveAsImg():
+    if not 'email' in session:
+        return redirect('/login?return_url=saveAsImg')
+    else:
+        return render_template('saveFileImg.html')
 
 
 @app.route('/saveAs', methods=['POST'])
@@ -150,6 +167,33 @@ def saveFile(fname=None):
 
     flash("Invalid File")
     return redirect('/saveAs')
+
+@app.route('/saveAsImg', methods=['POST'])
+@app.route('/saveImg', methods=['POST'])
+def saveFileImg(fname=None):
+    if not 'email' in session:
+        return "", 401 # not authorised
+
+    name = fname if fname else request.form['filename']
+    if name:
+        if name[-4:] != ".png": # check for '.pn' extension
+            name += ".png"
+
+        if allowed_file_img(name):
+            session['currentFile'] = name
+            email = session['email']
+            savepath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+            os.makedirs(savepath, exist_ok=True) # make the users save dir if it doesn't already exist
+
+            saveFilePath = os.path.join(savepath, name)
+            tempFilePath = session.pop("tempFile", None)
+
+            if tempFilePath:
+                shutil.copy(tempFilePath, saveFilePath)
+                return redirect('/diagram?filename=%s'%name)
+
+    flash("Invalid File")
+    return redirect('/saveAsImg')
 
 @app.route("/diagram")
 def diagram():
@@ -216,7 +260,8 @@ def loginButton():
             else:
                 return redirect('/')
 
-    return "Incorrect/Invalid e-mail and/or password<br/>", 401
+    flash ("Incorrect/Invalid e-mail and/or password")
+    return redirect("/login")
 
 
 @app.route("/logout")
