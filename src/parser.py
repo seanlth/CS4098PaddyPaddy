@@ -3,13 +3,14 @@ import itertools
 
 TOKENS = ( (r'[ \n\t]+'              , None)
          , (r'"[^"]*"'               , "STRING")
-         , (r'/\*[^(\*/)]*\*/'       , None) # ignore comments
-         , (r'script'                , "SCRIPT")
-         , (r'process'               , "PROCESS")
-         , (r'sequence'              , "SEQUENCE")
-         , (r'iteration'             , "ITERATION")
-         , (r'branch'                , "BRANCH")
-         , (r'action'                , "ACTION")
+         , (r'/\*((?!(\*/)).)*\*/'   , None) # ignore comments
+         , (r'script[ \n\t{]'        , "SCRIPT")
+         , (r'process[ \n\t{]'       , "PROCESS")
+         , (r'select(ion)?[ \n\t{]'  , "SELECTION")
+         , (r'sequence[ \n\t{]'      , "SEQUENCE")
+         , (r'iteration[ \n\t{]'     , "ITERATION")
+         , (r'branch[ \n\t{]'        , "BRANCH")
+         , (r'action[ \n\t{]'        , "ACTION")
          , (r'manual'                , "MANUAL")
          , (r'executable'            , "EXECUTABLE")
          , (r'{'                     , "LBRACE")
@@ -66,7 +67,7 @@ def lex(content, token_exprs):
     pos = 0
     while pos < len(content):
         for (pattern, tag) in token_exprs:
-            regex = re.compile(pattern, flags=re.DOTALL)
+            regex = re.compile(pattern, flags=re.MULTILINE | re.DOTALL)
             match = regex.match(content, pos)
             if match:
                 text = match.group(0)
@@ -103,6 +104,8 @@ def listOf(pFunc):
 def prim():
     if check("SEQUENCE"):
         return control("sequence")
+    elif check("SELECTION"):
+        return control("selection")
     elif check("ITERATION"):
         return control("iteration")
     elif check("BRANCH"):
