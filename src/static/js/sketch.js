@@ -9,6 +9,8 @@ var ACTION_WIDTH = 120;
 
 var numActions = 0;
 
+var drawingSwimLanes = false;
+
 var StateEnum = {
     normal: 0,
     form: 1,
@@ -94,6 +96,7 @@ function drawJSON(json) {
 
 function draw() {
     background(255);
+	stroke(0);
     var lastScaleX = scaleX;
     var lastScaleY = scaleY;
     keyboardInput();
@@ -125,6 +128,12 @@ function draw() {
     for(var i = 0; i < nodes.length; i++) {
         nodes[i].draw();
     }
+	
+	if ( drawingSwimLanes == true ) {
+		background(255);
+		drawAgentFlowLines();
+	}
+
 }
 
 function update() {
@@ -272,6 +281,26 @@ function drawActions(sequence, programWidth, index) {
     }
 }
 
+function hashColour(agentName) {
+	var hash = 0;
+	
+	for (var i = 0; i < agentName.length; i++) {
+		var c = agentName[i].charCodeAt(0);
+			hash = c + (hash << 6) + (hash << 16) - hash;
+	}
+	hash *= hash;
+	hash = hash % (256*256*256);
+
+	var r1 = hash / 256;
+	var b = hash % 256;
+	var r2 = r1 / 256;
+	var g = r1 % 256;			    
+	var r = r2 % 256; 
+	
+
+	return {r: r, g: g, b: b};
+}
+
 // adds the actions positional information to an agent array 
 // if the array doesn't exist it creates it
 function addToAgentArray(agentArray, action) {
@@ -297,7 +326,8 @@ function addToAgentArray(agentArray, action) {
 	}
 	else {
 		var p = {x: action.xPixelPosition, y: action.yPixelPosition};  
-		var newArray = {agent: action.agent, positions: [p]};
+
+		var newArray = {agent: action.agent, positions: [p], colour: hashColour(action.agent)};
 		agentArray.push(newArray);
 	}
 }
@@ -318,7 +348,14 @@ function createAgentFlowLines(agentArray, actions) {
 			addToAgentArray(agentArray, primitive);
 		}
 	}
-	console.log(agentArray);
+}
+
+function drawAgentFlowLines() {
+	var agentArray = [];
+	createAgentFlowLines(agentArray, program.actions);
+	var startPosition = {x: startX, y: middle};
+	var endPosition = {x: endX, y: middle};
+	drawFlowLines(startPosition, endPosition, agentArray);
 }
 
 function updateActions(sequence, programWidth, index) {
@@ -705,7 +742,7 @@ function Node(x, y, index) {
             ellipse(this.positionBranch.x, this.positionBranch.y, this.diameter, this.diameter);
             ellipse(this.positionSelect.x, this.positionSelect.y, this.diameter, this.diameter);
             ellipse(this.positionSequence.x, this.positionSequence.y, this.diameter, this.diameter);
-
+			
             textAlign(CENTER, CENTER);
             fill(0);
             text('A', this.positionAction.x, this.positionAction.y);
