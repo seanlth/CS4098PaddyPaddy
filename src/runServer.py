@@ -19,7 +19,7 @@ import tempfile
 
 import parser
 
-DEBUG = True
+DEBUG = False
 app = Flask(__name__)
 # REDIRECT_URI = '/oauth'
 app.config['SECRET_KEY'] = 'secret'
