@@ -64,8 +64,8 @@
               <li class="dropdown">
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Action Colour </a>
                   <ul class="dropdown-menu">
-                      <li><a href="javascript:actionColour = ActionColourEnum.none">None</a></li>
-                      <li><a href="javascript:actionColour = ActionColourEnum.analysis">Analysis</a></li>
+                      <li><a href="javascript:changeActionColour(ActionColourEnum.none)">None</a></li>
+                      <li><a href="javascript:changeActionColour(ActionColourEnum.analysis)">Analysis</a></li>
                       <!-- <li><a href="javascript:actionColour = ActionColourEnum.agent">Agent</a></li> -->
                   </ul>
               </li>
@@ -170,6 +170,9 @@
   </body>
   <textarea id="outputPanel" disabled="disabled">Output</textarea>
   <script type="text/javascript">
+    function changeActionColour(newValue) {
+        actionColour = newValue;
+    }
     {% if data %}
       $(window).load(function(){
         var data = {{ data | safe }};
