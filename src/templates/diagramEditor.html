@@ -105,6 +105,7 @@
           <option value="executable">Executable</option>
         </select>
       </p>
+      <br>
       <p> Agent:
         <input type="text" id="agent" name="agent"/>
       </p>
@@ -137,13 +138,14 @@
       <table>
         <p>Name: <Input type="text" name="flowName" id="flowName"/></p>
         <p> Type:
-          <select id="flowType" name="flowType">
+          <select id="flowType" style="color:#000;" name="flowType">
             <option value="branch">Branch</option>
             <option value="iteration">Iteration</option>
             <option value="selection">Selection</option>
             <option value="sequence">Sequence</option>
           </select>
         </p>
+	<br>
         <p align="center">
           <button type="button" value="enter" onClick="editSequence()">Done</button>
         </p>
