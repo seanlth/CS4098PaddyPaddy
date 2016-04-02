@@ -9,7 +9,6 @@
   <script src="{{url_for('static', filename='js/sketch.js')}}"></script>
   <script src="{{url_for('static', filename='js/pml_generator.js')}}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='diagramEditor.css') }}">
-  <style type=text/css>{{ get_resource_as_string('static/editor.css') }}</style>
 
   <body>
   <style type="text/css">
@@ -96,21 +95,22 @@
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
   <![endif]-->
 
-  <form id="actionEditor">
+  <form id="actionEditor" style="width: 300px;background-image:url('static/images/dark_wall.png'); color:#fff;">
     <table>
       <p>Name: <Input type="text" name="name" id="name"/></p>
       <p> Type:
-        <select id="type" name="type">
+        <select id="type" name="type" style="color:#000">
           <option value="none">None</option>
           <option value="manual">Manual</option>
           <option value="executable">Executable</option>
         </select>
       </p>
+      <br>
       <p> Agent:
         <input type="text" id="agent" name="agent"/>
       </p>
       <p> Script: </p>
-      <textarea id="script" name="script"></textarea>
+      <textarea id="script" name="script" style="color: #000;"></textarea>
       <p> Tool:
         <input type="text" id="tool" name="tool"/>
       </p>
@@ -134,17 +134,18 @@
       </p>
       </table>
     </form>
-    <form id="flowEditor">
+    <form id="flowEditor" style="width: 300px;background-image:url('static/images/dark_wall.png'); color:#fff;">
       <table>
         <p>Name: <Input type="text" name="flowName" id="flowName"/></p>
         <p> Type:
-          <select id="flowType" name="flowType">
+          <select id="flowType" style="color:#000;" name="flowType">
             <option value="branch">Branch</option>
             <option value="iteration">Iteration</option>
             <option value="selection">Selection</option>
             <option value="sequence">Sequence</option>
           </select>
         </p>
+	<br>
         <p align="center">
           <button type="button" value="enter" onClick="editSequence()">Done</button>
         </p>
