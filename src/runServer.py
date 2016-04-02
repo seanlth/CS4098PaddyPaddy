@@ -1,8 +1,5 @@
 from flask import Flask, redirect, url_for, render_template,request, session, flash
 from flask.ext.sqlalchemy import SQLAlchemy
-# from flask.ext.login import LoginManager, UserMixin, login_user, logout_user,\
-    # current_user
-# from flask_oauth import OAuth
 from oauth import OAuthSignIn
 from subprocess import check_output, STDOUT, CalledProcessError
 from werkzeug import generate_password_hash, check_password_hash, secure_filename
@@ -21,21 +18,7 @@ import parser
 
 DEBUG = False
 app = Flask(__name__)
-# REDIRECT_URI = '/oauth'
 app.config['SECRET_KEY'] = 'secret'
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
-# oauth = OAuth()
-# google = oauth.remote_app('google',
-#                           base_url='https://www.google.com/accounts/',
-#                           authorize_url='https://accounts.google.com/o/oauth2/auth',
-#                           request_token_url=None,
-#                           request_token_params={'scope': 'https://www.googleapis.com/auth/userinfo.email',
-#                                                 'response_type': 'code'},
-#                           access_token_url='https://accounts.google.com/o/oauth2/token',
-#                           access_token_method='POST',
-#                           access_token_params={'grant_type': 'authorization_code'},
-#                           consumer_key='305205879982-13behoi7hr2h9fnqd1t5sslgn43i972m.apps.googleusercontent.com',
-#                           consumer_secret='YdyrpHBahzLJ0qlPni6hy95d')
 app.config['OAUTH_CREDENTIALS'] = {
     'facebook': {
         'id': '604820106335654',
@@ -119,10 +102,6 @@ def openFile():
     # print ("CURRENT file: ", session['currentFile'])
     return render_template('openFile.html', files=files)
 
-# def uploadFile():
-#     if not 'email' in session:
-#         return redirect('/login?return_url=openFile')
-
 @app.route('/upload', methods=['POST'])
 def upload():
     if (not 'email' in session) and (not 'social' in session):
@@ -146,7 +125,6 @@ def upload():
 
 @app.route('/save')
 def save():
-    # print(session)
     if (not 'email' in session) and (not 'social' in session):
         return redirect('/login?return_url=saveAs')
     if 'currentFile' in session:
@@ -259,15 +237,7 @@ def loginButton():
 
 @app.route("/logout")
 def logout():
-
-    if 'email' in session:
-        session.pop('email', None)
-    elif 'social' in session:
-        session.pop('social', None)
-    if session.get('tempFile') is not None:
-        session['tempFile'] = ""
     session.clear()
-
     return redirect('/')
 
 @app.route("/tmp", methods=["POST"])
@@ -300,61 +270,6 @@ def oauth_callback(provider):
     if user is None:
         insert_social_user(social)
     return redirect('/')
-
-# @app.route('/google')
-# def index():
-#     access_token = session.get('access_token')
-#     if access_token is None:
-#         return redirect(url_for('googleLogin'))
-#
-#     access_token = access_token[0]
-#     headers = {'Authorization': 'OAuth '+access_token}
-#     req = Request('https://www.googleapis.com/oauth2/v1/userinfo', None, headers)
-#     try:
-#         res = urlopen(req)
-#     except URLError as e:
-#
-#         if e.code == 401:
-#             session.pop('access_token', None)
-#             return redirect(url_for('googleLogin'))
-#         return res.read()
-#     return res.read()
-
-# @app.route('/googleLogin')
-# def googleLogin():
-#     callback=url_for('_authorized', _external=True)
-#     return google.authorize(callback=callback)
-#
-# @app.route(REDIRECT_URI)
-# @google.authorized_handler
-# def _authorized(resp):
-#     access_token = resp['access_token']
-#     session['access_token'] = access_token, ''
-#     return redirect(url_for('index'))
-#
-# @google.tokengetter
-# def get_access_token():
-#     return session.get('access_token')
-
-
-# def oauthRedirect(user_data,next_url):
-#
-#     email = user_data["email"]
-#     print('EMAIL', email)
-#     user = query_user(email)
-#     session['email'] = email
-#
-#     if user == None:
-#         insert_user(email)
-#     else:
-#         flash('Authentication failed.')
-#         return redirect(url_for('login'))
-#
-#     return redirect(next_url)
-
-# @google.tokengetter
-# def get_access_token():
-#     return session.get('access_token')
 
 if __name__ == "__main__":
 	app.run(host="localhost", port=8000, debug=DEBUG)
