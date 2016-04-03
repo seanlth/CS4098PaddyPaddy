@@ -96,7 +96,9 @@ function drawJSON(json) {
 
 function draw() {
     background(255);
-	stroke(0);
+	//stroke(0);
+
+	//drawAgentFlowLines();
     var lastScaleX = scaleX;
     var lastScaleY = scaleY;
     keyboardInput();

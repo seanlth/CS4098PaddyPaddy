@@ -17,8 +17,9 @@ function drawFlowLines(start, end, agentFlowLines) {
 	var numberOfFlowLines = agentFlowLines.length;
 
 	var nodeLocations = [];
+	var gap = 10;
 
-	var yOffset = -floor(numberOfFlowLines / 2) * 5;
+	var yOffset = -floor(numberOfFlowLines / 2) * gap;
 
 	for ( var i = 0; i < agentFlowLines.length; i++ ) {
 		var array = agentFlowLines[i].positions;
@@ -43,18 +44,18 @@ function drawFlowLines(start, end, agentFlowLines) {
 			previousPosition = position;
 		}
 		line(7.5 + previousPosition.x, previousPosition.y + yOffset, end.x, end.y + yOffset);
-		yOffset += 5;
+		yOffset += gap;
 	}
 	var c = {r: 0, g: 0, b: 0};
-	drawNode(start.x, start.y, 15 + numberOfFlowLines * 5, c);
+	drawNode(start.x, start.y, 15 + numberOfFlowLines * gap, c);
 	for ( var i = 0; i < nodeLocations.length; i++ ) {
 		var node = nodeLocations[i];
 		drawNode(node.x, node.y, 15, node.colour);
 	}
-	drawNode(end.x, end.y, 10 + numberOfFlowLines * 5, c);
+	drawNode(end.x, end.y, 10 + numberOfFlowLines * gap, c);
 
 	// reset drawing variables 
 	fill(0);
-	strokeWeight(0);
+	strokeWeight(1);
 	stroke(0);
 }
