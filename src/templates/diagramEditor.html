@@ -69,6 +69,10 @@
               <li>
                   <a href="javascript:parse_hook()">Geneate PML </a>
               </li>
+			  <li>
+                  <a href="javascript:toggle_flowlines()">Toggle Flow Lines </a>
+              </li>
+
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li>
@@ -173,11 +177,20 @@
     {
         return "Any progress you made on the diagram will be lost.";
     };
+	
+	function toggle_flowlines() {
+		if ( drawingSwimLanes == true ) {
+			drawingSwimLanes = false;
+		}
+		else {
+			drawingSwimLanes = true;
+		}
+	}
 
     function parse_hook() {
       createPML();
     }
-
+	
     function new_hook() {
       console.log("new pressed");
       selectedIndex = [];
