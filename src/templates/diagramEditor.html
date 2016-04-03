@@ -8,6 +8,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/addons/p5.sound.min.js"></script>
   <script src="{{url_for('static', filename='js/sketch.js')}}"></script>
   <script src="{{url_for('static', filename='js/pml_generator.js')}}"></script>
+  <script src="{{url_for('static', filename='js/flowlines.js')}}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='diagramEditor.css') }}">
 
   <body>
@@ -75,6 +76,10 @@
               <li>
                   <a href="javascript:parse_hook()">Generate PML </a>
               </li>
+			  <li>
+                  <a href="javascript:toggle_flowlines()">Toggle Flow Lines </a>
+              </li>
+
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li>
@@ -184,11 +189,20 @@
     {
         return "Any progress you made on the diagram will be lost.";
     };
+	
+	function toggle_flowlines() {
+		if ( drawingSwimLanes == true ) {
+			drawingSwimLanes = false;
+		}
+		else {
+			drawingSwimLanes = true;
+		}
+	}
 
     function parse_hook() {
       createPML();
     }
-
+	
     function new_hook() {
       console.log("new pressed");
       selectedIndex = [];

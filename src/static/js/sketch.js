@@ -10,6 +10,12 @@ var ACTION_WIDTH = 120;
 
 var numActions = 0;
 
+var drawingSwimLanes = false;
+
+var stringColours = [];
+var hslOffset = 90;
+var hslStepper = 0;
+
 var StateEnum = {
     normal: 0,
     form: 1,
@@ -102,6 +108,8 @@ function drawJSON(json) {
 
 function draw() {
     background(255);
+
+	//drawAgentFlowLines();
     var lastScaleX = scaleX;
     var lastScaleY = scaleY;
     keyboardInput();
@@ -114,25 +122,42 @@ function draw() {
         update();
     }
 
-    fill(0);
-    line(startX, middle, endX, middle);
-    ellipse(startX, middle, 30, 30);
-    fill(255);
-    ellipse(endX, middle, 30, 30);
-    fill(0);
-    ellipse(endX, middle, 20, 20);
 
+    if ( drawingSwimLanes == true ) {
+		stroke(0, 0, 0, 50);
+	}
+	else {
+		stroke(0);
+	}
+	line(startX, middle, endX, middle);
+
+	if ( drawingSwimLanes == false ) {
+		fill(0);
+    	ellipse(startX, middle, 30, 30);
+    	fill(255);
+    	ellipse(endX, middle, 30, 30);
+    	fill(0);
+    	ellipse(endX, middle, 20, 20);
+	}
     var progWidth = sequenceLength(program);
-
+	stroke(0);
     drawActions(program, progWidth, []);
 
     for(var i = 0; i < names.length; i++) {
-        names[i].draw();
+    	names[i].draw();
     }
 
     for(var i = 0; i < nodes.length; i++) {
-        nodes[i].draw();
+		if ( drawingSwimLanes == false ) {
+        	nodes[i].draw();
+		}
     }
+
+	if ( drawingSwimLanes == true ) {
+		//background(255, 255, 255, 220);
+		drawAgentFlowLines();
+	}
+
 }
 
 function update() {
@@ -278,6 +303,123 @@ function drawActions(sequence, programWidth, index) {
             drawActions(prog, programWidth, nextIndex);
         }
     }
+}
+
+function hashColour(agentName) {
+	var hash = 0;
+
+	for (var i = 0; i < agentName.length; i++) {
+		var c = agentName[i].charCodeAt(0);
+			hash = c + (hash << 6) + (hash << 16) - hash;
+	}
+	hash *= hash;
+	hash = hash % (256*256*256);
+
+	var r1 = hash / 256;
+	var b = hash % 256;
+	var r2 = r1 / 256;
+	var g = r1 % 256;
+	var r = r2 % 256;
+
+
+	return {r: r, g: g, b: b};
+}
+
+function hslToRGB(hue) {
+	var c = (1 - Math.abs(2*0.5 - 1)) * 1;
+	var h = hue / 60;
+	var x = c * (1 - Math.abs(h % 2 - 1));
+	var r1 = 0;
+	var g1 = 0;
+	var b1 = 0;
+	if ( h >= 0 && h < 1 ) { r1 = c; g1 = x, b1 = 0; }
+	if ( h >= 1 && h < 2 ) { r1 = x; g1 = c, b1 = 0; }
+	if ( h >= 2 && h < 3 ) { r1 = 0; g1 = c, b1 = x; }
+	if ( h >= 3 && h < 4 ) { r1 = 0; g1 = x, b1 = c; }
+	if ( h >= 4 && h < 5 ) { r1 = x; g1 = 0, b1 = c; }
+	if ( h >= 5 && h < 6 ) { r1 = 0; g1 = 0, b1 = x; }
+
+	var m = 0.5 - 0.5 * c;
+	var r = r1 + m;
+	var g = g1 + m;
+	var b = b1 + m;
+	return { r: r * 255, g: g * 255, b: b * 255 };
+}
+
+function stringColour(name) {
+	for (var i = 0; i < stringColours.length; i++) {
+		var stringColour = stringColours[i];
+		if ( stringColour.name == name ) {
+			return stringColour.colour;
+		}
+	}
+	// else make new colour
+	var colour = hslOffset + hslStepper * 90;
+	hslStepper++;
+	if ( hslStepper == 4 ) {
+		hslStepper = 0;
+		hslOffset = hslOffset / 2;
+	}
+	var rgb = hslToRGB(colour);
+	stringColours.push( { name: name, colour: rgb } )
+	return colour;
+}
+
+// adds the actions positional information to an agent array
+// if the array doesn't exist it creates it
+function addToAgentArray(agentArray, action) {
+	var foundAgentArray = false;
+	var index = -1;
+
+	// search for the array with the same agent
+	for ( var i = 0; i < agentArray.length; i++ ) {
+		var array = agentArray[i];
+
+		// found the array
+		if ( array.agent == action.agent ) {
+			foundAgentArray = true;
+			index = i;
+			break;
+		}
+	}
+
+	// add to or create the array
+	if ( foundAgentArray == true ) {
+		var p = {x: action.xPixelPosition, y: action.yPixelPosition, name: action.name};
+		agentArray[index].positions.push(p);
+	}
+	else {
+		var p = {x: action.xPixelPosition, y: action.yPixelPosition, name: action.name};
+
+		var newArray = {agent: action.agent, positions: [p], colour: stringColour(action.agent)};
+		agentArray.push(newArray);
+	}
+}
+
+// takes all the actions
+// returns arrays of locatiosn
+// each actions in an array share an agent
+function createAgentFlowLines(agentArray, actions) {
+
+	// should be using for-each but js is too spooky for me
+	for ( var i = 0; i < actions.length; i++ ) {
+		var primitive = actions[i];
+
+		if ( primitive.hasOwnProperty('control') ) {
+			createAgentFlowLines(agentArray, primitive.actions);
+		}
+		else {
+			addToAgentArray(agentArray, primitive);
+		}
+	}
+}
+
+function drawAgentFlowLines() {
+	var agentArray = [];
+	createAgentFlowLines(agentArray, program.actions);
+	var startPosition = {x: startX, y: middle};
+	var endPosition = {x: endX, y: middle};
+	drawFlowLines(startPosition, endPosition, agentArray);
 }
 
 function updateActions(sequence, programWidth, index) {
@@ -658,6 +800,7 @@ function Node(x, y, index) {
 
     this.draw = function() {
         if(state != StateEnum.controlFlow && this.highlighted) {
+			stroke(0);
             fill(255);
             ellipse(this.positionAction.x, this.positionAction.y, this.diameter, this.diameter);
             ellipse(this.positionIterate.x, this.positionIterate.y, this.diameter, this.diameter);
@@ -665,6 +808,7 @@ function Node(x, y, index) {
             ellipse(this.positionSelect.x, this.positionSelect.y, this.diameter, this.diameter);
             ellipse(this.positionSequence.x, this.positionSequence.y, this.diameter, this.diameter);
 
+			stroke(255);
             textAlign(CENTER, CENTER);
             fill(0);
             text('A', this.positionAction.x, this.positionAction.y);
@@ -672,12 +816,14 @@ function Node(x, y, index) {
             text('B', this.positionBranch.x, this.positionBranch.y);
             text('Sel', this.positionSelect.x, this.positionSelect.y);
             text('Seq', this.positionSequence.x, this.positionSequence.y);
-
+			stroke(0);
             if(clipBoard.length > 0) {
                 fill(255);
                 ellipse(this.positionPaste.x, this.positionPaste.y, this.diameter, this.diameter);
                 fill(0);
+				stroke(255);
                 text('P', this.positionPaste.x, this.positionPaste.y);
+				stroke(0);
             }
         }
         else {
@@ -694,11 +840,13 @@ function Node(x, y, index) {
             else {
                 fill(255, 0, 0);
             }
-
+			stroke(0);
             ellipse(this.x, this.y, this.diameter, this.diameter);
+			stroke(255);
             fill(0);
             textAlign(CENTER, CENTER);
             text('+', this.x, this.y);
+			stroke(255);
         }
     }
 }
@@ -759,6 +907,7 @@ function Name(name, x, y, index) {
         fill(255);
         rect(this.x, this.y, this.buttonWidth, this.buttonWidth);
         fill(0);
+		stroke(255);
         textAlign(CENTER, CENTER);
         text('...', this.x + this.buttonWidth / 2, this.y + this.buttonWidth / 2);
         textAlign(LEFT, TOP);
@@ -770,6 +919,7 @@ function Name(name, x, y, index) {
                 text(this.name.substring(0, 19 * scaleX) + '...', this.x + this.buttonWidth + 3, this.y);
             }
         }
+		stroke(0);
     }
 }
 
@@ -794,6 +944,8 @@ function Action(action) {
     this.id = numActions++;
     this.x;
     this.y;
+	this.xPixelPosition;
+	this.yPixelPosition;
 
     // All the PML important details
     if(action) {
@@ -906,6 +1058,11 @@ function Action(action) {
         var yPixels = (this.y * actionHeight * 2) + middle;
         var xPixels = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX;
 
+        this.xPixelPosition = xPixels;
+        this.yPixelPosition = yPixels;
+        stroke(0);
+        fill(255);
+
         if(actionColour == ActionColourEnum.none) {
             fill(255);
             rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
@@ -957,13 +1114,19 @@ function Action(action) {
                 fill(0);
             }
         }
-        textAlign(CENTER, CENTER);
-        if(this.name.length <= 17 * scaleX) {
-            text(this.name, xPixels, yPixels);
+
+        if ( drawingSwimLanes == false ) {
+            fill(0);
+            stroke(255);
+            textAlign(CENTER, CENTER);
+            if(this.name.length <= 17 * scaleX) {
+                text(this.name, xPixels, yPixels);
+            }
+            else {
+                text(this.name.substring(0, 14 * scaleX) + '...', xPixels, yPixels);
+            }
         }
-        else {
-            text(this.name.substring(0, 14 * scaleX) + '...', xPixels, yPixels);
-        }
+        stroke(0);
     }
 }
 
@@ -974,7 +1137,13 @@ function drawLine(prog, x, y, programWidth) {
     var endLineXPixels = diagramWidth * (endLineX / (programWidth + 1)) + startX;
 
     var yPixels = (y * actionHeight * 2) + middle;
-    line(startLineXPixels, yPixels, endLineXPixels, yPixels);
+	if ( drawingSwimLanes == true ) {
+		stroke(0, 0, 0, 50);
+   	}
+	else {
+		stroke(0);
+	}
+	line(startLineXPixels, yPixels, endLineXPixels, yPixels);
 
     return {"startX": startLineXPixels, "endX": endLineXPixels, "y": yPixels};
 }
@@ -1120,7 +1289,12 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
 
     line(lineDetails.startX, linePositionYStart, lineDetails.startX, linePositionYEnd);
     line(lineDetails.endX, linePositionYStart, lineDetails.endX, linePositionYEnd);
-    fill(0);
+	if ( drawingSwimLanes == true ) {
+		fill(0, 0, 0, 50);
+	}
+	else {
+    	fill(0);
+	}
     ellipse(lineDetails.endX, lineDetails.y, 10 , 10);
 
     translate(lineDetails.startX, lineDetails.y - 21);
