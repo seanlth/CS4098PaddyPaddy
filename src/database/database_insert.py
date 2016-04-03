@@ -12,3 +12,11 @@ def insert_user(email, password_hash):
 	new_user = User(email=email, password=password_hash)
 	session.add(new_user)
 	session.commit()
+def insert_social_user(social):
+    engine = create_engine('sqlite:///pml.db')
+    Base.metadata.bind = engine
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+    new_user = User(social = social)
+    session.add(new_user)
+    session.commit()

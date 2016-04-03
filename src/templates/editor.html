@@ -37,7 +37,7 @@
                     <li><a href="javascript:open_hook()">Open</a></li>
                     <li>
                       <form action="upload" method="post" enctype="multipart/form-data" id ="fileUpload">
-                        {% if not 'email' in session %}
+                        {% if (not 'email' in session) and (not 'social' in session) %}
                           <a href="/login" style="color: #333333;">Upload</a>
                         {% else %}
                           <input id="upload-file" type="file" name="file" style="display: none;">
@@ -45,15 +45,8 @@
                             document.getElementById('upload-file').onchange = function() {
                                 document.getElementById("fileUpload").submit();
                             }
-
                           </script>
                           <a1 onclick="$('input[id=upload-file]').click();">Upload</a1>
-                          <script>
-
-                          // $('input').change(function(){
-                          //    $(this).attr('title',($(this).val()));
-                          // });
-                          </script>
                         {% endif %}
                       </form>
                     </li>
@@ -88,14 +81,16 @@
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li>
-            {% if not 'email' in session %}
-            <a href="/login"><r>Login</r></a>
+            {% if 'social' in session %}
+              <a href="/logout"><r>Logout</r></a>
+            {% elif 'email' in session %}
+                <a href="/logout"><r>Logout</r></a>
             {% else %}
-            <a href="/logout"><r>Logout</r></a>
+              <a href="/login"><r>Login</r></a>
             {% endif %}
           </li>
         </ul>
-    </div><!-- /.navbar-collapse -->
+    </div>
 </nav>
 <div class="container" id="editor">{{editor_content}}</div>
 
