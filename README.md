@@ -28,6 +28,7 @@
   * Resouces (simple)
   * Agents (simple)
   * PML Generation
+  * Analysis Coloured Actions
 
 ##Testing Instructions:
 1. For many of the features available on ```localhost:8000``` testing can be donw without signing in, Syntax highlighting  
@@ -42,12 +43,13 @@
 3. Boxes and arrows can be tested on ```localhost:8000```. Clicking on a (+) node allows you to add an action, branch,  
    selection or iteration. For any of these except iteration, you have the option of clicking a bright green node,  
    folding all the actions in between into the control structure or choosing the dark green node you already clicked  
-   on, creaating a control structure with one new node. Red (+) nodes are invalid selections. You can change the names  
+   on, creating a control structure with one new node. Red (+) nodes are invalid selections. You can change the names  
    of these control structures with the [...] displayed beside the name which will create a prompt. The various parameters  
    of an action can be altered using a form displayed when you click on one. The generate PML button will open a new  
    tab/window with the editor open to PML generated based on your diagram. If the diagram becomes larger than the screen  
-   scrolling is done by clicking and dragging the mouse or by using the arrow keys. [Dialog pop-ups are integral please  
-   do not disable the page from creating them.]
+   scrolling is done by clicking and dragging the mouse or by using the arrow keys. Choosing analysis from the Action Colour
+   drop-down changes the colour depending on each actions requirements and provisions.
+   [Dialog pop-ups are integral please do not disable the page from creating them.]
 
 4. There are also some smoke tests available by running "make test". (On clean machines, run twice as there may be errors  
    reported erroneously.)
