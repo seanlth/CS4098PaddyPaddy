@@ -1,6 +1,6 @@
 var canvas, startX, endX, middle;// variables for drawing
 var state, selectedAction, selectedIndex, currentControlFlow, generatePML; // variables for handling input
-var offsetX, offsetY, scaleX, scaleY, actionHeight, actionWidth;
+var offsetX, initialY, offsetY, scaleX, scaleY, actionHeight, actionWidth;
 var clipBoard;
 var sequenceNum, selectionNum, iterationNum, branchNum, actionNum;
 var actionColour;
@@ -42,6 +42,8 @@ function setup() {
     canvas.mouseMoved(mouseMovedCanvas);
     canvas.id('canvas');
 
+    initialY = canvas.position().y;
+
     startX = 40;
     endX = width - 40;
     middle = height / 2;
@@ -73,12 +75,6 @@ function whatControlAction(){
     else if(currentControlFlow == FlowControlEnum.selection){return selectionNum++}
 }
 
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  middle = height / 2;
-  update();
-}
-
 function createPML() {
     var pml_code = json_to_pml_redirect(program);
 }
@@ -96,7 +92,6 @@ function drawJSON(json) {
           } else {
             addActions(acts[i].actions);
           }
-
         }
       }
     }
@@ -116,7 +111,7 @@ function draw() {
     actionHeight = ACTION_HEIGHT * scaleY;
     actionWidth = ACTION_WIDTH * scaleX;
 
-    resizeScreen();
+    resize();
 
     if(scaleX != lastScaleX || scaleY != lastScaleY) {
         update();
@@ -164,7 +159,7 @@ function update() {
     background(255);
     var progWidth = sequenceLength(program);
 
-    resizeScreen();
+    resize();
 
     names = [new Name(program.name, startX, middle - 45, [])];
     nodes = [];
@@ -175,7 +170,7 @@ function update() {
 }
 
 // check program isn't too crowded and resize if needed
-function resizeScreen() {
+function resize() {
     var progWidth = sequenceLength(program);
     var prefferedSize = progWidth * actionWidth * 1.4;
 
@@ -186,19 +181,44 @@ function resizeScreen() {
         endX = prefferedSize + startX;
     }
 
-    if(endX < width - 40) {
-        endX = width - 40;
-        offsetX = 0;
-        resetMatrix();
-        translate(0, offsetY);
+    if(endX < windowWidth - 40) {
+        endX = windowWidth - 40;
+        canvas.position(0, offsetY + initialY);
     }
+
+    var lowY = lowestY(program);
+    var highY = highestY(program);
+
+
+    var heightP = (highY - lowY + 1) * 2 * actionHeight;
+    if((highY * 2 * actionHeight) + middle > height || (lowY * 2 * actionHeight) > middle) {
+        middle = (-lowY / (highY - lowY)) * height;
+    }
+
+    if(width != endX + startX && heightP > height) {
+        resizeCanvas(endX + startX, heightP);
+    }
+    else if(width != endX + startX) {
+        resizeCanvas(endX + startX, height);
+    }
+    else if(heightP > height) {
+        resizeCanvas(endX + startX, heightP);
+        middle = (-lowY / (highY - lowY)) * height;
+        update();
+    }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  middle = height / 2;
+  update();
 }
 
 function keyboardInput() {
     var lastValueX = offsetX, lastValueY = offsetY;
     var speed = 10;
     // handle horizontal scrolling if display is wider than screen
-    if(endX + startX > width) {
+    if(endX + startX > windowWidth) {
         if(keyIsDown(LEFT_ARROW)) {
             offsetX += speed;
         }
@@ -210,32 +230,26 @@ function keyboardInput() {
             offsetX = 0;
         }
 
-        if(offsetX < width - (endX + startX)) {
-            offsetX = width - (endX + startX);
+        if(offsetX < -(width - windowWidth)) {
+            offsetX = -(width - windowWidth);
         }
     }
 
-    var movementY = 0;
-    if(keyIsDown(UP_ARROW)) {
-        movementY = speed;
-    }
-    else if(keyIsDown(DOWN_ARROW)) {
-        movementY = -speed;
-    }
-
-    var offScreen = false, onScreen = 0;
-    for(var i = 0; i < nodes.length; i++) {
-        if(nodes[i].y + offsetY - (actionWidth / 2) < 0 || nodes[i].y + offsetY + (actionWidth / 2) > height) {
-            offScreen = true;
+    if(height + initialY > windowHeight) {
+        if(keyIsDown(UP_ARROW)) {
+            offsetY += speed;
+        }
+        else if(keyIsDown(DOWN_ARROW)) {
+            offsetY -= speed;
         }
 
-        if(nodes[i].y + offsetY + movementY - (actionWidth / 2) > 0 && nodes[i].y + offsetY + movementY + (actionWidth / 2) < height) {
-            onScreen++;
+        if(offsetY > 0) {
+            offsetY = 0;
         }
-    }
 
-    if(offScreen && onScreen >= 1) {
-        offsetY += movementY
+        if(offsetY < -(windowHeight + initialY - height + 10)) {
+            offsetY = -(windowHeight + initialY - height + 10);
+        }
     }
 
     // zoooooooooooom
@@ -261,7 +275,7 @@ function keyboardInput() {
     }
 
     resetMatrix();
-    translate(offsetX, offsetY);
+    canvas.position(offsetX, offsetY + initialY);
 }
 
 function drawActions(sequence, programWidth, index) {
@@ -644,7 +658,7 @@ function addNodesRec(actions, index, progWidth) {
 function highestY(sequence) {
     if(sequence.constructor == Action) return sequence.y;
 
-    var maxY = Number.MIN_VALUE;
+    var maxY = 0;
     for(var i = 0; i < sequence.actions.length; i++) {
         var y;
         if(sequence.actions[i].constructor == Action) {
@@ -665,7 +679,7 @@ function highestY(sequence) {
 function lowestY(sequence) {
     if(sequence.constructor == Action) return sequence.y;
 
-    var minY = Number.MAX_VALUE;
+    var minY = 0;
     for(var i = 0; i < sequence.actions.length; i++) {
         var y;
         if(sequence.actions[i].constructor == Action) {
@@ -1302,7 +1316,7 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
     fill(255);
     rect(0, 0, 30, 30);
     resetMatrix();
-    translate(offsetX, offsetY);
+    //translate(offsetX, offsetY);
 }
 
 function selectAction(actions, id){
@@ -1419,8 +1433,8 @@ function mousePressedCanvas(event) {
     $('#flowEditor').hide();
     $('#outputPanel').hide();
 
-    var x = mouseX - offsetX;
-    var y = mouseY - offsetY;
+    var x = mouseX;
+    var y = mouseY;
     var programwidth = sequenceLength(program);
     var pressed = false;
 
@@ -1455,8 +1469,8 @@ function pressActions(actions, programwidth, x, y) {
 function mouseMovedCanvas(event) {
     if (state == StateEnum.form) return;
 
-    var x = mouseX - offsetX;
-    var y = mouseY - offsetY;
+    var x = mouseX;
+    var y = mouseY;
     var programwidth = sequenceLength(program);
     var mousedOver = mouseOverActions(program.actions, programwidth, x, y);
 
@@ -1498,7 +1512,7 @@ function mouseDragged(event) {
 
     var lastValueX = offsetX, lastValueY = offsetY;
     // handle horizontal scrolling if display is wider than screen
-    if(endX + startX > width) {
+    if(endX + startX > windowWidth) {
         if(event.movementX) {
             offsetX += event.movementX;
         }
@@ -1510,37 +1524,32 @@ function mouseDragged(event) {
             offsetX = 0;
         }
 
-        if(offsetX < width - (endX + startX)) {
-            offsetX = width - (endX + startX);
+        if(offsetX < -(width - windowWidth)) {
+            offsetX = -(width - windowWidth);
         }
     }
 
-    var movementY = 0;
-    if(event.movementY) {
-        movementY = event.movementY;
-    }
-    else if(event.mozMovementY) {
-        movementY = event.mozMovementY;
-    }
-    var offScreen = false, onScreen = 0;
-    for(var i = 0; i < nodes.length; i++) {
-        if(nodes[i].y + offsetY - (actionWidth / 2) < 0 || nodes[i].y + offsetY + (actionWidth / 2) > height) {
-            offScreen = true;
+    if(height + initialY > windowHeight) {
+        if(event.movementY) {
+            offsetY += event.movementY;
+        }
+        else if(event.mozMovementY) {
+            offsetY += event.mozMovementY;
         }
 
-        if(nodes[i].y + offsetY +movementY - (actionWidth / 2) > 0 && nodes[i].y + offsetY +movementY + (actionWidth / 2) < height) {
-            onScreen++;
+        if(offsetY > 0) {
+            offsetY = 0;
         }
-    }
 
-    if(offScreen && onScreen >= 1) {
-        offsetY +=movementY;
+        if(offsetY < -(windowHeight + initialY - height + 10)) {
+            offsetY = -(windowHeight + initialY - height + 10);
+        }
     }
 
     // only redraw with change
     if(lastValueX != offsetX || lastValueY != offsetY) {
         resetMatrix();
-        translate(offsetX, offsetY);
+        canvas.position(offsetX, offsetY + initialY);
     }
 }
 
