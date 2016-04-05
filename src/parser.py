@@ -20,7 +20,7 @@ TOKENS = ( (r'[ \n\t]+'              , None)
          , (r'tool'                  , "TOOL")
          , (r'agent'                 , "AGENT")
          , (r'[_A-Za-z][_A-Za-z0-9]*', "IDENT")
-         , (r'[^ ]+'                 , "TOK")
+         , (r'[^ }]+'                , "TOK")
          )
 
 class ParserException(Exception): pass
