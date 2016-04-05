@@ -79,6 +79,9 @@
 			  <li>
                   <a href="javascript:toggle_flowlines()">Toggle Flow Lines </a>
               </li>
+              <li>
+                  <a href="javascript:toggle_editing()">Toggle Editing </a>
+              </li>
 
           </ul>
           <ul class="nav navbar-nav navbar-right">
@@ -189,7 +192,7 @@
     {
         return "Any progress you made on the diagram will be lost.";
     };
-	
+
 	function toggle_flowlines() {
 		if ( drawingSwimLanes == true ) {
 			drawingSwimLanes = false;
@@ -199,10 +202,19 @@
 		}
 	}
 
+    function toggle_editing() {
+        if(state == StateEnum.notEditing) {
+            state = StateEnum.normal;
+        }
+        else {
+            state = StateEnum.notEditing;
+        }
+    }
+
     function parse_hook() {
       createPML();
     }
-	
+
     function new_hook() {
       console.log("new pressed");
       selectedIndex = [];
