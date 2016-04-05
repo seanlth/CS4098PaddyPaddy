@@ -1075,6 +1075,9 @@ function Action(action) {
         var yPixels = (this.y * actionHeight * 2) + middle;
         var xPixels = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX;
 
+        var x = xPixels - (actionWidth / 2);
+        var y = yPixels - (actionHeight / 2);
+
         this.xPixelPosition = xPixels;
         this.yPixelPosition = yPixels;
         stroke(0);
@@ -1082,7 +1085,7 @@ function Action(action) {
 
         if(actionColour == ActionColourEnum.none) {
             fill(255);
-            rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+            rect(x, y, actionWidth, actionHeight);
             fill(0);
         }
         else if(actionColour == ActionColourEnum.analysis) {
@@ -1104,32 +1107,53 @@ function Action(action) {
             if(this.requires.length == 0 && this.provides.length == 0) {
                 //empty
                 fill(255, 255, 0);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                rect(x, y, actionWidth, actionHeight);
                 fill(0);
             }
             else if(this.provides.length == 0) {
                 //blackhole
                 fill(0);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                rect(x, y, actionWidth, actionHeight);
                 fill(255);
             }
             else if(this.requires.length == 0) {
                 //miracle
                 fill(0, 255, 255);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                rect(x, y, actionWidth, actionHeight);
                 fill(0);
             }
             else if(transforms) {
                 //tranforms
                 fill(0, 255, 0);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                rect(x, y, actionWidth, actionHeight);
                 fill(0);
             }
             else {
                 fill(255);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                rect(x, y, actionWidth, actionHeight);
                 fill(0);
             }
+        }
+        else {
+            var agents = this.agent.split(/[\s,&&,==,||]+/);
+
+            var width = actionWidth / agents.length;
+
+            for(var i = 0; i < agents.length; i++) {
+                var a = agents[i].split(/[.]+/)[0];
+                var colour = stringColour(a);
+                fill(colour.r, colour.g, colour.b);
+                rect(x + (i * width), y, width, actionHeight);
+            }
+
+            //draw box around name for legibility's sake
+            fill(255);
+            rect(x, yPixels - textSize() / 2, actionWidth, textSize());
+
+            //draw outline box
+            fill(0, 0, 0, 0);
+            rect(x, y, actionWidth, actionHeight);
+            fill(0);
         }
 
         if ( drawingSwimLanes == false ) {
