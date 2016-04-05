@@ -134,16 +134,16 @@
         <input type="text" id="provides" name="tool"/>
       </p>
       <p align="center">
-        <button type="button" value="enter" onClick="editAction()">Done</button>
+        <button type="button" id="done_action" value="enter" onClick="editAction()">Done</button>
       </p>
       <p align="center">
-        <button type="button" value="enter" onClick="removeAction()">Remove Action</button>
+        <button type="button" id="remove_action" value="enter" onClick="removeAction()">Remove Action</button>
       </p>
       <p align="center">
-        <button type="button" value="enter" onClick="cutAction()">Cut Action</button>
+        <button type="button" id="cut_action" value="enter" onClick="cutAction()">Cut Action</button>
       </p>
       <p align="center">
-        <button type="button" value="enter" onClick="cancel()">Cancel</button>
+        <button type="button" id="cancel_action" value="enter" onClick="cancel()">Cancel</button>
       </p>
       </table>
     </form>
@@ -160,16 +160,16 @@
         </p>
 	<br>
         <p align="center">
-          <button type="button" value="enter" onClick="editSequence()">Done</button>
+          <button type="button" id="done_sequence" value="enter" onClick="editSequence()">Done</button>
         </p>
         <p align="center">
-          <button type="button" value="enter" onClick="removeSequence()">Remove</button>
+          <button type="button" id="remove_sequence" value="enter" onClick="removeSequence()">Remove</button>
         </p>
         <p align="center">
-          <button type="button" value="enter" onClick="cutSequence()">Cut</button>
+          <button type="button" id="cut_sequence" value="enter" onClick="cutSequence()">Cut</button>
         </p>
         <p align="center">
-          <button type="button" value="enter" onClick="cancel()">Cancel</button>
+          <button type="button" id="cancel_sequence" value="enter" onClick="cancel()">Cancel</button>
         </p>
         </table>
       </form>
@@ -189,7 +189,7 @@
     {
         return "Any progress you made on the diagram will be lost.";
     };
-	
+
 	function toggle_flowlines() {
 		if ( drawingSwimLanes == true ) {
 			drawingSwimLanes = false;
@@ -202,7 +202,7 @@
     function parse_hook() {
       createPML();
     }
-	
+
     function new_hook() {
       console.log("new pressed");
       selectedIndex = [];

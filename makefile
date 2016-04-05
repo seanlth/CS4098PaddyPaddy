@@ -15,6 +15,7 @@ install: buildDeps
 	env/bin/pip3 install Flask-SQLAlchemy
 	env/bin/pip3 install Flask-OAuth
 	env/bin/pip3 install rauth
+	env/bin/pip3 install selenium
 	sudo apt-get install libncurses5-dev
 	cd peos/pml/ && make && \
 	mv check/pmlcheck ../../
