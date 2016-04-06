@@ -1,6 +1,6 @@
 var canvas, startX, endX, middle;// variables for drawing
 var state, selectedAction, selectedIndex, currentControlFlow, generatePML; // variables for handling input
-var offsetX, offsetY, scaleX, scaleY, actionHeight, actionWidth;
+var offsetX, initialY, offsetY, scaleX, scaleY, actionHeight, actionWidth;
 var clipBoard;
 var sequenceNum, selectionNum, iterationNum, branchNum, actionNum;
 var actionColour;
@@ -19,7 +19,8 @@ var hslStepper = 0;
 var StateEnum = {
     normal: 0,
     form: 1,
-    controlFlow: 2
+    controlFlow: 2,
+    notEditing: 3
 };
 
 var FlowControlEnum = {
@@ -37,10 +38,13 @@ var ActionColourEnum = {
 
 function setup() {
     state = StateEnum.normal;
+    editing = true;
     canvas = createCanvas(windowWidth, windowHeight - 50);
     canvas.mousePressed(mousePressedCanvas);
     canvas.mouseMoved(mouseMovedCanvas);
     canvas.id('canvas');
+
+    initialY = canvas.position().y;
 
     startX = 40;
     endX = width - 40;
@@ -73,12 +77,6 @@ function whatControlAction(){
     else if(currentControlFlow == FlowControlEnum.selection){return selectionNum++}
 }
 
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  middle = height / 2;
-  update();
-}
-
 function createPML() {
     var pml_code = json_to_pml_redirect(program);
 }
@@ -96,7 +94,6 @@ function drawJSON(json) {
           } else {
             addActions(acts[i].actions);
           }
-
         }
       }
     }
@@ -109,14 +106,14 @@ function drawJSON(json) {
 function draw() {
     background(255);
 
-	//drawAgentFlowLines();
+    //drawAgentFlowLines();
     var lastScaleX = scaleX;
     var lastScaleY = scaleY;
     keyboardInput();
     actionHeight = ACTION_HEIGHT * scaleY;
     actionWidth = ACTION_WIDTH * scaleX;
 
-    resizeScreen();
+    resize();
 
     if(scaleX != lastScaleX || scaleY != lastScaleY) {
         update();
@@ -124,39 +121,40 @@ function draw() {
 
 
     if ( drawingSwimLanes == true ) {
-		stroke(0, 0, 0, 50);
-	}
-	else {
-		stroke(0);
-	}
-	line(startX, middle, endX, middle);
+        stroke(0, 0, 0, 50);
+    }
+    else {
+        stroke(0);
+    }
+    line(startX, middle, endX, middle);
 
-	if ( drawingSwimLanes == false ) {
-		fill(0);
-    	ellipse(startX, middle, 30, 30);
-    	fill(255);
-    	ellipse(endX, middle, 30, 30);
-    	fill(0);
-    	ellipse(endX, middle, 20, 20);
-	}
+    if ( drawingSwimLanes == false ) {
+        fill(0);
+        ellipse(startX, middle, 30, 30);
+        fill(255);
+        ellipse(endX, middle, 30, 30);
+        fill(0);
+        ellipse(endX, middle, 20, 20);
+    }
+
     var progWidth = sequenceLength(program);
-	stroke(0);
+    stroke(0);
     drawActions(program, progWidth, []);
 
     for(var i = 0; i < names.length; i++) {
-    	names[i].draw();
+        names[i].draw();
     }
 
-    for(var i = 0; i < nodes.length; i++) {
-		if ( drawingSwimLanes == false ) {
-        	nodes[i].draw();
-		}
+    if(state != StateEnum.notEditing) {
+        for(var i = 0; i < nodes.length; i++) {
+            nodes[i].draw();
+        }
     }
 
-	if ( drawingSwimLanes == true ) {
-		//background(255, 255, 255, 220);
-		drawAgentFlowLines();
-	}
+    if ( drawingSwimLanes == true ) {
+        //background(255, 255, 255, 220);
+        drawAgentFlowLines();
+    }
 
 }
 
@@ -164,7 +162,7 @@ function update() {
     background(255);
     var progWidth = sequenceLength(program);
 
-    resizeScreen();
+    resize();
 
     names = [new Name(program.name, startX, middle - 45, [])];
     nodes = [];
@@ -175,7 +173,7 @@ function update() {
 }
 
 // check program isn't too crowded and resize if needed
-function resizeScreen() {
+function resize() {
     var progWidth = sequenceLength(program);
     var prefferedSize = progWidth * actionWidth * 1.4;
 
@@ -186,12 +184,37 @@ function resizeScreen() {
         endX = prefferedSize + startX;
     }
 
-    if(endX < width - 40) {
-        endX = width - 40;
-        offsetX = 0;
-        resetMatrix();
-        translate(0, offsetY);
+    if(endX < windowWidth - 40) {
+        endX = windowWidth - 40;
+        canvas.position(0, offsetY + initialY);
     }
+
+    var lowY = lowestY(program);
+    var highY = highestY(program);
+
+
+    var heightP = (highY - lowY + 1) * 2 * actionHeight;
+    if((highY * 2 * actionHeight) + middle > height || (lowY * 2 * actionHeight) > middle) {
+        middle = (-lowY / (highY - lowY)) * height;
+    }
+
+    if(width != endX + startX && heightP > height) {
+        resizeCanvas(endX + startX, heightP);
+    }
+    else if(width != endX + startX) {
+        resizeCanvas(endX + startX, height);
+    }
+    else if(heightP > height) {
+        resizeCanvas(endX + startX, heightP);
+        middle = (-lowY / (highY - lowY)) * height;
+        update();
+    }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  middle = height / 2;
+  update();
 }
 
 function keyboardInput() {
@@ -202,7 +225,7 @@ function keyboardInput() {
     var lastValueX = offsetX, lastValueY = offsetY;
     var speed = 10;
     // handle horizontal scrolling if display is wider than screen
-    if(endX + startX > width) {
+    if(endX + startX > windowWidth) {
         if(keyIsDown(LEFT_ARROW)) {
             offsetX += speed;
         }
@@ -214,32 +237,26 @@ function keyboardInput() {
             offsetX = 0;
         }
 
-        if(offsetX < width - (endX + startX)) {
-            offsetX = width - (endX + startX);
+        if(offsetX < -(width - windowWidth)) {
+            offsetX = -(width - windowWidth);
         }
     }
 
-    var movementY = 0;
-    if(keyIsDown(UP_ARROW)) {
-        movementY = speed;
-    }
-    else if(keyIsDown(DOWN_ARROW)) {
-        movementY = -speed;
-    }
-
-    var offScreen = false, onScreen = 0;
-    for(var i = 0; i < nodes.length; i++) {
-        if(nodes[i].y + offsetY - (actionWidth / 2) < 0 || nodes[i].y + offsetY + (actionWidth / 2) > height) {
-            offScreen = true;
+    if(height + initialY > windowHeight) {
+        if(keyIsDown(UP_ARROW)) {
+            offsetY += speed;
+        }
+        else if(keyIsDown(DOWN_ARROW)) {
+            offsetY -= speed;
         }
 
-        if(nodes[i].y + offsetY + movementY - (actionWidth / 2) > 0 && nodes[i].y + offsetY + movementY + (actionWidth / 2) < height) {
-            onScreen++;
+        if(offsetY > 0) {
+            offsetY = 0;
         }
-    }
 
-    if(offScreen && onScreen >= 1) {
-        offsetY += movementY
+        if(offsetY < -(windowHeight + initialY - height + 10)) {
+            offsetY = -(windowHeight + initialY - height + 10);
+        }
     }
 
     // zoooooooooooom
@@ -265,7 +282,7 @@ function keyboardInput() {
     }
 
     resetMatrix();
-    translate(offsetX, offsetY);
+    canvas.position(offsetX, offsetY + initialY);
 }
 
 function drawActions(sequence, programWidth, index) {
@@ -310,94 +327,94 @@ function drawActions(sequence, programWidth, index) {
 }
 
 function hashColour(agentName) {
-	var hash = 0;
+    var hash = 0;
 
-	for (var i = 0; i < agentName.length; i++) {
-		var c = agentName[i].charCodeAt(0);
-			hash = c + (hash << 6) + (hash << 16) - hash;
-	}
-	hash *= hash;
-	hash = hash % (256*256*256);
+    for (var i = 0; i < agentName.length; i++) {
+        var c = agentName[i].charCodeAt(0);
+        hash = c + (hash << 6) + (hash << 16) - hash;
+    }
+    hash *= hash;
+    hash = hash % (256*256*256);
 
-	var r1 = hash / 256;
-	var b = hash % 256;
-	var r2 = r1 / 256;
-	var g = r1 % 256;
-	var r = r2 % 256;
+    var r1 = hash / 256;
+    var b = hash % 256;
+    var r2 = r1 / 256;
+    var g = r1 % 256;
+    var r = r2 % 256;
 
 
-	return {r: r, g: g, b: b};
+    return {r: r, g: g, b: b};
 }
 
 function hslToRGB(hue) {
-	var c = (1 - Math.abs(2*0.5 - 1)) * 1;
-	var h = hue / 60;
-	var x = c * (1 - Math.abs(h % 2 - 1));
-	var r1 = 0;
-	var g1 = 0;
-	var b1 = 0;
-	if ( h >= 0 && h < 1 ) { r1 = c; g1 = x, b1 = 0; }
-	if ( h >= 1 && h < 2 ) { r1 = x; g1 = c, b1 = 0; }
-	if ( h >= 2 && h < 3 ) { r1 = 0; g1 = c, b1 = x; }
-	if ( h >= 3 && h < 4 ) { r1 = 0; g1 = x, b1 = c; }
-	if ( h >= 4 && h < 5 ) { r1 = x; g1 = 0, b1 = c; }
-	if ( h >= 5 && h < 6 ) { r1 = 0; g1 = 0, b1 = x; }
+    var c = (1 - Math.abs(2*0.5 - 1)) * 1;
+    var h = hue / 60;
+    var x = c * (1 - Math.abs(h % 2 - 1));
+    var r1 = 0;
+    var g1 = 0;
+    var b1 = 0;
+    if ( h >= 0 && h < 1 ) { r1 = c; g1 = x, b1 = 0; }
+    if ( h >= 1 && h < 2 ) { r1 = x; g1 = c, b1 = 0; }
+    if ( h >= 2 && h < 3 ) { r1 = 0; g1 = c, b1 = x; }
+    if ( h >= 3 && h < 4 ) { r1 = 0; g1 = x, b1 = c; }
+    if ( h >= 4 && h < 5 ) { r1 = x; g1 = 0, b1 = c; }
+    if ( h >= 5 && h < 6 ) { r1 = 0; g1 = 0, b1 = x; }
 
-	var m = 0.5 - 0.5 * c;
-	var r = r1 + m;
-	var g = g1 + m;
-	var b = b1 + m;
-	return { r: r * 255, g: g * 255, b: b * 255 };
+    var m = 0.5 - 0.5 * c;
+    var r = r1 + m;
+    var g = g1 + m;
+    var b = b1 + m;
+    return { r: r * 255, g: g * 255, b: b * 255 };
 }
 
 function stringColour(name) {
-	for (var i = 0; i < stringColours.length; i++) {
-		var stringColour = stringColours[i];
-		if ( stringColour.name == name ) {
-			return stringColour.colour;
-		}
-	}
-	// else make new colour
-	var colour = hslOffset + hslStepper * 90;
-	hslStepper++;
-	if ( hslStepper == 4 ) {
-		hslStepper = 0;
-		hslOffset = hslOffset / 2;
-	}
-	var rgb = hslToRGB(colour);
-	stringColours.push( { name: name, colour: rgb } )
-	return colour;
+    for (var i = 0; i < stringColours.length; i++) {
+        var stringColour = stringColours[i];
+        if ( stringColour.name == name ) {
+            return stringColour.colour;
+        }
+    }
+    // else make new colour
+    var colour = hslOffset + hslStepper * 90;
+    hslStepper++;
+    if ( hslStepper == 4 ) {
+        hslStepper = 0;
+        hslOffset = hslOffset / 2;
+    }
+    var rgb = hslToRGB(colour);
+    stringColours.push( { name: name, colour: rgb } )
+    return colour;
 }
 
 // adds the actions positional information to an agent array
 // if the array doesn't exist it creates it
 function addToAgentArray(agentArray, action) {
-	var foundAgentArray = false;
-	var index = -1;
+    var foundAgentArray = false;
+    var index = -1;
 
-	// search for the array with the same agent
-	for ( var i = 0; i < agentArray.length; i++ ) {
-		var array = agentArray[i];
+    // search for the array with the same agent
+    for ( var i = 0; i < agentArray.length; i++ ) {
+        var array = agentArray[i];
 
-		// found the array
-		if ( array.agent == action.agent ) {
-			foundAgentArray = true;
-			index = i;
-			break;
-		}
-	}
+        // found the array
+        if ( array.agent == action.agent ) {
+            foundAgentArray = true;
+            index = i;
+            break;
+        }
+    }
 
-	// add to or create the array
-	if ( foundAgentArray == true ) {
-		var p = {x: action.xPixelPosition, y: action.yPixelPosition, name: action.name};
-		agentArray[index].positions.push(p);
-	}
-	else {
-		var p = {x: action.xPixelPosition, y: action.yPixelPosition, name: action.name};
+    // add to or create the array
+    if ( foundAgentArray == true ) {
+        var p = {x: action.xPixelPosition, y: action.yPixelPosition, name: action.name};
+        agentArray[index].positions.push(p);
+    }
+    else {
+        var p = {x: action.xPixelPosition, y: action.yPixelPosition, name: action.name};
 
-		var newArray = {agent: action.agent, positions: [p], colour: stringColour(action.agent)};
-		agentArray.push(newArray);
-	}
+        var newArray = {agent: action.agent, positions: [p], colour: stringColour(action.agent)};
+        agentArray.push(newArray);
+    }
 }
 
 // takes all the actions
@@ -405,25 +422,25 @@ function addToAgentArray(agentArray, action) {
 // each actions in an array share an agent
 function createAgentFlowLines(agentArray, actions) {
 
-	// should be using for-each but js is too spooky for me
-	for ( var i = 0; i < actions.length; i++ ) {
-		var primitive = actions[i];
+    // should be using for-each but js is too spooky for me
+    for ( var i = 0; i < actions.length; i++ ) {
+        var primitive = actions[i];
 
-		if ( primitive.hasOwnProperty('control') ) {
-			createAgentFlowLines(agentArray, primitive.actions);
-		}
-		else {
-			addToAgentArray(agentArray, primitive);
-		}
-	}
+        if ( primitive.hasOwnProperty('control') ) {
+            createAgentFlowLines(agentArray, primitive.actions);
+        }
+        else {
+            addToAgentArray(agentArray, primitive);
+        }
+    }
 }
 
 function drawAgentFlowLines() {
-	var agentArray = [];
-	createAgentFlowLines(agentArray, program.actions);
-	var startPosition = {x: startX, y: middle};
-	var endPosition = {x: endX, y: middle};
-	drawFlowLines(startPosition, endPosition, agentArray);
+    var agentArray = [];
+    createAgentFlowLines(agentArray, program.actions);
+    var startPosition = {x: startX, y: middle};
+    var endPosition = {x: endX, y: middle};
+    drawFlowLines(startPosition, endPosition, agentArray);
 }
 
 function updateActions(sequence, programWidth, index) {
@@ -648,7 +665,7 @@ function addNodesRec(actions, index, progWidth) {
 function highestY(sequence) {
     if(sequence.constructor == Action) return sequence.y;
 
-    var maxY = Number.MIN_VALUE;
+    var maxY = 0;
     for(var i = 0; i < sequence.actions.length; i++) {
         var y;
         if(sequence.actions[i].constructor == Action) {
@@ -669,7 +686,7 @@ function highestY(sequence) {
 function lowestY(sequence) {
     if(sequence.constructor == Action) return sequence.y;
 
-    var minY = Number.MAX_VALUE;
+    var minY = 0;
     for(var i = 0; i < sequence.actions.length; i++) {
         var y;
         if(sequence.actions[i].constructor == Action) {
@@ -804,7 +821,7 @@ function Node(x, y, index) {
 
     this.draw = function() {
         if(state != StateEnum.controlFlow && this.highlighted) {
-			stroke(0);
+            stroke(0);
             fill(255);
             ellipse(this.positionAction.x, this.positionAction.y, this.diameter, this.diameter);
             ellipse(this.positionIterate.x, this.positionIterate.y, this.diameter, this.diameter);
@@ -812,7 +829,7 @@ function Node(x, y, index) {
             ellipse(this.positionSelect.x, this.positionSelect.y, this.diameter, this.diameter);
             ellipse(this.positionSequence.x, this.positionSequence.y, this.diameter, this.diameter);
 
-			stroke(255);
+            stroke(255);
             textAlign(CENTER, CENTER);
             fill(0);
             text('A', this.positionAction.x, this.positionAction.y);
@@ -820,14 +837,14 @@ function Node(x, y, index) {
             text('B', this.positionBranch.x, this.positionBranch.y);
             text('Sel', this.positionSelect.x, this.positionSelect.y);
             text('Seq', this.positionSequence.x, this.positionSequence.y);
-			stroke(0);
+            stroke(0);
             if(clipBoard.length > 0) {
                 fill(255);
                 ellipse(this.positionPaste.x, this.positionPaste.y, this.diameter, this.diameter);
                 fill(0);
-				stroke(255);
+                stroke(255);
                 text('P', this.positionPaste.x, this.positionPaste.y);
-				stroke(0);
+                stroke(0);
             }
         }
         else {
@@ -844,13 +861,13 @@ function Node(x, y, index) {
             else {
                 fill(255, 0, 0);
             }
-			stroke(0);
+            stroke(0);
             ellipse(this.x, this.y, this.diameter, this.diameter);
-			stroke(255);
+            stroke(255);
             fill(0);
             textAlign(CENTER, CENTER);
             text('+', this.x, this.y);
-			stroke(255);
+            stroke(255);
         }
     }
 }
@@ -911,7 +928,7 @@ function Name(name, x, y, index) {
         fill(255);
         rect(this.x, this.y, this.buttonWidth, this.buttonWidth);
         fill(0);
-		stroke(255);
+        stroke(255);
         textAlign(CENTER, CENTER);
         text('...', this.x + this.buttonWidth / 2, this.y + this.buttonWidth / 2);
         textAlign(LEFT, TOP);
@@ -923,7 +940,7 @@ function Name(name, x, y, index) {
                 text(this.name.substring(0, 19 * scaleX) + '...', this.x + this.buttonWidth + 3, this.y);
             }
         }
-		stroke(0);
+        stroke(0);
     }
 }
 
@@ -948,8 +965,8 @@ function Action(action) {
     this.id = numActions++;
     this.x;
     this.y;
-	this.xPixelPosition;
-	this.yPixelPosition;
+    this.xPixelPosition;
+    this.yPixelPosition;
 
     // All the PML important details
     if(action) {
@@ -1141,13 +1158,13 @@ function drawLine(prog, x, y, programWidth) {
     var endLineXPixels = diagramWidth * (endLineX / (programWidth + 1)) + startX;
 
     var yPixels = (y * actionHeight * 2) + middle;
-	if ( drawingSwimLanes == true ) {
-		stroke(0, 0, 0, 50);
-   	}
-	else {
-		stroke(0);
-	}
-	line(startLineXPixels, yPixels, endLineXPixels, yPixels);
+    if ( drawingSwimLanes == true ) {
+        stroke(0, 0, 0, 50);
+    }
+    else {
+        stroke(0);
+    }
+    line(startLineXPixels, yPixels, endLineXPixels, yPixels);
 
     return {"startX": startLineXPixels, "endX": endLineXPixels, "y": yPixels};
 }
@@ -1293,12 +1310,12 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
 
     line(lineDetails.startX, linePositionYStart, lineDetails.startX, linePositionYEnd);
     line(lineDetails.endX, linePositionYStart, lineDetails.endX, linePositionYEnd);
-	if ( drawingSwimLanes == true ) {
-		fill(0, 0, 0, 50);
-	}
-	else {
-    	fill(0);
-	}
+    if ( drawingSwimLanes == true ) {
+        fill(0, 0, 0, 50);
+    }
+    else {
+        fill(0);
+    }
     ellipse(lineDetails.endX, lineDetails.y, 10 , 10);
 
     translate(lineDetails.startX, lineDetails.y - 21);
@@ -1306,7 +1323,7 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
     fill(255);
     rect(0, 0, 30, 30);
     resetMatrix();
-    translate(offsetX, offsetY);
+    //translate(offsetX, offsetY);
 }
 
 function selectAction(actions, id){
@@ -1423,8 +1440,8 @@ function mousePressedCanvas(event) {
     $('#flowEditor').hide();
     $('#outputPanel').hide();
 
-    var x = mouseX - offsetX;
-    var y = mouseY - offsetY;
+    var x = mouseX;
+    var y = mouseY;
     var programwidth = sequenceLength(program);
     var pressed = false;
 
@@ -1440,7 +1457,7 @@ function mousePressedCanvas(event) {
         pressed = pressActions(program.actions, programwidth, x, y);
     }
 
-    if(!pressed) {
+    if(!pressed && state != StateEnum.notEditing) {
         state = StateEnum.normal;
     }
 }
@@ -1459,15 +1476,17 @@ function pressActions(actions, programwidth, x, y) {
 function mouseMovedCanvas(event) {
     if (state == StateEnum.form) return;
 
-    var x = mouseX - offsetX;
-    var y = mouseY - offsetY;
+    var x = mouseX;
+    var y = mouseY;
     var programwidth = sequenceLength(program);
     var mousedOver = mouseOverActions(program.actions, programwidth, x, y);
 
-    for(var i = 0; i < nodes.length; i++) {
-        if(nodes[i].mouseOver(x, y)){
-            mousedOver = true;
-            break;
+    if(state != StateEnum.notEditing) {
+        for(var i = 0; i < nodes.length; i++) {
+            if(nodes[i].mouseOver(x, y)){
+                mousedOver = true;
+                break;
+            }
         }
     }
 
@@ -1502,7 +1521,7 @@ function mouseDragged(event) {
 
     var lastValueX = offsetX, lastValueY = offsetY;
     // handle horizontal scrolling if display is wider than screen
-    if(endX + startX > width) {
+    if(endX + startX > windowWidth) {
         if(event.movementX) {
             offsetX += event.movementX;
         }
@@ -1514,43 +1533,38 @@ function mouseDragged(event) {
             offsetX = 0;
         }
 
-        if(offsetX < width - (endX + startX)) {
-            offsetX = width - (endX + startX);
+        if(offsetX < -(width - windowWidth)) {
+            offsetX = -(width - windowWidth);
         }
     }
 
-    var movementY = 0;
-    if(event.movementY) {
-        movementY = event.movementY;
-    }
-    else if(event.mozMovementY) {
-        movementY = event.mozMovementY;
-    }
-    var offScreen = false, onScreen = 0;
-    for(var i = 0; i < nodes.length; i++) {
-        if(nodes[i].y + offsetY - (actionWidth / 2) < 0 || nodes[i].y + offsetY + (actionWidth / 2) > height) {
-            offScreen = true;
+    if(height + initialY > windowHeight) {
+        if(event.movementY) {
+            offsetY += event.movementY;
+        }
+        else if(event.mozMovementY) {
+            offsetY += event.mozMovementY;
         }
 
-        if(nodes[i].y + offsetY +movementY - (actionWidth / 2) > 0 && nodes[i].y + offsetY +movementY + (actionWidth / 2) < height) {
-            onScreen++;
+        if(offsetY > 0) {
+            offsetY = 0;
         }
-    }
 
-    if(offScreen && onScreen >= 1) {
-        offsetY +=movementY;
+        if(offsetY < -(windowHeight + initialY - height + 10)) {
+            offsetY = -(windowHeight + initialY - height + 10);
+        }
     }
 
     // only redraw with change
     if(lastValueX != offsetX || lastValueY != offsetY) {
         resetMatrix();
-        translate(offsetX, offsetY);
+        canvas.position(offsetX, offsetY + initialY);
     }
 }
 
 function editAction() {
 
-	// variable regex stuff here
+    // variable regex stuff here
     var variableRegex = new RegExp('^ *([a-zA-Z_][a-zA-Z_0-9]*) *$')
     var name = document.getElementById('name').value;
     if (!variableRegex.test(name)) {
@@ -1562,7 +1576,7 @@ function editAction() {
 
     var predicateRegex = new RegExp('^ *((([a-zA-Z_.0-9]+|\"[^\"]*\")( *([|][|]|&&) *([a-zA-Z_.0-9]+|\"[^\"]*\"))*))| * *$');
 
-	// agent regex stuff here
+    // agent regex stuff here
     var agent = document.getElementById('agent').value;
     if ( !predicateRegex.test(agent) && agent.length != 0) {
         alert(  "The agent " + agent + " of the Action is invalid, "
@@ -1570,48 +1584,48 @@ function editAction() {
               + "only letters, numbers and underscrores.");
         return
     }
-	var agentResult = predicateRegex.exec(agent);
-	if  ( agentResult[1] == null || agent.length == 0 ) {
-		agent = "";
-	}
-	else {
-		agent = agentResult[1];
-	}
+    var agentResult = predicateRegex.exec(agent);
+    if  ( agentResult[1] == null || agent.length == 0 ) {
+        agent = "";
+    }
+    else {
+        agent = agentResult[1];
+    }
 
-	// tool regex stuff here
-	var toolRegex = new RegExp('^ *([^\"]*) *$');
+    // tool regex stuff here
+    var toolRegex = new RegExp('^ *([^\"]*) *$');
     var tool = document.getElementById('tool').value;
 
-	if ( !toolRegex.test(tool) && tool.length != 0) {
+    if ( !toolRegex.test(tool) && tool.length != 0) {
         alert(  "The tool " + tool + " of the Action is invalid, "
               + "the tool must not contain \" characters.");
         return
     }
-	var toolResult = toolRegex.exec(tool);
-	if ( toolResult[1] == null || toolResult.length == 0 ) {
-		tool = "";
-	}
-	else {
-		tool = toolResult[1];
-	}
+    var toolResult = toolRegex.exec(tool);
+    if ( toolResult[1] == null || toolResult.length == 0 ) {
+        tool = "";
+    }
+    else {
+        tool = toolResult[1];
+    }
 
-	// requires regex stuff here
+    // requires regex stuff here
     var requires = document.getElementById('requires').value
-	if(!predicateRegex.test(requires) && requires.length != 0) {
+    if(!predicateRegex.test(requires) && requires.length != 0) {
         alert(  "The requirement \"" + requires + "\" of the Action is invalid, "
               + "requirements must start with an underscore or letter and contain "
               + "only letters, numbers and underscrores.");
         return
     }
-	var requiresResult = predicateRegex.exec(requires);
-	if ( requiresResult[1] == null || requiresResult.length == 0 ) {
-		requires = "";
-	}
-	else {
-		requires = requiresResult[1];
-	}
+    var requiresResult = predicateRegex.exec(requires);
+    if ( requiresResult[1] == null || requiresResult.length == 0 ) {
+        requires = "";
+    }
+    else {
+        requires = requiresResult[1];
+    }
 
-	// provides regex stuff here
+    // provides regex stuff here
     var provides = document.getElementById('provides').value;
     if(!predicateRegex.test(provides) && provides.length != 0) {
         alert(  "The provision \"" + provides + "\" of the Action is invalid, "
@@ -1619,13 +1633,13 @@ function editAction() {
               + "only letters, numbers and underscrores.");
         return
     }
-	var providesResult = predicateRegex.exec(provides);
-	if ( providesResult[1] == null || providesResult.legnth == 0 ) {
-		provides = "";
-	}
-	else {
-		provides = providesResult[1];
-	}
+    var providesResult = predicateRegex.exec(provides);
+    if ( providesResult[1] == null || providesResult.legnth == 0 ) {
+        provides = "";
+    }
+    else {
+        provides = providesResult[1];
+    }
 
 
     selectedAction.name = variableRegex.exec(name)[1];

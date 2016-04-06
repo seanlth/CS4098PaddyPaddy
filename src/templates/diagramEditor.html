@@ -82,8 +82,6 @@
 			  <li>
 				  <a id="downloadLnk" download="diagram.jpg">Save Image </a>
               </li>
-
-
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li>
@@ -195,9 +193,12 @@
     };
 	
 	function download() {
+		toggle_editing();
+		draw();
 		var canvas = document.getElementById("canvas");
 		var dt = canvas.toDataURL('image/jpeg');
 		this.href = dt;
+		toggle_editing();
 	}
     downloadLnk.addEventListener('click', download, false);
 
@@ -210,10 +211,19 @@
 		}
 	}
 
+    function toggle_editing() {
+        if(state == StateEnum.notEditing) {
+            state = StateEnum.normal;
+        }
+        else {
+            state = StateEnum.notEditing;
+        }
+    }
+
     function parse_hook() {
       createPML();
     }
-	
+
     function new_hook() {
       console.log("new pressed");
       selectedIndex = [];
