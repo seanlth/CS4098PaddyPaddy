@@ -200,6 +200,7 @@ function resize() {
 
     if(width != endX + startX && heightP > height) {
         resizeCanvas(endX + startX, heightP);
+        update();
     }
     else if(width != endX + startX) {
         resizeCanvas(endX + startX, height);
@@ -250,8 +251,8 @@ function keyboardInput() {
             offsetY = 0;
         }
 
-        if(offsetY < -(windowHeight + initialY - height + 10)) {
-            offsetY = -(windowHeight + initialY - height + 10);
+        if(offsetY < windowHeight - initialY - height) {
+            offsetY = windowHeight - initialY - height;
         }
     }
 
@@ -1570,9 +1571,9 @@ function mouseDragged(event) {
             offsetY = 0;
         }
 
-        if(offsetY < -(windowHeight + initialY - height + 10)) {
-            offsetY = -(windowHeight + initialY - height + 10);
-        }
+        // if(offsetY > windowHeight - initialY - height) {
+        //     offsetY = windowHeight - initialY - height;
+        // }
     }
 
     // only redraw with change
