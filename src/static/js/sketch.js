@@ -145,7 +145,7 @@ function draw() {
         names[i].draw();
     }
 
-    if(state != StateEnum.notEditing) {
+    if ( drawingSwimLanes == false ) {
         for(var i = 0; i < nodes.length; i++) {
             nodes[i].draw();
         }
