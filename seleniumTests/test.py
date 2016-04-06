@@ -13,7 +13,7 @@ testInvalidPML = "process a {\n\
 }"
 
 driver = webdriver.Firefox()
-driver.get("http://localhost:8000")
+driver.get("http://0.0.0.0:8000")
 
 #test load
 assert "Editor" in driver.title
@@ -121,6 +121,26 @@ driver.implicitly_wait(10)
 outputAfterGenerate = driver.find_element_by_id("output").get_attribute("value")
 assert outputBeforeGenerate == outputAfterGenerate
 # print("Successful: PML generated")
+
+def signup(): 
+    driver.get("http://0.0.0.0:8000/signup"); 
+    driver.find_element_by_name("email").send_keys("test@test.test");
+    driver.find_element_by_name("password").send_keys("testpassword");
+    driver.find_element_by_name("verify").send_keys("testpassword");
+    driver.find_element_by_name("submit").click();
+    assert driver.current_url == "http://0.0.0.0:8000/";
+    print("Successful: Signup");
+
+def file_upload():
+    driver.get("http://0.0.0.0:8000/upload");
+    driver.findElement(By.id("upload")).sendKeys("<absolutePathToMyFile>");
+    driver.execute_script("return upload_hook()");
+    
+
+signup();
+
+def file_upload():
+    driver.get 
 
 input("Press Enter to continue...")
 driver.quit()
