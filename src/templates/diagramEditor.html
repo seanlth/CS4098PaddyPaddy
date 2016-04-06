@@ -220,6 +220,8 @@
       selectedIndex = [];
       clipBoard = [];
       program = {name: "new_process", actions: new Array()};
+      canvasResize(windowWidth, windowHeight - 50);
+      middle = height / 2;
       update();
       $.ajax("/resetCurrent");
     }
