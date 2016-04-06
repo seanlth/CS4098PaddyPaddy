@@ -195,6 +195,10 @@ function resizeScreen() {
 }
 
 function keyboardInput() {
+	if ( state == StateEnum.form ) { 
+		return;
+	}
+
     var lastValueX = offsetX, lastValueY = offsetY;
     var speed = 10;
     // handle horizontal scrolling if display is wider than screen

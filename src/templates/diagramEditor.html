@@ -79,6 +79,10 @@
 			  <li>
                   <a href="javascript:toggle_flowlines()">Toggle Flow Lines </a>
               </li>
+			  <li>
+				  <a id="downloadLnk" download="diagram.jpg">Save Image </a>
+              </li>
+
 
           </ul>
           <ul class="nav navbar-nav navbar-right">
@@ -190,6 +194,13 @@
         return "Any progress you made on the diagram will be lost.";
     };
 	
+	function download() {
+		var canvas = document.getElementById("canvas");
+		var dt = canvas.toDataURL('image/jpeg');
+		this.href = dt;
+	}
+    downloadLnk.addEventListener('click', download, false);
+
 	function toggle_flowlines() {
 		if ( drawingSwimLanes == true ) {
 			drawingSwimLanes = false;
