@@ -821,9 +821,9 @@ function Node(x, y, index) {
                 fill(255);
                 ellipse(this.positionPaste.x, this.positionPaste.y, this.diameter, this.diameter);
                 fill(0);
-				stroke(255);
+                stroke(255);
                 text('P', this.positionPaste.x, this.positionPaste.y);
-				stroke(0);
+                stroke(0);
             }
         }
         else {
@@ -840,13 +840,14 @@ function Node(x, y, index) {
             else {
                 fill(255, 0, 0);
             }
-			stroke(0);
+
+            stroke(0);
             ellipse(this.x, this.y, this.diameter, this.diameter);
-			stroke(255);
+            stroke(255);
             fill(0);
             textAlign(CENTER, CENTER);
             text('+', this.x, this.y);
-			stroke(255);
+            stroke(255);
         }
     }
 }
@@ -925,6 +926,9 @@ function Name(name, x, y, index) {
 
 function validControlFlow(node) {
     if(selectedIndex.length != node.index.length) return false;
+
+    if((node.index[node.index.length - 1] < 0 && selectedIndex[selectedIndex.length - 1] >= 0) ||
+       (node.index[node.index.length - 1] >= 0 && selectedIndex[selectedIndex.length - 1] < 0)) return false;
 
     return compareArrays(selectedIndex, node.index, selectedIndex.length - 1);
 }
