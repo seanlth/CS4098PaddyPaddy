@@ -12,6 +12,12 @@ function drawNode(x, y, radius, agentColour) {
 	strokeWeight(2);
 }
 
+function numberOfUniqueFlowLines(agentFlowLines) {
+    for (int i = 0; i < agentFlowLines.length; i++) {
+        for (int )
+    }
+}
+
 function drawFlowLines(start, end, agentFlowLines) {
     
 	var numberOfFlowLines = agentFlowLines.length;
@@ -24,8 +30,10 @@ function drawFlowLines(start, end, agentFlowLines) {
 	for ( var i = 0; i < agentFlowLines.length; i++ ) {
 		var array = agentFlowLines[i].positions;
 		var colour = agentFlowLines[i].colour;	
-		var previousPosition = start;
-		
+		var previousXPosition = agentFlowLines[i].start;
+        var endXPosition = agentFlowLines[i].end;
+		var y = agentFlowLines[i].y;
+
 		var R = colour.r;
 		var G = colour.g;
 		var B = colour.b;
@@ -34,17 +42,17 @@ function drawFlowLines(start, end, agentFlowLines) {
 		strokeWeight(2);
 		
 		var position = array[0];
-		line(previousPosition.x, previousPosition.y + yOffset, position.x, position.y + yOffset);
-		nodeLocations.push( {x: position.x, y: position.y + yOffset, colour: {r: R, g: G, b: B}, name: position.name} );
-		previousPosition = position;
+		line(previousXPosition, y + yOffset, position.x, y + yOffset);
+		nodeLocations.push( {x: position.x, y: y + yOffset, colour: {r: R, g: G, b: B}, name: position.name} );
+		previousXPosition = position.x;
 
 		for ( var j = 1; j < array.length; j++ ) {
-			var position = array[j];
-			line(previousPosition.x, previousPosition.y + yOffset, position.x, position.y + yOffset);
-			nodeLocations.push( {x: position.x, y: position.y + yOffset, colour: {r: R, g: G, b: B}, name: position.name} );
-			previousPosition = position;
+			var xPosition = array[j].x;
+			line(previousXPosition, y + yOffset, xPosition, y + yOffset);
+			nodeLocations.push( {x: xPosition, y: y + yOffset, colour: {r: R, g: G, b: B}, name: array[j].name} );
+			previousXPosition = xPosition;
 		}
-		line(previousPosition.x, previousPosition.y + yOffset, end.x, end.y + yOffset);
+		line(previousXPosition, y + yOffset, endXPosition, y + yOffset);
 		yOffset += gap;
 	}
 	var c = {r: 0, g: 0, b: 0};
