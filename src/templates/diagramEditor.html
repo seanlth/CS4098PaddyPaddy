@@ -36,7 +36,7 @@
                       <li>
                         <form action="upload" method="post" enctype="multipart/form-data" id ="fileUpload">
                           {% if (not 'email' in session) and (not 'social' in session) %}
-                            <a href="/login" style="color: #333333;">Upload</a>
+                            <a href="/login?return_url=diagram" style="color: #333333;">Upload</a>
                           {% else %}
                             <input id="upload-file" type="file" name="file" style="display: none;">
                             <script>
@@ -77,9 +77,9 @@
           <ul class="nav navbar-nav navbar-right">
             <li>
               {% if not 'email' in session %}
-              <a href="/login"><r>Login</r></a>
+              <a href="javascript:login_hook()"><r>Login</r></a>
               {% else %}
-              <a href="/logout"><r>Logout</r></a>
+              <a href="/logout?return_url=diagram"><r>Logout</r></a>
               {% endif %}
             </li>
           </ul>
@@ -243,6 +243,14 @@
     function open_hook() {
       console.log("open pressed");
       window.location.href = 'openFile?diagram=true';
+    }
+
+    function login_hook() {
+        console.log("login pressed");
+        pushTemp(function(response) {
+            window.onbeforeunload = function () {};
+            window.location.href = 'login?return_url=diagram'
+        });
     }
 
     function run_hook() {

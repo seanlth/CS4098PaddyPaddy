@@ -181,7 +181,7 @@ def saveFile(fname=None):
 
 @app.route("/diagram")
 def diagram():
-    if 'useParsed' in request.args and 'tempFile' in session:
+    if 'tempFile' in session:
         tempFile = session['tempFile']
         with open(tempFile) as f:
             data = f.read()
@@ -266,7 +266,10 @@ def loginButton():
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect('/')
+    if 'return_url' in request.args:
+        return redirect(request.args['return_url'])
+    else:
+        return redirect('/')
 
 @app.route("/tmp", methods=["POST"])
 def tmp():
