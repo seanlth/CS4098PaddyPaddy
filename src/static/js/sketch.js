@@ -360,6 +360,17 @@ function stringColour(name) {
 // adds the actions positional information to an agent array 
 // if the array doesn't exist it creates it
 function addToAgentArray(agentArray, action) {
+    
+    // uses y value to distinguish between actions in parallel sequences
+    //
+    // agentArray : {
+    //  agent_name : string,
+    //  y: Int
+    //  positions : {x_positions: [Int]}
+    //  Colour
+    // }
+
+
 	var foundAgentArray = false;
 	var index = -1;
 
@@ -380,7 +391,7 @@ function addToAgentArray(agentArray, action) {
 		var p = {x: action.xPixelPosition, y: action.yPixelPosition, name: action.name};  
 		agentArray[index].positions.push(p);
 	}
-	else {
+	else if ( action.agent != "" ) {
 		var p = {x: action.xPixelPosition, y: action.yPixelPosition, name: action.name};  
 
 		var newArray = {agent: action.agent, positions: [p], colour: stringColour(action.agent)};

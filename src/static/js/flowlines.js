@@ -29,16 +29,13 @@ function drawFlowLines(start, end, agentFlowLines) {
 		var R = colour.r;
 		var G = colour.g;
 		var B = colour.b;
-		//var R = colour;
-		//var G = 100;
-		//var B = 50;
 
 		stroke(R, G, B);
 		strokeWeight(2);
 		
 		var position = array[0];
 		line(previousPosition.x, previousPosition.y + yOffset, position.x, position.y + yOffset);
-		nodeLocations.push( {x: position.x, y: position.y + yOffset, colour: {r: R, g: G, b: G}, name: position.name} );
+		nodeLocations.push( {x: position.x, y: position.y + yOffset, colour: {r: R, g: G, b: B}, name: position.name} );
 		previousPosition = position;
 
 		for ( var j = 1; j < array.length; j++ ) {
