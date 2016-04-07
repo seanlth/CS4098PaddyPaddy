@@ -12,7 +12,9 @@ install: buildDeps
 	git submodule update
 	virtualenv -p /usr/bin/python3 env
 	env/bin/pip3 install Flask
-	env/bin/pip3 install SQLAlchemy
+	env/bin/pip3 install Flask-SQLAlchemy
+	env/bin/pip3 install Flask-OAuth
+	env/bin/pip3 install rauth
 	sudo apt-get install libncurses5-dev
 	cd peos/pml/ && make && \
 	mv check/pmlcheck ../../

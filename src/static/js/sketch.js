@@ -3,6 +3,7 @@ var state, selectedAction, selectedIndex, currentControlFlow, generatePML; // va
 var offsetX, offsetY, scaleX, scaleY, actionHeight, actionWidth;
 var clipBoard;
 var sequenceNum, selectionNum, iterationNum, branchNum, actionNum;
+var actionColour;
 
 var ACTION_HEIGHT = 50;
 var ACTION_WIDTH = 120;
@@ -28,6 +29,12 @@ var FlowControlEnum = {
     sequence: "sequence"
 };
 
+var ActionColourEnum = {
+    none: 0,
+    analysis: 1,
+    agent: 2
+}
+
 function setup() {
     state = StateEnum.normal;
     canvas = createCanvas(windowWidth, windowHeight - 50);
@@ -46,6 +53,7 @@ function setup() {
     actionWidth = ACTION_WIDTH;
     selectedIndex = [];
     clipBoard = [];
+    actionColour = ActionColourEnum.none;
 
     sequenceNum = 1;
     selectionNum = 1;
@@ -62,7 +70,7 @@ function whatControlAction(){
     if(currentControlFlow == FlowControlEnum.sequence){return sequenceNum++}
     else if(currentControlFlow == FlowControlEnum.iteration){return iterationNum++}
     else if(currentControlFlow == FlowControlEnum.branch){return branchNum++}
-    else if(currentControlFlow == FlowControlEnum.selection){return selectionNum++}    
+    else if(currentControlFlow == FlowControlEnum.selection){return selectionNum++}
 }
 
 function windowResized() {
@@ -113,8 +121,8 @@ function draw() {
     if(scaleX != lastScaleX || scaleY != lastScaleY) {
         update();
     }
-	
-	
+
+
     if ( drawingSwimLanes == true ) {
 		stroke(0, 0, 0, 50);
 	}
@@ -123,7 +131,7 @@ function draw() {
 	}
 	line(startX, middle, endX, middle);
 
-	if ( drawingSwimLanes == false ) { 
+	if ( drawingSwimLanes == false ) {
 		fill(0);
     	ellipse(startX, middle, 30, 30);
     	fill(255);
@@ -134,7 +142,7 @@ function draw() {
     var progWidth = sequenceLength(program);
 	stroke(0);
     drawActions(program, progWidth, []);
-	
+
     for(var i = 0; i < names.length; i++) {
     	names[i].draw();
     }
@@ -144,7 +152,7 @@ function draw() {
         	nodes[i].draw();
 		}
     }
-	
+
 	if ( drawingSwimLanes == true ) {
 		//background(255, 255, 255, 220);
 		drawAgentFlowLines();
@@ -299,7 +307,7 @@ function drawActions(sequence, programWidth, index) {
 
 function hashColour(agentName) {
 	var hash = 0;
-	
+
 	for (var i = 0; i < agentName.length; i++) {
 		var c = agentName[i].charCodeAt(0);
 			hash = c + (hash << 6) + (hash << 16) - hash;
@@ -310,9 +318,9 @@ function hashColour(agentName) {
 	var r1 = hash / 256;
 	var b = hash % 256;
 	var r2 = r1 / 256;
-	var g = r1 % 256;			    
-	var r = r2 % 256; 
-	
+	var g = r1 % 256;
+	var r = r2 % 256;
+
 
 	return {r: r, g: g, b: b};
 }
@@ -357,7 +365,7 @@ function stringColour(name) {
 	return colour;
 }
 
-// adds the actions positional information to an agent array 
+// adds the actions positional information to an agent array
 // if the array doesn't exist it creates it
 function addToAgentArray(agentArray, action) {
     
@@ -374,10 +382,10 @@ function addToAgentArray(agentArray, action) {
 	var foundAgentArray = false;
 	var index = -1;
 
-	// search for the array with the same agent 
+	// search for the array with the same agent
 	for ( var i = 0; i < agentArray.length; i++ ) {
 		var array = agentArray[i];
-		
+
 		// found the array
 		if ( array.agent == action.agent ) {
 			foundAgentArray = true;
@@ -385,10 +393,10 @@ function addToAgentArray(agentArray, action) {
 			break;
 		}
 	}
-	
+
 	// add to or create the array
 	if ( foundAgentArray == true ) {
-		var p = {x: action.xPixelPosition, y: action.yPixelPosition, name: action.name};  
+		var p = {x: action.xPixelPosition, y: action.yPixelPosition, name: action.name};
 		agentArray[index].positions.push(p);
 	}
 	else if ( action.agent != "" ) {
@@ -399,17 +407,17 @@ function addToAgentArray(agentArray, action) {
 	}
 }
 
-// takes all the actions 
-// returns arrays of locatiosn 
+// takes all the actions
+// returns arrays of locatiosn
 // each actions in an array share an agent
 function createAgentFlowLines(agentArray, actions) {
-	
+
 	// should be using for-each but js is too spooky for me
 	for ( var i = 0; i < actions.length; i++ ) {
 		var primitive = actions[i];
 
 		if ( primitive.hasOwnProperty('control') ) {
-			createAgentFlowLines(agentArray, primitive.actions);	
+			createAgentFlowLines(agentArray, primitive.actions);
 		}
 		else {
 			addToAgentArray(agentArray, primitive);
@@ -810,7 +818,7 @@ function Node(x, y, index) {
             ellipse(this.positionBranch.x, this.positionBranch.y, this.diameter, this.diameter);
             ellipse(this.positionSelect.x, this.positionSelect.y, this.diameter, this.diameter);
             ellipse(this.positionSequence.x, this.positionSequence.y, this.diameter, this.diameter);
-			
+
 			stroke(255);
             textAlign(CENTER, CENTER);
             fill(0);
@@ -1060,24 +1068,76 @@ function Action(action) {
     this.draw = function(programWidth) {
         var yPixels = (this.y * actionHeight * 2) + middle;
         var xPixels = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX;
-		
-		this.xPixelPosition = xPixels;
-		this.yPixelPosition = yPixels;
-		stroke(0);
+
+        this.xPixelPosition = xPixels;
+        this.yPixelPosition = yPixels;
+        stroke(0);
         fill(255);
-        rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
-        fill(0);
-		stroke(255);
-		if ( drawingSwimLanes == false ) {
-        	textAlign(CENTER, CENTER);
-        	if(this.name.length <= 17 * scaleX) {
-            	text(this.name, xPixels, yPixels);
-        	}
-        	else {
-            	text(this.name.substring(0, 14 * scaleX) + '...', xPixels, yPixels);
-        	}
-		}
-		stroke(0);
+
+        if(actionColour == ActionColourEnum.none) {
+            fill(255);
+            rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+            fill(0);
+        }
+        else if(actionColour == ActionColourEnum.analysis) {
+            var requiresIdentifiers = this.requires.split(/[\s,&&,==,||]+/);
+            var providesIdentifiers = this.provides.split(/[\s,&&,==,||]+/);
+
+            var transforms = true;
+            for(var i = 0; i < providesIdentifiers.length; i++) {
+                var p = providesIdentifiers[i].split(/[.]+/)[0];
+                var match = false;
+                for(var j = 0; j < requiresIdentifiers.length; j++) {
+                    if(p == requiresIdentifiers[j].split(/[.]+/)[0]) {
+                        match = true;
+                    }
+                }
+                transforms = transforms && !match;
+            }
+
+            if(this.requires.length == 0 && this.provides.length == 0) {
+                //empty
+                fill(255, 255, 0);
+                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                fill(0);
+            }
+            else if(this.provides.length == 0) {
+                //blackhole
+                fill(0);
+                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                fill(255);
+            }
+            else if(this.requires.length == 0) {
+                //miracle
+                fill(0, 255, 255);
+                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                fill(0);
+            }
+            else if(transforms) {
+                //tranforms
+                fill(0, 255, 0);
+                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                fill(0);
+            }
+            else {
+                fill(255);
+                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+                fill(0);
+            }
+        }
+
+        if ( drawingSwimLanes == false ) {
+            fill(0);
+            stroke(255);
+            textAlign(CENTER, CENTER);
+            if(this.name.length <= 17 * scaleX) {
+                text(this.name, xPixels, yPixels);
+            }
+            else {
+                text(this.name.substring(0, 14 * scaleX) + '...', xPixels, yPixels);
+            }
+        }
+        stroke(0);
     }
 }
 
