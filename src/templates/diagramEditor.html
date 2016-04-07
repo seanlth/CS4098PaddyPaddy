@@ -1,13 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
-
-
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/p5.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/addons/p5.dom.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/addons/p5.sound.min.js"></script>
   <script src="{{url_for('static', filename='js/sketch.js')}}"></script>
   <script src="{{url_for('static', filename='js/pml_generator.js')}}"></script>
+  <script src="{{url_for('static', filename='js/predicateEditor.js')}}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='diagramEditor.css') }}">
   <style type=text/css>{{ get_resource_as_string('static/editor.css') }}</style>
 
@@ -15,6 +14,11 @@
   <style type="text/css">
   .navbar{
     background:url("static/images/dark_wall.png");
+  }
+
+  /* TODO: better styling */
+  input[class~='invalid']{
+    background-color: red;
   }
   </style>
   <nav class="navbar navbar-default" role="navigation">
@@ -152,9 +156,31 @@
         </table>
       </form>
     <form id="predicateEditor">
-      <p align="center">
-        <p>Field: <Input type="text" name="field" id="field"/></p>
-      </p>
+      <div id='pred_ed'>
+
+        current predicate:
+        <p id="current_pred">&lt;None&gt;</p>
+        <div id="base_conjunct">
+          <input type="text" class='base' />
+          <button class="addDot" id="base_addDot">+.</button>
+          <select class="comparison" id="base_operator">
+            <option>None</option>
+            <option selected>==</option>
+            <option>!=</option>
+            <option>&lt;</option>
+            <option>&gt;</option>
+            <option>&gt;=</option>
+            <option>&lt;=</option>
+          </select>
+          <button class="addOp" id="base_addOp">+op</button>
+        </div>
+
+        <div id='form'></div>
+        <p>
+          <button id='adder'> + </button>
+          <button id='finished'>Done</button>
+        </p>
+      </div>
       <button type="button" value="enter" onClick="exitPredicateEditor()">Cancel</button>
     </form>
   </body>

@@ -1,12 +1,9 @@
-<html>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.0.0-beta1/jquery.js"></script>
-<script>
 /*
 TODO:
-- resize fields
 - finished func
-- refactor
+- resize fields
 - better error messages
+- refactor
 */
 
 $(function() {
@@ -54,7 +51,6 @@ $(function() {
 
       var postOp = base.children('.postOp');
       if (postOp.length > 0){
-        //FIXME: different ops
         val = postOp.children().val();
         if (isValidVal(val)){
           res += " == " + val;
@@ -111,10 +107,10 @@ $(function() {
 
     postOp.append([inp, addDot]);
     button.after(postOp);
-    button.hide();
+    button.css('visibility', 'hidden');
 
     var selector = button.siblings('.comparison');
-    selector.show();
+    selector.css('visibility', 'visible');
     selector.val("==");
 
   }
@@ -122,8 +118,8 @@ $(function() {
   function onOpChange(selector){
     if (selector.val() == "None"){
       selector.siblings('.postOp').remove();
-      selector.hide()
-      selector.siblings('.addOp').show();
+      selector.css('visibility', 'hidden');
+      selector.siblings('.addOp').css('visibility', 'visible');
     }
   }
 
@@ -150,7 +146,7 @@ $(function() {
                         </select>');
     comp.on("change", function(){ onOpChange(comp); });
     comp.val("==");
-    comp.hide();
+    comp.css('visibility', 'hidden');
 
     var close = $('<button class="close">X</button>');
     close.on("click", function() { base.remove(); });
@@ -173,40 +169,6 @@ $(function() {
   $('#base_addDot').on("click", function(){ onAddDotClick($(this)); });
   $('#base_addOp').on("click",  function(){ onAddOpClick($(this)); });
   $('#base_operator').on("change", function(){ onOpChange($(this)); });
-  $('.comparison').hide();
+  $('.comparison').css('visibility', 'hidden');
   //var updateTimer = setInterval(updateCurrent, 2000);
 });
-</script>
-<style>
-/* TODO: better styling */
-input[class~='invalid']{
-  background-color: red;
-}
-</style>
-<body>
-  <div id='pred_ed'>
-    current predicate:
-    <p id="current_pred">&lt;None&gt;</p>
-    <div id="base_conjunct">
-      <input type="text" class='base' />
-      <button class="addDot" id="base_addDot">+.</button>
-      <select class="comparison" id="base_operator">
-        <option>None</option>
-        <option selected>==</option>
-        <option>!=</option>
-        <option>&lt;</option>
-        <option>&gt;</option>
-        <option>&gt;=</option>
-        <option>&lt;=</option>
-      </select>
-      <button class="addOp" id="base_addOp">+op</button>
-    </div>
-
-    <div id='form'></div>
-    <p>
-      <button id='adder'> + </button>
-      <button id='finished'>Done</button>
-    </p>
-  </div>
-</body>
-</html>
