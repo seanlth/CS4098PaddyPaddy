@@ -5,6 +5,14 @@ var clipBoard;
 var sequenceNum, selectionNum, iterationNum, branchNum, actionNum;
 var actionColour;
 
+var analysisLegendContent = [
+    {name: 'Normal', colour: { r: 255, g: 255, b: 255}},
+    {name: 'Empty', colour: { r: 255, g: 255, b: 0}},
+    {name: 'Blackhole', colour: { r: 0, g: 0, b: 0}},
+    {name: 'Miracle', colour: { r: 0, g: 255, b: 255}},
+    {name: 'Transforms', colour: { r: 0, g: 255, b: 0}}
+];
+
 var ACTION_HEIGHT = 50;
 var ACTION_WIDTH = 120;
 
@@ -158,6 +166,9 @@ function draw() {
 		drawAgentFlowLines();
 	}
 
+    if(actionColour == ActionColourEnum.analysis) {
+        drawLegend(startX, height - startX, "Action Analysis Colours", analysisLegendContent);
+    }
 }
 
 function update() {
@@ -303,6 +314,26 @@ function drawActions(sequence, programWidth, index) {
             drawActions(prog, programWidth, nextIndex);
         }
     }
+}
+
+//x and y position bottom left corner of the legend(easiest way to keep on canvas)
+function drawLegend(x, y, title, content) {
+    var yPos = y;
+    textAlign(LEFT);
+
+    var contentHeight = textSize();
+    for(var i = content.length - 1; i >= 0; i--) {
+        stroke(0);
+        fill(content[i].colour.r, content[i].colour.g, content[i].colour.b);
+        rect(x, yPos - (contentHeight / 2), contentHeight, contentHeight);
+
+        stroke(255);
+        fill(0);
+        text(content[i].name, x + contentHeight * 2, yPos);
+        yPos = yPos - (contentHeight * 1.5);
+    }
+
+    text(title, x, yPos);
 }
 
 function hashColour(agentName) {
@@ -1084,35 +1115,40 @@ function Action(action) {
                 transforms = transforms && !match;
             }
 
+            var r, g, b;
             if(this.requires.length == 0 && this.provides.length == 0) {
                 //empty
-                fill(255, 255, 0);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
-                fill(0);
+                r = analysisLegendContent[1].colour.r;
+                g = analysisLegendContent[1].colour.g;
+                b = analysisLegendContent[1].colour.b;
             }
             else if(this.provides.length == 0) {
                 //blackhole
-                fill(0);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
-                fill(255);
+                r = analysisLegendContent[2].colour.r;
+                g = analysisLegendContent[2].colour.g;
+                b = analysisLegendContent[2].colour.b;
             }
             else if(this.requires.length == 0) {
                 //miracle
-                fill(0, 255, 255);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
-                fill(0);
+                r = analysisLegendContent[3].colour.r;
+                g = analysisLegendContent[3].colour.g;
+                b = analysisLegendContent[3].colour.b;
             }
             else if(transforms) {
                 //tranforms
-                fill(0, 255, 0);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
-                fill(0);
+                r = analysisLegendContent[4].colour.r;
+                g = analysisLegendContent[4].colour.g;
+                b = analysisLegendContent[4].colour.b;
             }
             else {
-                fill(255);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
-                fill(0);
+                r = analysisLegendContent[0].colour.r;
+                g = analysisLegendContent[0].colour.g;
+                b = analysisLegendContent[0].colour.b;
             }
+
+            fill(r, g, b);
+            rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+            fill(0);
         }
 
         if ( drawingSwimLanes == false ) {
