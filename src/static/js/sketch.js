@@ -172,6 +172,8 @@ function update() {
     if(program.actions.length == 0) {
         nodes.push(new Node(width / 2, height / 2, [0]));
     }
+
+
 }
 
 // check program isn't too crowded and resize if needed
@@ -362,7 +364,7 @@ function stringColour(name) {
 	}
 	var rgb = hslToRGB(colour);
 	stringColours.push( { name: name, colour: rgb } )
-	return colour;
+	return rgb;
 }
 
 // adds the actions positional information to an agent array
@@ -425,7 +427,13 @@ function createAgentFlowLines(agentArray, actions, startX, endX) {
 		var primitive = actions[i];
 
 		if ( primitive.hasOwnProperty('control') ) {
-			createAgentFlowLines(agentArray, primitive.actions, primitive.startX, primitive.endX);
+            if ( primitive.control == "branch" || primitive.control == "selection" ) {
+			    createAgentFlowLines(agentArray, primitive.actions, primitive.startX, primitive.endX);
+            }
+            else {
+                createAgentFlowLines(agentArray, primitive.actions, startX, endX);
+            }
+
 		}
 		else {
 			addToAgentArray(agentArray, primitive, startX, endX);
@@ -434,7 +442,7 @@ function createAgentFlowLines(agentArray, actions, startX, endX) {
 }
 
 function drawAgentFlowLines() {
-    stringColours = []; // stops colour pollution 
+    //stringColours = []; // stops colour pollution 
 	var agentArray = [];
 	var startPosition = {x: startX, y: middle};
 	var endPosition = {x: endX, y: middle};
