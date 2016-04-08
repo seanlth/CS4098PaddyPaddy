@@ -7,8 +7,8 @@
   <script src="{{url_for('static', filename='js/sketch.js')}}"></script>
   <script src="{{url_for('static', filename='js/pml_generator.js')}}"></script>
   <script src="{{url_for('static', filename='js/predicateEditor.js')}}"></script>
+  <script src="{{url_for('static', filename='js/flowlines.js')}}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='diagramEditor.css') }}">
-  <style type=text/css>{{ get_resource_as_string('static/editor.css') }}</style>
 
   <body>
   <style type="text/css">
@@ -36,33 +36,34 @@
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">File </a>
                   <ul class="dropdown-menu">
                       <li><a href="javascript:new_hook()">New</a></li>
-                      <!-- <li><a href="javascript:open_hook()">Open</a></li>
+                      <li><a href="javascript:open_hook()">Open</a></li>
                       <li>
                         <form action="upload" method="post" enctype="multipart/form-data" id ="fileUpload">
-                          {% if not 'email' in session %}
-                            <a href="/login" style="color: #333333;">Upload</a>
+                          {% if (not 'email' in session) and (not 'social' in session) %}
+                            <a href="/login?return_url=diagram" style="color: #333333;">Upload</a>
                           {% else %}
                             <input id="upload-file" type="file" name="file" style="display: none;">
                             <script>
                               document.getElementById('upload-file').onchange = function() {
                                   document.getElementById("fileUpload").submit();
                               }
-
                             </script>
                             <a1 onclick="$('input[id=upload-file]').click();">Upload</a1>
-                            <script>
-
-                            // $('input').change(function(){
-                            //    $(this).attr('title',($(this).val()));
-                            // });
-                            </script>
                           {% endif %}
                         </form>
                       </li>
                       <li><a href="javascript:save_hook()">Save</a></li>
-                      <li><a href="javascript:saveAs_hook()">Save As</a></li> -->
+                      <li><a href="javascript:saveAs_hook()">Save As</a></li>
                       <!-- <li class="divider"></li> -->
                       <!-- <li><a href="#">Separated link</a></li> -->
+                  </ul>
+              </li>
+              <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Action Colour </a>
+                  <ul class="dropdown-menu">
+                      <li><a href="javascript:changeActionColour(ActionColourEnum.none)">None</a></li>
+                      <li><a href="javascript:changeActionColour(ActionColourEnum.analysis)">Analysis</a></li>
+                      <li><a href="javascript:changeActionColour(ActionColourEnum.agent)">Agent</a></li>
                   </ul>
               </li>
               <li>
@@ -70,15 +71,21 @@
               </li>
 
               <li>
-                  <a href="javascript:parse_hook()">Geneate PML </a>
+                  <a href="javascript:parse_hook()">Generate PML </a>
+              </li>
+			  <li>
+                  <a href="javascript:toggle_flowlines()">Toggle Flow Lines </a>
+              </li>
+			  <li>
+				  <a id="downloadLnk" download="diagram.jpg">Save Image </a>
               </li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li>
               {% if not 'email' in session %}
-              <a href="/login"><r>Login</r></a>
+              <a href="javascript:login_hook()"><r>Login</r></a>
               {% else %}
-              <a href="/logout"><r>Logout</r></a>
+              <a href="/logout?return_url=diagram"><r>Logout</r></a>
               {% endif %}
             </li>
           </ul>
@@ -100,11 +107,11 @@
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
   <![endif]-->
 
-  <form id="actionEditor">
+  <form id="actionEditor" style="background-image:url('static/images/dark_wall.png');">
     <table>
       <p>Name: <Input type="text" name="name" id="name"/></p>
       <p> Type:
-        <select id="type" name="type">
+        <select id="type" name="type" style="color:#000">
           <option value="none">None</option>
           <option value="manual">Manual</option>
           <option value="executable">Executable</option>
@@ -130,17 +137,18 @@
       </p>
       </table>
     </form>
-    <form id="flowEditor">
+    <form id="flowEditor" style="background-image:url('static/images/dark_wall.png');">
       <table>
         <p>Name: <Input type="text" name="flowName" id="flowName"/></p>
         <p> Type:
-          <select id="flowType" name="flowType">
+          <select id="flowType" style="color:#000;" name="flowType">
             <option value="branch">Branch</option>
             <option value="iteration">Iteration</option>
             <option value="selection">Selection</option>
             <option value="sequence">Sequence</option>
           </select>
         </p>
+	<br>
         <p align="center">
           <button type="button" value="enter" onClick="editSequence()">Done</button>
         </p>
@@ -186,12 +194,17 @@
   </body>
   <textarea id="outputPanel" disabled="disabled">Output</textarea>
   <script type="text/javascript">
+    function changeActionColour(newValue) {
+        actionColour = newValue;
+    }
+
     {% if data %}
       $(window).load(function(){
         var data = {{ data | safe }};
         drawJSON(data);
       });
     {% endif %}
+
     window.onbeforeunload = function()
     {
         return "Any progress you made on the diagram will be lost.";
@@ -204,40 +217,91 @@
       $("#provides-edit").on('click', editProvides);
     });
 
+    function pushTemp(callback){
+      var content = btoa(json_to_pml(program)); // encode editor content
+
+      $.ajax({
+          url: '/tmp',
+          data: { content: content },
+          type: 'POST',
+          success: callback,
+          error: function(error) {
+              console.log(error);
+          }
+      });
+    }
+
+	function download() {
+		toggle_editing();
+		draw();
+		var canvas = document.getElementById("canvas");
+		var dt = canvas.toDataURL('image/jpeg');
+		this.href = dt;
+		toggle_editing();
+	}
+    downloadLnk.addEventListener('click', download, false);
+
+	function toggle_flowlines() {
+		if ( drawingSwimLanes == true ) {
+			drawingSwimLanes = false;
+		}
+		else {
+			drawingSwimLanes = true;
+		}
+	}
+
+    function toggle_editing() {
+        if(state == StateEnum.notEditing) {
+            state = StateEnum.normal;
+        }
+        else {
+            state = StateEnum.notEditing;
+        }
+    }
+
     function parse_hook() {
-      createPML();
+        createPML();
     }
 
     function new_hook() {
-      console.log("new pressed");
-      selectedIndex = [];
-      clipBoard = [];
-      program = {name: "new_process", actions: new Array()};
-      update();
-      $.ajax("/resetCurrent");
+        console.log("new pressed");
+        selectedIndex = [];
+        clipBoard = [];
+        program = {name: "new_process", actions: new Array()};
+        update();
+        $.ajax({url:"/resetCurrent", success:function(){
+          window.location.href = "/diagram";
+        }});
     }
 
 	function save_hook(){
-      console.log("save pressed");
-      pushTemp(function(response) {
-        window.location.href = 'save'
-      });
+        console.log("save pressed");
+
+        pushTemp(function(response) {
+            window.onbeforeunload = function () {};
+            window.location.href = "save";
+        } );
     }
 
     function saveAs_hook(){
       console.log("save as pressed");
       pushTemp(function(response) {
-        window.location.href = 'saveAs'
+          window.onbeforeunload = function () {};
+          window.location.href = 'saveAs?diagram=true'
       });
     }
+
     function open_hook() {
       console.log("open pressed");
-      // document.title ="blah";
-      window.location.href = 'openFile';
+      window.location.href = 'openFile?diagram=true';
     }
-    function upload_hook() {
-      console.log("open pressed");
-      window.location.href = 'openFile';
+
+    function login_hook() {
+        console.log("login pressed");
+        pushTemp(function(response) {
+            window.onbeforeunload = function () {};
+            window.location.href = 'login?return_url=diagram'
+        });
     }
 
     function run_hook() {
@@ -252,8 +316,7 @@
                 console.log(response);
             },
             error: function(error) {
-                alert(error.responseText);
-                document.getElementById("outputPanel").innerHTML = response;
+                document.getElementById("outputPanel").innerHTML = error.responseText;
                 highlight_error(error.responseText);
             }
         });

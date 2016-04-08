@@ -37,7 +37,7 @@
                     <li><a href="javascript:open_hook()">Open</a></li>
                     <li>
                       <form action="upload" method="post" enctype="multipart/form-data" id ="fileUpload">
-                        {% if not 'email' in session %}
+                        {% if (not 'email' in session) and (not 'social' in session) %}
                           <a href="/login" style="color: #333333;">Upload</a>
                         {% else %}
                           <input id="upload-file" type="file" name="file" style="display: none;">
@@ -45,15 +45,8 @@
                             document.getElementById('upload-file').onchange = function() {
                                 document.getElementById("fileUpload").submit();
                             }
-
                           </script>
                           <a1 onclick="$('input[id=upload-file]').click();">Upload</a1>
-                          <script>
-
-                          // $('input').change(function(){
-                          //    $(this).attr('title',($(this).val()));
-                          // });
-                          </script>
                         {% endif %}
                       </form>
                     </li>
@@ -88,14 +81,16 @@
         </ul>
         <ul class="nav navbar-nav navbar-right">
           <li>
-            {% if not 'email' in session %}
-            <a href="/login"><r>Login</r></a>
+            {% if 'social' in session %}
+              <a href="/logout"><r>Logout</r></a>
+            {% elif 'email' in session %}
+                <a href="/logout"><r>Logout</r></a>
             {% else %}
-            <a href="/logout"><r>Logout</r></a>
+              <a href="javascript:login_hook()"><r>Login</r></a>
             {% endif %}
           </li>
         </ul>
-    </div><!-- /.navbar-collapse -->
+    </div>
 </nav>
 <div class="container" id="editor">{{editor_content}}</div>
 
@@ -144,8 +139,37 @@
 
     function parse_hook() {
       console.log("parse pressed");
-      pushTemp(function(response){
-        window.location.href = "/diagram?useParsed=True";
+
+      var program;
+      require(['static/ace-master/lib/ace/ace'], function(ace){
+          editor = ace.edit("editor");
+          program = editor.getValue();
+
+          if(program == "") {
+              window.location.href = "/diagram";
+              return;
+          }
+
+          document.getElementById("output").innerHTML = "Output";
+
+          editor.session.removeMarker(error_marker);
+          editor.session.clearAnnotations();
+
+          $.ajax({
+              url: '/',
+              data: { program: program },
+              type: 'POST',
+              success: function(response) {
+                  pushTemp(function(response){
+                    window.location.href = "/diagram?useParsed=True";
+                  });
+              },
+              error: function(error) {
+                  document.getElementById("output").innerHTML = error.responseText;
+                  console.log(error);
+                  highlight_error(error.responseText);
+              }
+          });
       });
     }
 
@@ -170,15 +194,25 @@
         window.location.href = 'saveAs'
       });
     }
+
     function open_hook() {
       console.log("open pressed");
       // document.title ="blah";
       window.location.href = 'openFile';
     }
+
     function upload_hook() {
       console.log("open pressed");
       window.location.href = 'openFile';
     }
+
+    function login_hook() {
+        console.log("login pressed");
+        pushTemp(function(response) {
+            window.location.href = 'login'
+        });
+    }
+
     function changeBindings(binding){
       var keyBindings = {
         ace: null,

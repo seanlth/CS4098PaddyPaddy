@@ -22,7 +22,17 @@
       <div>
       <ul>
       {% for file in files %}
-      <li><a href='/?filename={{ file }}'><p1> open '{{file}}'<p1></a></li>
+      <script>
+        function open_file(fileName) {
+            if(location.search == '?diagram=true') {
+                window.location.href = '/diagram?filename='+fileName
+            }
+            else {
+                window.location.href = '/?filename='+fileName
+            }
+        }
+      </script>
+      <li><a href='javascript:open_file("{{file}}")'><p1> open '{{file}}'<p1></a></li>
       {% else %}
       <li><em><p1>no files found</p1></em></li>
       {% endfor %}

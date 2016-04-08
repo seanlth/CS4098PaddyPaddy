@@ -1,13 +1,12 @@
-from flask import Flask, request, render_template
-from flask import redirect, url_for, send_from_directory
-from flask import session, flash
-
+from flask import Flask, redirect, url_for, render_template, request, session, flash
+from flask.ext.sqlalchemy import SQLAlchemy
+from oauth import OAuthSignIn
 from subprocess import check_output, STDOUT, CalledProcessError
 from werkzeug import generate_password_hash, check_password_hash, secure_filename
 
 from database.database_create import Base, User
-from database.database_insert import insert_user
-from database.database_query import query_user, number_of_users
+from database.database_insert import insert_user, insert_social_user
+from database.database_query import query_user,query_social_user, number_of_users
 
 import base64
 import json
@@ -17,11 +16,23 @@ import tempfile
 
 import parser
 
-DEBUG = False
+DEBUG = True
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret'
+app.config['OAUTH_CREDENTIALS'] = {
+    'facebook': {
+        'id': '604820106335654',
+        'secret': '5eb3f15f84c722df9cbc577206557cc8'
+    },
+    'twitter': {
+        'id': 'cGFr2WV93py7an7FrGXXNDS6p',
+        'secret': 'U9ufkrhicVHrj5CGojmQ7ZCxSwytoShSgM0t9WCq0HbqcfKwL8'
+    }
+}
 app.secret_key = 'fe2917b485cc985c47071f3e38273348' # echo team paddy paddy | md5sum
 app.config['UPLOAD_FOLDER'] = 'userFiles/'
 app.config['ALLOWED_EXTENSIONS'] = set(['pml'])
+
 
 def get_resource_as_string(name, charset='utf-8'):
     with app.open_resource(name) as f:
@@ -55,8 +66,11 @@ def editor(filename = ""):
 
     if 'filename' in request.args or filename != "":
         filename = filename if filename else request.args['filename']
-        if 'email' in session:
-            email = session['email']
+        if ('email' in session) or ('social' in session):
+            if 'email' in session:
+                email = session['email']
+            elif 'social' in session:
+                email = session['social']
             userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
             filepath = os.path.join(userpath, filename)
             session['currentFile'] = filename
@@ -72,11 +86,16 @@ def editor(filename = ""):
 
 @app.route('/openFile')
 def openFile():
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
+        if 'diagram' in request.args:
+            return redirect('/login?return_url=openFile&diagram=true')
         return redirect('/login?return_url=openFile')
 
     files = []
-    email = session['email']
+    if 'email' in session:
+        email = session['email']
+    elif 'social' in session:
+        email = session['social']
     userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
     try:
         files = os.listdir(userpath)
@@ -85,16 +104,14 @@ def openFile():
     # print ("CURRENT file: ", session['currentFile'])
     return render_template('openFile.html', files=files)
 
-# def uploadFile():
-#     if not 'email' in session:
-#         return redirect('/login?return_url=openFile')
-
 @app.route('/upload', methods=['POST'])
 def upload():
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
         return "", 401 # not authorised
-
-    email = session['email']
+    if 'email' in session:
+        email = session['email']
+    elif 'social' in session:
+        email = session['social']
     file = request.files['file']
     filename = ""
     if file and allowed_file(file.filename):
@@ -103,6 +120,8 @@ def upload():
         os.makedirs(userpath, exist_ok=True)
         file.save(os.path.join(userpath, filename))
         session['currentFile'] = filename
+        if 'diagram' in request.referrer:
+            return redirect('/diagram?filename=%s'%filename)
         return redirect('/?filename=%s'%filename)
     flash("Invalid file")
     return redirect('/openFile')
@@ -110,7 +129,7 @@ def upload():
 
 @app.route('/save')
 def save():
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
         return redirect('/login?return_url=saveAs')
     if 'currentFile' in session:
         return saveFile(session['currentFile'])
@@ -118,16 +137,17 @@ def save():
 
 @app.route('/saveAs')
 def saveAs():
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
+        if 'diagram' in request.args:
+            return redirect('/login?return_url=saveAs&diagram=true')
         return redirect('/login?return_url=saveAs')
     else:
         return render_template('saveFile.html')
 
-
 @app.route('/saveAs', methods=['POST'])
 @app.route('/save', methods=['POST'])
 def saveFile(fname=None):
-    if not 'email' in session:
+    if (not 'email' in session) and (not 'social' in session):
         return "", 401 # not authorised
 
     name = fname if fname else request.form['filename']
@@ -137,7 +157,10 @@ def saveFile(fname=None):
 
         if allowed_file(name):
             session['currentFile'] = name
-            email = session['email']
+            if 'email' in session:
+                email = session['email']
+            elif 'social' in session:
+                email = session['social']
             savepath = os.path.join(app.config['UPLOAD_FOLDER'], email)
             os.makedirs(savepath, exist_ok=True) # make the users save dir if it doesn't already exist
 
@@ -146,14 +169,19 @@ def saveFile(fname=None):
 
             if tempFilePath:
                 shutil.copy(tempFilePath, saveFilePath)
-                return redirect('/?filename=%s'%name)
+                if "diagram" in request.referrer or 'diagram':
+                    print("here")
+                    return redirect('/diagram?filename=%s'%name)
+                else:
+                    print("there")
+                    return redirect('/?filename=%s'%name)
 
     flash("Invalid File")
     return redirect('/saveAs')
 
 @app.route("/diagram")
 def diagram():
-    if 'useParsed' in request.args and 'tempFile' in session:
+    if 'tempFile' in session:
         tempFile = session['tempFile']
         with open(tempFile) as f:
             data = f.read()
@@ -161,6 +189,24 @@ def diagram():
                 parsed = parser.parse(data) #TODO: proper error message
                 return render_template("diagramEditor.html", data=json.dumps(parsed))
             except parser.ParserException: pass
+
+    if 'filename' in request.args:
+        filename = request.args['filename']
+        if('email' in session) or ('social' in session):
+            email = session['email']
+        elif 'social' in session:
+            email = session['social']
+        userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+        filepath = os.path.join(userpath, filename)
+        session['currentFile'] = filename
+        try:
+            with open(filepath) as f:
+                data = f.read()
+                parsed = parser.parse(data)
+                return render_template("diagramEditor.html", data=json.dumps(parsed))
+        except parser.ParserException: pass
+        except FileNotFoundError:
+            editor_content = ""
 
     return render_template("diagramEditor.html")
 
@@ -197,7 +243,6 @@ def signUpButton():
 def login():
     if 'return_url' in request.args:
         session['return_url'] = request.args['return_url']
-
     return render_template("login.html")
 
 
@@ -206,7 +251,6 @@ def loginButton():
     email = request.form["email"]
     password = request.form["password"]
     user = query_user(email)
-
     if user != None:
         if check_password_hash(user.password, password):
             session['email'] = email
@@ -222,8 +266,10 @@ def loginButton():
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect('/')
-
+    if 'return_url' in request.args:
+        return redirect(request.args['return_url'])
+    else:
+        return redirect('/')
 
 @app.route("/tmp", methods=["POST"])
 def tmp():
@@ -237,6 +283,24 @@ def tmp():
 def resetCurrent():
     session.pop('currentFile', None)
     return ""
+@app.route('/authorize/<provider>')
+def oauth_authorize(provider):
+    oauth = OAuthSignIn.get_provider(provider)
+    return oauth.authorize()
+
+
+@app.route('/callback/<provider>')
+def oauth_callback(provider):
+    oauth = OAuthSignIn.get_provider(provider)
+    social, username, email = oauth.callback()
+    if social is None:
+        flash('Authentication failed.')
+        return redirect(url_for('login'))
+    user = query_social_user(social);
+    session['social'] = social
+    if user is None:
+        insert_social_user(social)
+    return redirect('/')
 
 if __name__ == "__main__":
-	app.run(host="0.0.0.0", port=8000, debug=DEBUG)
+	app.run(host="localhost", port=8000, debug=DEBUG)
