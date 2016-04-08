@@ -66,7 +66,7 @@
                   <ul class="dropdown-menu">
                       <li><a href="javascript:changeActionColour(ActionColourEnum.none)">None</a></li>
                       <li><a href="javascript:changeActionColour(ActionColourEnum.analysis)">Analysis</a></li>
-                      <!-- <li><a href="javascript:actionColour = ActionColourEnum.agent">Agent</a></li> -->
+                      <li><a href="javascript:changeActionColour(ActionColourEnum.agent)">Agent</a></li>
                   </ul>
               </li>
               <li>
@@ -229,6 +229,8 @@
       selectedIndex = [];
       clipBoard = [];
       program = {name: "new_process", actions: new Array()};
+      canvasResize(windowWidth, windowHeight - 50);
+      middle = height / 2;
       update();
       $.ajax("/resetCurrent");
     }
@@ -268,8 +270,7 @@
                 console.log(response);
             },
             error: function(error) {
-                alert(error.responseText);
-                document.getElementById("outputPanel").innerHTML = response;
+                document.getElementById("outputPanel").innerHTML = error.responseText;
                 highlight_error(error.responseText);
             }
         });

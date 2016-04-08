@@ -3,7 +3,15 @@ var state, selectedAction, selectedIndex, currentControlFlow, generatePML; // va
 var offsetX, initialY, offsetY, scaleX, scaleY, actionHeight, actionWidth;
 var clipBoard;
 var sequenceNum, selectionNum, iterationNum, branchNum, actionNum;
-var actionColour;
+var actionColour, agentActionLegendContent;
+
+var analysisLegendContent = [
+    {name: 'Normal', colour: { r: 255, g: 255, b: 255}},
+    {name: 'Empty', colour: { r: 255, g: 255, b: 0}},
+    {name: 'Blackhole', colour: { r: 0, g: 0, b: 0}},
+    {name: 'Miracle', colour: { r: 0, g: 255, b: 255}},
+    {name: 'Transforms', colour: { r: 0, g: 255, b: 0}}
+];
 
 var ACTION_HEIGHT = 50;
 var ACTION_WIDTH = 120;
@@ -103,22 +111,18 @@ function drawJSON(json) {
     update();
 }
 
+var lastZoom = false;
 function draw() {
     background(255);
 
     //drawAgentFlowLines();
-    var lastScaleX = scaleX;
-    var lastScaleY = scaleY;
-    keyboardInput();
-    actionHeight = ACTION_HEIGHT * scaleY;
-    actionWidth = ACTION_WIDTH * scaleX;
 
     resize();
 
-    if(scaleX != lastScaleX || scaleY != lastScaleY) {
-        update();
-    }
+    keyboardInput();
 
+    actionHeight = ACTION_HEIGHT * scaleY;
+    actionWidth = ACTION_WIDTH * scaleX;
 
     if ( drawingSwimLanes == true ) {
         stroke(0, 0, 0, 50);
@@ -139,6 +143,7 @@ function draw() {
 
     var progWidth = sequenceLength(program);
     stroke(0);
+    agentActionLegendContent = [];
     drawActions(program, progWidth, []);
 
     for(var i = 0; i < names.length; i++) {
@@ -156,13 +161,19 @@ function draw() {
         drawAgentFlowLines();
     }
 
+    if(actionColour == ActionColourEnum.analysis) {
+        drawLegend(startX, height - startX, "Action Analysis Colours", analysisLegendContent);
+    }
+    else if(actionColour == ActionColourEnum.agent) {
+        drawLegend(startX, height - startX, "Action Agent Colours", agentActionLegendContent);
+    }
 }
 
 function update() {
     background(255);
     var progWidth = sequenceLength(program);
 
-    resize();
+    //resize();
 
     names = [new Name(program.name, startX, middle - 45, [])];
     nodes = [];
@@ -179,14 +190,17 @@ function resize() {
 
     if(prefferedSize > endX - startX) {
         endX = prefferedSize + startX;
+        update();
     }
-    else if(prefferedSize < endX - startX) {
+    else if(prefferedSize < endX - startX && endX > windowWidth - 40) {
         endX = prefferedSize + startX;
+        update();
     }
 
     if(endX < windowWidth - 40) {
         endX = windowWidth - 40;
         canvas.position(0, offsetY + initialY);
+        update();
     }
 
     var lowY = lowestY(program);
@@ -194,25 +208,31 @@ function resize() {
 
 
     var heightP = (highY - lowY + 1) * 2 * actionHeight;
-    if((highY * 2 * actionHeight) + middle > height || (lowY * 2 * actionHeight) > middle) {
-        middle = (-lowY / (highY - lowY)) * height;
-    }
 
     if(width != endX + startX && heightP > height) {
         resizeCanvas(endX + startX, heightP);
+        update();
     }
     else if(width != endX + startX) {
         resizeCanvas(endX + startX, height);
     }
     else if(heightP > height) {
         resizeCanvas(endX + startX, heightP);
-        middle = (-lowY / (highY - lowY)) * height;
+        middle = (-lowY / sequenceHeight(program)) * height;
+        update();
+    }
+    else if(((highY + 0.5) * 2 * actionHeight) + middle > height) {
+        middle = height - ((highY + 0.5) * 2 * actionHeight);
+        update();
+    }
+    else if(middle + ((lowY - 0.5) * 2 * actionHeight) < 0) {
+        middle = -((lowY - 0.5) * 2 * actionHeight);
         update();
     }
 }
 
 function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
+  resizeCanvas(windowWidth, windowHeight - 50);
   middle = height / 2;
   update();
 }
@@ -233,7 +253,7 @@ function keyboardInput() {
             offsetX -= speed;
         }
 
-        if(offsetX > 0) {
+        if(offsetX > 0 || width <= windowWidth) {
             offsetX = 0;
         }
 
@@ -250,38 +270,43 @@ function keyboardInput() {
             offsetY -= speed;
         }
 
-        if(offsetY > 0) {
+        if(offsetY > 0 || height < windowHeight - 50) {
             offsetY = 0;
         }
 
-        if(offsetY < -(windowHeight + initialY - height + 10)) {
-            offsetY = -(windowHeight + initialY - height + 10);
+        if(offsetY < windowHeight - initialY - height) {
+            offsetY = windowHeight - initialY - height;
         }
     }
 
     // zoooooooooooom
-    if(keyIsDown(107)) {
+    if(keyIsDown(107) || keyIsDown(187)) {
         scaleY = scaleY < 2 ? scaleY + 0.02 : 2;
         scaleX = scaleX < 2 ? scaleX + 0.02 : 2;
+        update();
     }
-    else if(keyIsDown(109)) {
+    if(keyIsDown(109) || keyIsDown(189)) {
         scaleY = scaleY > 0.3 ? scaleY - 0.02 : 0.3;
         scaleX = scaleX > 0.3 ? scaleX - 0.02 : 0.3;
+        update();
     }
-    else if(keyIsDown(74)) {
+    if(keyIsDown(74)) {
         scaleX = scaleX > 0.3 ? scaleX - 0.02 : 0.3;
+        update();
     }
-    else if(keyIsDown(76)) {
+    if(keyIsDown(76)) {
         scaleX = scaleX < 2 ? scaleX + 0.02 : 2;
+        update();
     }
-    else if(keyIsDown(73)) {
+    if(keyIsDown(73)) {
         scaleY = scaleY < 2 ? scaleY + 0.02 : 2;
+        update();
     }
-    else if(keyIsDown(75)) {
+    if(keyIsDown(75)) {
         scaleY = scaleY > 0.3 ? scaleY - 0.02 : 0.3;
+        update();
     }
 
-    resetMatrix();
     canvas.position(offsetX, offsetY + initialY);
 }
 
@@ -324,6 +349,28 @@ function drawActions(sequence, programWidth, index) {
             drawActions(prog, programWidth, nextIndex);
         }
     }
+}
+
+//x and y position bottom left corner of the legend(easiest way to keep on canvas)
+function drawLegend(x, y, title, content) {
+    var yPos = y;
+    textAlign(LEFT);
+
+    var contentHeight = textSize();
+    for(var i = content.length - 1; i >= 0; i--) {
+        stroke(0);
+        fill(content[i].colour.r, content[i].colour.g, content[i].colour.b);
+        rect(x, yPos - (contentHeight / 2), contentHeight, contentHeight);
+
+        stroke(255);
+        fill(0);
+        text(content[i].name, x + contentHeight * 2, yPos);
+        yPos = yPos - (contentHeight * 1.5);
+    }
+
+    stroke(255);
+    fill(0);
+    text(title, x, yPos);
 }
 
 function hashColour(agentName) {
@@ -545,25 +592,8 @@ function sequenceLength(sequence) {
     return length + 3;
 }
 
-function sequenceHeight(sequence, start, incrementor) {
-    start = start || 0;
-    incrementor = incrementor || 1;
-    var height = 0, maxHeight = 0;
-
-    for(var i = 0; i < sequence.actions.length; i += incrementor) {
-        if(sequence.actions[i].constructor != Action){
-            height = sequenceHeight(sequence.actions[i]) - 1;
-            if(maxHeight < height) {
-                maxHeight = height;
-            }
-        }
-    }
-
-    if(sequence.control == FlowControlEnum.branch || sequence.control == FlowControlEnum.selection) {
-        return maxHeight + sequence.actions.length;
-    }
-
-    return maxHeight + 1;
+function sequenceHeight(sequence) {
+    return highestY(sequence) - lowestY(sequence);
 }
 
 function indexToXY(index) {
@@ -640,32 +670,10 @@ function addAction(index) {
     actions.splice(index[index.length-1], 0, new Action());
 }
 
-function addNodes() {
-    nodes = [];
-    if(program.actions.length == 0) {
-        nodes.push(new Node([0], 0));
-    }
-    else{
-        var progWidth = sequenceLength(program);
-        addNodesRec(program.actions, [], progWidth);
-    }
-}
-
-function addNodesRec(actions, index, progWidth) {
-    for(var i = 0; i < actions.length; i++) {
-        nodes.push(new Node(index.concat([i]), progWidth));
-
-        if(actions[i].control != FlowControlEnum.action) {
-            addNodesRec(actions[i].actions, index.concat([i]), progWidth);
-        }
-    }
-    nodes.push(new Node(index.concat([actions.length]), progWidth));
-}
-
 function highestY(sequence) {
     if(sequence.constructor == Action) return sequence.y;
 
-    var maxY = 0;
+    var maxY = Number.MIN_VALUE;
     for(var i = 0; i < sequence.actions.length; i++) {
         var y;
         if(sequence.actions[i].constructor == Action) {
@@ -680,13 +688,13 @@ function highestY(sequence) {
         }
     }
 
-    return maxY;
+    return maxY != Number.MIN_VALUE ? maxY : 0;
 }
 
 function lowestY(sequence) {
     if(sequence.constructor == Action) return sequence.y;
 
-    var minY = 0;
+    var minY = Number.MAX_VALUE;
     for(var i = 0; i < sequence.actions.length; i++) {
         var y;
         if(sequence.actions[i].constructor == Action) {
@@ -701,7 +709,7 @@ function lowestY(sequence) {
         }
     }
 
-    return minY;
+    return minY != Number.MAX_VALUE ? minY : 0;
 }
 
 function Node(x, y, index) {
@@ -739,6 +747,8 @@ function Node(x, y, index) {
 
             return false;
         }
+
+        if(!this.highlighted) return;
 
         var d = dist(x, y, this.positionAction.x, this.positionAction.y);
         if(d < this.radius) {
@@ -1034,7 +1044,7 @@ function Action(action) {
         var yPixels = (this.y * actionHeight * 2) + middle;
         var xPixels = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX;
 
-        // if action isn't the first action in a horixaontal control structure, add a node between this and the last action
+        // if action isn't the first action in a horizontal control structure, add a node between this and the last action
         if(index[index.length - 1] != 0 && prog.control != FlowControlEnum.branch && prog.control != FlowControlEnum.selection) {
             var nodeX = (endX - startX) * ((this.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
             nodes.push(new Node(nodeX, yPixels, index));
@@ -1079,17 +1089,15 @@ function Action(action) {
         var yPixels = (this.y * actionHeight * 2) + middle;
         var xPixels = (endX - startX) * ((this.x + 1) / (programWidth + 1)) + startX;
 
+        var x = xPixels - (actionWidth / 2);
+        var y = yPixels - (actionHeight / 2);
+
         this.xPixelPosition = xPixels;
         this.yPixelPosition = yPixels;
         stroke(0);
         fill(255);
 
-        if(actionColour == ActionColourEnum.none) {
-            fill(255);
-            rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
-            fill(0);
-        }
-        else if(actionColour == ActionColourEnum.analysis) {
+        if(actionColour == ActionColourEnum.analysis) {
             var requiresIdentifiers = this.requires.split(/[\s,&&,==,||]+/);
             var providesIdentifiers = this.provides.split(/[\s,&&,==,||]+/);
 
@@ -1105,35 +1113,80 @@ function Action(action) {
                 transforms = transforms && !match;
             }
 
+            var r, g, b;
             if(this.requires.length == 0 && this.provides.length == 0) {
                 //empty
-                fill(255, 255, 0);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
-                fill(0);
+                r = analysisLegendContent[1].colour.r;
+                g = analysisLegendContent[1].colour.g;
+                b = analysisLegendContent[1].colour.b;
             }
             else if(this.provides.length == 0) {
                 //blackhole
-                fill(0);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
-                fill(255);
+                r = analysisLegendContent[2].colour.r;
+                g = analysisLegendContent[2].colour.g;
+                b = analysisLegendContent[2].colour.b;
             }
             else if(this.requires.length == 0) {
                 //miracle
-                fill(0, 255, 255);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
-                fill(0);
+                r = analysisLegendContent[3].colour.r;
+                g = analysisLegendContent[3].colour.g;
+                b = analysisLegendContent[3].colour.b;
             }
             else if(transforms) {
                 //tranforms
-                fill(0, 255, 0);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
-                fill(0);
+                r = analysisLegendContent[4].colour.r;
+                g = analysisLegendContent[4].colour.g;
+                b = analysisLegendContent[4].colour.b;
             }
             else {
-                fill(255);
-                rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
-                fill(0);
+                r = analysisLegendContent[0].colour.r;
+                g = analysisLegendContent[0].colour.g;
+                b = analysisLegendContent[0].colour.b;
             }
+
+            fill(r, g, b);
+            rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
+            fill(0);
+        }
+        else if(actionColour == ActionColourEnum.agent) {
+            var agents = this.agent.split(/[\s,&&,==,||]+/);
+
+            var width = actionWidth / agents.length;
+
+            for(var i = 0; i < agents.length; i++) {
+                var a = agents[i].split(/[.]+/)[0];
+                if(a != "") {
+                    var colour = null;
+                    for(var j = 0; j < agentActionLegendContent.length; j++) {
+                        if(agentActionLegendContent[j].name == a) {
+                            colour = agentActionLegendContent[j].colour;
+                        }
+                    }
+
+                    if(colour == null) {
+                        colour = stringColour(a);
+                        agentActionLegendContent.push({name: a, colour: colour});
+                    }
+
+                    fill(colour.r, colour.g, colour.b);
+                    rect(x + (i * width), y, width, actionHeight);
+                }
+            }
+
+            //draw box around name for legibility's sake
+            fill(255);
+            rect(x, yPixels - textSize() / 2, actionWidth, textSize());
+
+            //draw outline box
+            fill(0, 0, 0, 0);
+            stroke(0);
+            rect(x, y, actionWidth, actionHeight);
+            fill(0);
+        }
+        else {
+            fill(255);
+            rect(x, y, actionWidth, actionHeight);
+            fill(0);
         }
 
         if ( drawingSwimLanes == false ) {
@@ -1178,7 +1231,7 @@ function drawIterationLoop(prog, x, y, index, programWidth) {
     var yPixels = (y * actionHeight * 2) + middle;
 
     var yTop = lowestY(prog);
-    var loopHeight = sequenceHeight(prog);
+    var loopHeight = sequenceHeight(prog) + 1;
     var rectHeight = (loopHeight - 1) * actionHeight * 2 + actionHeight * 1.4;
 
     rectPositionY = middle + (actionHeight * yTop * 2) - actionHeight * 0.7;
@@ -1199,7 +1252,7 @@ function drawSequenceBox(prog, x, y, index, programWidth) {
     var yPixels = (y * actionHeight * 2) + middle;
 
     var yTop = lowestY(prog);
-    var loopHeight = sequenceHeight(prog);
+    var loopHeight = sequenceHeight(prog) + 1;
     var rectHeight = (loopHeight - 1) * actionHeight * 2 + actionHeight * 1.4;
 
     rectPositionY = middle + (actionHeight * yTop * 2) - actionHeight * 0.7;
@@ -1546,13 +1599,13 @@ function mouseDragged(event) {
             offsetY += event.mozMovementY;
         }
 
-        if(offsetY > 0) {
-            offsetY = 0;
-        }
+        // if(offsetY > 0) {
+        //     offsetY = 0;
+        // }
 
-        if(offsetY < -(windowHeight + initialY - height + 10)) {
-            offsetY = -(windowHeight + initialY - height + 10);
-        }
+        // if(offsetY > windowHeight - initialY - height) {
+        //     offsetY = windowHeight - initialY - height;
+        // }
     }
 
     // only redraw with change
