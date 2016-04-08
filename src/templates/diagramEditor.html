@@ -77,13 +77,15 @@
               </li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            <li>
-              {% if not 'email' in session %}
-              <a href="javascript:login_hook()"><r>Login</r></a>
-              {% else %}
-              <a href="/logout?return_url=diagram"><r>Logout</r></a>
-              {% endif %}
-            </li>
+              <li>
+                {% if 'social' in session %}
+                  <a href="/logout"><r>Logout</r></a>
+                {% elif 'email' in session %}
+                    <a href="/logout"><r>Logout</r></a>
+                {% else %}
+                  <a href="javascript:login_hook()"><r>Login</r></a>
+                {% endif %}
+              </li>
           </ul>
       </div><!-- /.navbar-collapse -->
   </nav>
@@ -201,7 +203,7 @@
       });
     }
 
-	
+
 	function download() {
 		toggle_editing();
 		draw();
