@@ -73,7 +73,8 @@ function add_action(action, current_indentation) {
 		 action.provides != "" ||
 		 action.agent != "" ||
 		 action.tool != ""||
-		 action.script != "" ) {
+		 action.script != "" ||
+         action.type != "" ) {
 		node = current_indentation + "action " + action.name + add_type(action.type) + " { \n";
 		node += add_requirements(action.requires, current_indentation + "    ");
 		node += add_provisions(action.provides, current_indentation + "    ");

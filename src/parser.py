@@ -1,26 +1,26 @@
 import re
 import itertools
 
-TOKENS = ( (r'[ \n\t]+'              , None)
-         , (r'"[^"]*"'               , "STRING")
-         , (r'/\*((?!(\*/)).)*\*/'   , None) # ignore comments
-         , (r'script[ \n\t{]'        , "SCRIPT")
-         , (r'process[ \n\t{]'       , "PROCESS")
-         , (r'select(ion)?[ \n\t{]'  , "SELECTION")
-         , (r'sequence[ \n\t{]'      , "SEQUENCE")
-         , (r'iteration[ \n\t{]'     , "ITERATION")
-         , (r'branch[ \n\t{]'        , "BRANCH")
-         , (r'action[ \n\t{]'        , "ACTION")
-         , (r'manual'                , "MANUAL")
-         , (r'executable'            , "EXECUTABLE")
-         , (r'{'                     , "LBRACE")
-         , (r'}'                     , "RBRACE")
-         , (r'requires'              , "REQUIRES")
-         , (r'provides'              , "PROVIDES")
-         , (r'tool'                  , "TOOL")
-         , (r'agent'                 , "AGENT")
-         , (r'[_A-Za-z][_A-Za-z0-9]*', "IDENT")
-         , (r'[^ }]+'                , "TOK")
+TOKENS = ( (r'[ \n\t]+'                , None)
+         , (r'"[^"]*"'                 , "STRING")
+         , (r'/\*((?!(\*/)).)*\*/'     , None) # ignore comments
+         , (r'script[ \n\t{]'          , "SCRIPT")
+         , (r'process[ \n\t{]'         , "PROCESS")
+         , (r'select(ion)?[ \n\t{]'    , "SELECTION")
+         , (r'sequence[ \n\t{]'        , "SEQUENCE")
+         , (r'iteration[ \n\t{]'       , "ITERATION")
+         , (r'branch[ \n\t{]'          , "BRANCH")
+         , (r'action[ \n\t{]'          , "ACTION")
+         , (r'manual'                  , "MANUAL")
+         , (r'executable'              , "EXECUTABLE")
+         , (r'{'                       , "LBRACE")
+         , (r'}'                       , "RBRACE")
+         , (r'requires'                , "REQUIRES")
+         , (r'provides'                , "PROVIDES")
+         , (r'tool'                    , "TOOL")
+         , (r'agent'                   , "AGENT")
+         , (r'[_A-Za-z][_A-Za-z0-9\.]*', "IDENT")
+         , (r'[^ }]+'                  , "TOK")
          )
 
 class ParserException(Exception): pass
@@ -180,4 +180,3 @@ def expr():
     push_back((text, tag))
 
     return ' '.join(res)
-
