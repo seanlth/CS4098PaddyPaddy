@@ -173,8 +173,6 @@ function update() {
     background(255);
     var progWidth = sequenceLength(program);
 
-    //resize();
-
     names = [new Name(program.name, startX, middle - 45, [])];
     nodes = [];
     updateActions(program, progWidth, []);
@@ -186,7 +184,7 @@ function update() {
 // check program isn't too crowded and resize if needed
 function resize() {
     var progWidth = sequenceLength(program);
-    var prefferedSize = progWidth * actionWidth * 1.4;
+    var prefferedSize = Math.ceil(progWidth * actionWidth * 1.6);
 
     if(prefferedSize > endX - startX) {
         endX = prefferedSize + startX;
@@ -198,6 +196,7 @@ function resize() {
     }
 
     if(endX < windowWidth - 40) {
+        offsetX = 0;
         endX = windowWidth - 40;
         canvas.position(0, offsetY + initialY);
         update();
@@ -206,19 +205,28 @@ function resize() {
     var lowY = lowestY(program);
     var highY = highestY(program);
 
+    var preferredHeight = (highY - lowY + 1) * 2 * actionHeight;
+    if(preferredHeight < windowHeight - initialY) {
+        preferredHeight = windowHeight - initialY;
+        middle = preferredHeight / 2;
+        offsetY = 0;
+    }
 
-    var heightP = (highY - lowY + 1) * 2 * actionHeight;
-
-    if(width != endX + startX && heightP > height) {
-        resizeCanvas(endX + startX, heightP);
+    if(width != endX + startX && preferredHeight != height) {
+        resizeCanvas(endX + startX, preferredHeight);
         update();
     }
     else if(width != endX + startX) {
         resizeCanvas(endX + startX, height);
     }
-    else if(heightP > height) {
-        resizeCanvas(endX + startX, heightP);
-        middle = (-lowY / sequenceHeight(program)) * height;
+    else if(preferredHeight != height) {
+        resizeCanvas(endX + startX, preferredHeight);
+        if(highY == -lowY) {
+            middle = height / 2;
+        }
+        else {
+            middle = (-lowY / sequenceHeight(program)) * height;
+        }
         update();
     }
     else if(((highY + 0.5) * 2 * actionHeight) + middle > height) {
@@ -238,9 +246,9 @@ function windowResized() {
 }
 
 function keyboardInput() {
-	if ( state == StateEnum.form ) { 
-		return;
-	}
+    if ( state == StateEnum.form ) {
+        return;
+    }
 
     var lastValueX = offsetX, lastValueY = offsetY;
     var speed = 10;
@@ -280,12 +288,12 @@ function keyboardInput() {
     }
 
     // zoooooooooooom
-    if(keyIsDown(107) || keyIsDown(187)) {
+    if(keyIsDown(107) || keyIsDown(187) || keyIsDown(61)) {
         scaleY = scaleY < 2 ? scaleY + 0.02 : 2;
         scaleX = scaleX < 2 ? scaleX + 0.02 : 2;
         update();
     }
-    if(keyIsDown(109) || keyIsDown(189)) {
+    if(keyIsDown(109) || keyIsDown(189) || keyIsDown(173)) {
         scaleY = scaleY > 0.3 ? scaleY - 0.02 : 0.3;
         scaleX = scaleX > 0.3 ? scaleX - 0.02 : 0.3;
         update();
@@ -1438,13 +1446,6 @@ function ControlFlow(firstIndex, secondIndex) {
     if(start[length - 1] == end[length - 1]) {
         var flowType = whatControlAction();
         var blankControlFlow =  {name: '' + currentControlFlow+ flowType, control: currentControlFlow, actions: [new Action()]};
-        // if the new action is to be in a branch/selection, surround it in a sequence
-        if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
-            array.splice(start[length - 1], 0,
-                {name: "Sequence"+sequenceNum++, control: FlowControlEnum.sequence, actions: [blankControlFlow]});
-            return;
-        }
-
         array.splice(start[length - 1], 0, blankControlFlow);
         return;
     }
