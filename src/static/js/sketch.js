@@ -3,7 +3,7 @@ var state, selectedAction, selectedIndex, currentControlFlow, generatePML; // va
 var offsetX, initialY, offsetY, scaleX, scaleY, actionHeight, actionWidth;
 var clipBoard;
 var sequenceNum, selectionNum, iterationNum, branchNum, actionNum;
-var actionColour;
+var actionColour, agentActionLegendContent;
 
 var analysisLegendContent = [
     {name: 'Normal', colour: { r: 255, g: 255, b: 255}},
@@ -143,6 +143,7 @@ function draw() {
 
     var progWidth = sequenceLength(program);
     stroke(0);
+    agentActionLegendContent = [];
     drawActions(program, progWidth, []);
 
     for(var i = 0; i < names.length; i++) {
@@ -162,6 +163,9 @@ function draw() {
 
     if(actionColour == ActionColourEnum.analysis) {
         drawLegend(startX, height - startX, "Action Analysis Colours", analysisLegendContent);
+    }
+    else if(actionColour == ActionColourEnum.agent) {
+        drawLegend(startX, height - startX, "Action Agent Colours", agentActionLegendContent);
     }
 }
 
@@ -361,6 +365,8 @@ function drawLegend(x, y, title, content) {
         yPos = yPos - (contentHeight * 1.5);
     }
 
+    stroke(255);
+    fill(0);
     text(title, x, yPos);
 }
 
@@ -1088,12 +1094,7 @@ function Action(action) {
         stroke(0);
         fill(255);
 
-        if(actionColour == ActionColourEnum.none) {
-            fill(255);
-            rect(x, y, actionWidth, actionHeight);
-            fill(0);
-        }
-        else if(actionColour == ActionColourEnum.analysis) {
+        if(actionColour == ActionColourEnum.analysis) {
             var requiresIdentifiers = this.requires.split(/[\s,&&,==,||]+/);
             var providesIdentifiers = this.provides.split(/[\s,&&,==,||]+/);
 
@@ -1144,16 +1145,29 @@ function Action(action) {
             rect(xPixels - (actionWidth / 2), yPixels - (actionHeight / 2), actionWidth, actionHeight);
             fill(0);
         }
-        else {
+        else if(actionColour == ActionColourEnum.agent) {
             var agents = this.agent.split(/[\s,&&,==,||]+/);
 
             var width = actionWidth / agents.length;
 
             for(var i = 0; i < agents.length; i++) {
                 var a = agents[i].split(/[.]+/)[0];
-                var colour = stringColour(a);
-                fill(colour.r, colour.g, colour.b);
-                rect(x + (i * width), y, width, actionHeight);
+                if(a != "") {
+                    var colour = null;
+                    for(var j = 0; j < agentActionLegendContent.length; j++) {
+                        if(agentActionLegendContent[j].name == a) {
+                            colour = agentActionLegendContent[j].colour;
+                        }
+                    }
+
+                    if(colour == null) {
+                        colour = stringColour(a);
+                        agentActionLegendContent.push({name: a, colour: colour});
+                    }
+
+                    fill(colour.r, colour.g, colour.b);
+                    rect(x + (i * width), y, width, actionHeight);
+                }
             }
 
             //draw box around name for legibility's sake
@@ -1162,6 +1176,12 @@ function Action(action) {
 
             //draw outline box
             fill(0, 0, 0, 0);
+            stroke(0);
+            rect(x, y, actionWidth, actionHeight);
+            fill(0);
+        }
+        else {
+            fill(255);
             rect(x, y, actionWidth, actionHeight);
             fill(0);
         }
