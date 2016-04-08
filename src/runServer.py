@@ -169,11 +169,10 @@ def saveFile(fname=None):
 
             if tempFilePath:
                 shutil.copy(tempFilePath, saveFilePath)
-                if "diagram" in request.referrer or 'diagram':
-                    print("here")
+                print(request.referrer)
+                if "diagram" in request.referrer:
                     return redirect('/diagram?filename=%s'%name)
                 else:
-                    print("there")
                     return redirect('/?filename=%s'%name)
 
     flash("Invalid File")
@@ -193,20 +192,21 @@ def diagram():
     if 'filename' in request.args:
         filename = request.args['filename']
         if('email' in session) or ('social' in session):
-            email = session['email']
-        elif 'social' in session:
-            email = session['social']
-        userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
-        filepath = os.path.join(userpath, filename)
-        session['currentFile'] = filename
-        try:
-            with open(filepath) as f:
-                data = f.read()
-                parsed = parser.parse(data)
-                return render_template("diagramEditor.html", data=json.dumps(parsed))
-        except parser.ParserException: pass
-        except FileNotFoundError:
-            editor_content = ""
+            if 'email' in session:
+                email = session['email']
+            elif 'social' in session:
+                email = session['social']
+            userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+            filepath = os.path.join(userpath, filename)
+            session['currentFile'] = filename
+            try:
+                with open(filepath) as f:
+                    data = f.read()
+                    parsed = parser.parse(data)
+                    return render_template("diagramEditor.html", data=json.dumps(parsed))
+            except parser.ParserException: pass
+            except FileNotFoundError:
+                editor_content = ""
 
     return render_template("diagramEditor.html")
 
@@ -260,7 +260,8 @@ def loginButton():
             else:
                 return redirect('/')
 
-    return "Incorrect/Invalid e-mail and/or password<br/>", 401
+    flash('Incorrect Email/Password')
+    return redirect('/login')
 
 
 @app.route("/logout")
