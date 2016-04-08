@@ -16,7 +16,7 @@ import tempfile
 
 import parser
 
-DEBUG = True
+DEBUG = False
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret'
 app.config['OAUTH_CREDENTIALS'] = {
