@@ -1731,6 +1731,10 @@ function editAgent(){
   var agent = selectedAction.agent;
   $('#field').val(agent);
   $('#predicateEditor').show();
+
+  setFinishedAction(function(curr){
+    console.log(curr);
+  });
 }
 
 function editTool(){
