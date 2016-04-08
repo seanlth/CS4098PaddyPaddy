@@ -261,8 +261,7 @@
                 console.log(response);
             },
             error: function(error) {
-                alert(error.responseText);
-                document.getElementById("outputPanel").innerHTML = response;
+                document.getElementById("outputPanel").innerHTML = error.responseText;
                 highlight_error(error.responseText);
             }
         });
