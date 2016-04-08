@@ -19,7 +19,7 @@ TOKENS = ( (r'[ \n\t]+'              , None)
          , (r'provides'              , "PROVIDES")
          , (r'tool'                  , "TOOL")
          , (r'agent'                 , "AGENT")
-         , (r'[_A-Za-z][_A-Za-z0-9]*', "IDENT")
+         , (r'[_A-Za-z][_A-Za-z0-9\.]*', "IDENT")
          , (r'[^ ]+'                 , "TOK")
          )
 
@@ -180,4 +180,3 @@ def expr():
     push_back((text, tag))
 
     return ' '.join(res)
-
