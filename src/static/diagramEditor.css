@@ -4,11 +4,17 @@
     margin: 0;
     /*top: 50px;*/
     left: 0;
+    z-index: 0;
 }
 
 element.style {
     position: fixed;
 }
+
+a:focus {
+    color: #777 !important;
+}
+
 .navbar {
     border-left-width: 0px !important;
     border-right-width: 0px !important;
@@ -21,6 +27,7 @@ element.style {
     margin-bottom:0 !important;
     min-height:28px !important;
     border-radius: 0px !important;
+    z-index: 1;
 }
 #outputPanel {
     display: none;
@@ -44,7 +51,9 @@ body {
     position: fixed;
     overflow: hidden;
     width: 100%;
+    background-color: grey !important;
 }
+
 button{
   padding:5px;
   border-radius:5px;

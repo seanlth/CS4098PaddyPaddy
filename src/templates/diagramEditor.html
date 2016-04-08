@@ -59,7 +59,7 @@
                   <ul class="dropdown-menu">
                       <li><a href="javascript:changeActionColour(ActionColourEnum.none)">None</a></li>
                       <li><a href="javascript:changeActionColour(ActionColourEnum.analysis)">Analysis</a></li>
-                      <!-- <li><a href="javascript:actionColour = ActionColourEnum.agent">Agent</a></li> -->
+                      <li><a href="javascript:changeActionColour(ActionColourEnum.agent)">Agent</a></li>
                   </ul>
               </li>
               <li>
@@ -72,7 +72,9 @@
 			  <li>
                   <a href="javascript:toggle_flowlines()">Toggle Flow Lines </a>
               </li>
-
+			  <li>
+				  <a id="downloadLnk" download="diagram.jpg">Save Image </a>
+              </li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
             <li>
@@ -199,7 +201,18 @@
       });
     }
 
-    function toggle_flowlines() {
+	
+	function download() {
+		toggle_editing();
+		draw();
+		var canvas = document.getElementById("canvas");
+		var dt = canvas.toDataURL('image/jpeg');
+		this.href = dt;
+		toggle_editing();
+	}
+    downloadLnk.addEventListener('click', download, false);
+
+	function toggle_flowlines() {
 		if ( drawingSwimLanes == true ) {
 			drawingSwimLanes = false;
 		}
@@ -207,6 +220,15 @@
 			drawingSwimLanes = true;
 		}
 	}
+
+    function toggle_editing() {
+        if(state == StateEnum.notEditing) {
+            state = StateEnum.normal;
+        }
+        else {
+            state = StateEnum.notEditing;
+        }
+    }
 
     function parse_hook() {
         createPML();
@@ -265,8 +287,7 @@
                 console.log(response);
             },
             error: function(error) {
-                alert(error.responseText);
-                document.getElementById("outputPanel").innerHTML = response;
+                document.getElementById("outputPanel").innerHTML = error.responseText;
                 highlight_error(error.responseText);
             }
         });
