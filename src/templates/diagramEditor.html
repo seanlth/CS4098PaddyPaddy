@@ -117,12 +117,12 @@
           <option value="executable">Executable</option>
         </select>
       </p>
-      <p> Agent: <span id="agent" name="agent">&lt;None&gt;</span> <a href="#" id="agent-edit" class="btn btn-sm btn-default">edit <span class="glyphicon glyphicon-edit"></span></a> </p>
-      <p> Tool: <span id="tool" name="tool">&lt;None&gt;</span> <a href="#" id="tool-edit" class="btn btn-sm btn-default">edit <span class="glyphicon glyphicon-edit"></span></a> </p>
-      <p> Requires: <span id="requires" name="requires">&lt;None&gt;</span> <a href="#" id="requires-edit" class="btn btn-sm btn-default">edit <span class="glyphicon glyphicon-edit"></span></a> </p>
-      <p> Provides: <span id="provides" name="provides">&lt;None&gt;</span> <a href="#" id="provides-edit" class="btn btn-sm btn-default">edit <span class="glyphicon glyphicon-edit"></span></a> </p>
+      <p> Agent: <span id="agent" name="agent">&lt;None&gt;</span> <button type="button" id="agent-edit" >edit <span class="glyphicon glyphicon-edit"></span></button> </p>
+      <p> Requires: <span id="requires" name="requires">&lt;None&gt;</span> <button type="button" id="requires-edit">edit <span class="glyphicon glyphicon-edit"></span></button> </p>
+      <p> Provides: <span id="provides" name="provides">&lt;None&gt;</span> <button type="button" id="provides-edit">edit <span class="glyphicon glyphicon-edit"></span></button> </p>
+      <p> Tool: <input type="text" id="tool" name="tool"></textarea> </p>
       <p> Script: </p>
-      <textarea id="script" name="script"></textarea>
+      <textarea type="text" id="script" name="script"></textarea>
       <p align="center">
         <button type="button" value="enter" onClick="editAction()">Done</button>
       </p>
@@ -164,6 +164,7 @@
         </table>
       </form>
     <form id="predicateEditor" style="background-image:url('static/images/dark_wall.png');">
+      <!-- TODO: remove extraneous div -->
       <div id='pred_ed'>
 
         current predicate:
@@ -212,7 +213,6 @@
 
     $(function(){
       $("#agent-edit").on('click',    editAgent);
-      $("#tool-edit").on('click',     editTool);
       $("#requires-edit").on('click', editRequires);
       $("#provides-edit").on('click', editProvides);
     });

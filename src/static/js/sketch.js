@@ -986,21 +986,21 @@ function Action(action) {
     if(action) {
         this.name     = action.name     || "Action"+numActions;
         this.type     = action.type     || "none";
-        this.agent    = action.agent    || "";
         this.script   = action.script   || "";
         this.tool     = action.tool     || "";
-        this.requires = action.requires || "";
-        this.provides = action.provides || "";
+        this.agent    = action.agent    || [];
+        this.requires = action.requires || [];
+        this.provides = action.provides || [];
         this.selected = action.selected || false;
     }
     else {
         this.name     = "Action"+numActions;
         this.type     = "none";
-        this.agent    = "";
         this.script   = "";
         this.tool     = "";
-        this.requires = "";
-        this.provides = "";
+        this.agent    = [];
+        this.requires = [];
+        this.provides = [];
         this.selected = false;
     }
 
@@ -1017,13 +1017,13 @@ function Action(action) {
 
             $('#name').val(this.name);
             $('#type').val(this.type);
+
             $('#script').val(this.script);
+            $('#tool').val(this.tool);
 
-            if (this.agent != "") $('#agent').html(this.agent);
-            if (this.tool != "") $('#tool').html(this.tool);
-            if (this.requires != "") $('#requires').html(this.requires);
-            if (this.provides != "") $('#provides').html(this.provides);
-
+            $('#agent').html(predicate_to_string(this.agent) || "&lt;None&gt;");
+            $('#requires').html(predicate_to_string(this.requires) || "&lt;None&gt;");
+            $('#provides').html(predicate_to_string(this.provides) || "&lt;None&gt;");
             return true;
         }
         return false;
@@ -1103,8 +1103,10 @@ function Action(action) {
         fill(255);
 
         if(actionColour == ActionColourEnum.analysis) {
-            var requiresIdentifiers = this.requires.split(/[\s,&&,==,||]+/);
-            var providesIdentifiers = this.provides.split(/[\s,&&,==,||]+/);
+            var requires = predicate_to_string(this.requires);
+            var provides = predicate_to_string(this.provides);
+            var requiresIdentifiers = requires.split(/[\s,&&,==,||]+/);
+            var providesIdentifiers = provides.split(/[\s,&&,==,||]+/);
 
             var transforms = true;
             for(var i = 0; i < providesIdentifiers.length; i++) {
@@ -1119,19 +1121,19 @@ function Action(action) {
             }
 
             var r, g, b;
-            if(this.requires.length == 0 && this.provides.length == 0) {
+            if(requires.length == 0 && provides.length == 0) {
                 //empty
                 r = analysisLegendContent[1].colour.r;
                 g = analysisLegendContent[1].colour.g;
                 b = analysisLegendContent[1].colour.b;
             }
-            else if(this.provides.length == 0) {
+            else if(provides.length == 0) {
                 //blackhole
                 r = analysisLegendContent[2].colour.r;
                 g = analysisLegendContent[2].colour.g;
                 b = analysisLegendContent[2].colour.b;
             }
-            else if(this.requires.length == 0) {
+            else if(requires.length == 0) {
                 //miracle
                 r = analysisLegendContent[3].colour.r;
                 g = analysisLegendContent[3].colour.g;
@@ -1154,7 +1156,7 @@ function Action(action) {
             fill(0);
         }
         else if(actionColour == ActionColourEnum.agent) {
-            var agents = this.agent.split(/[\s,&&,==,||]+/);
+            var agents = predicate_to_string(this.agent).split(/[\s,&&,==,||]+/);
 
             var width = actionWidth / agents.length;
 
@@ -1622,13 +1624,13 @@ function mouseDragged(event) {
 }
 
 function editAction() {
-    selectedAction.name     = $('#name').val();
-    selectedAction.type     = $('#type').val();
-    selectedAction.agent    = $('#agent').val();
-    selectedAction.script   = $('#script').val();
-    selectedAction.tool     = $('#tool').val();
-    selectedAction.requires = $('#requires').val();
-    selectedAction.provides = $('#provides').val();
+    // selectedAction.name     = $('#name').val();
+    // selectedAction.type     = $('#type').val();
+    // selectedAction.agent    = $('#agent').val();
+    // selectedAction.script   = $('#script').val();
+    // selectedAction.tool     = $('#tool').val();
+    // selectedAction.requires = $('#requires').val();
+    // selectedAction.provides = $('#provides').val();
     selectedAction.selected = false;
 
     $("#actionEditor").hide();
@@ -1727,34 +1729,3 @@ function cancel() {
     state = StateEnum.normal;
 }
 
-function editAgent(){
-  var agent = selectedAction.agent;
-  $('#field').val(agent);
-  $('#predicateEditor').show();
-
-  setFinishedAction(function(curr){
-    console.log(curr);
-  });
-}
-
-function editTool(){
-  var tool = selectedAction.tool;
-  $('#field').val(tool);
-  $('#predicateEditor').show();
-}
-
-function editRequires(){
-  var requires = selectedAction.requires;
-  $('#requires').val(requires);
-  $('#predicateEditor').show();
-}
-
-function editProvides(){
-  var provides = selectedAction.provides;
-  $('#provides').val(provides);
-  $('#predicateEditor').show();
-}
-
-function exitPredicateEditor(){
-  $('#predicateEditor').hide();
-}
