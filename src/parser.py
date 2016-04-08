@@ -19,8 +19,11 @@ TOKENS = ( (r'[ \n\t]+'                , None)
          , (r'provides'                , "PROVIDES")
          , (r'tool'                    , "TOOL")
          , (r'agent'                   , "AGENT")
-         , (r'[_A-Za-z][_A-Za-z0-9\.]*', "IDENT")
-         , (r'[^ }]+'                  , "TOK")
+         , (r'[_A-Za-z][_A-Za-z0-9]*'  , "IDENT")
+         , (r'\.'                      , "DOT")
+         , (r'[0-9]+'                  , "NUMBER")
+         , (r'(==)|(!=)|(<=?)|(>=?)'   , "COMP_OP")
+         , (r'(\|\|)|(&&)'             , "CONJ_OP")
          )
 
 class ParserException(Exception): pass
@@ -168,15 +171,38 @@ def spec():
     return (specType, sel)
 
 def expr():
-    '''Parse an expression
-    We know an expression will only occur validly in between braces so we just chomp any possibly valid
-    tokens until we hit something else (presumably a brace)
-    '''
-    res = []
-    (text, tag) = get()
-    while tag in ["STRING", "TOK", "IDENT"]:
-        res.append(text)
-        (text, tag) = get()
-    push_back((text, tag))
+    '''Parse an expression '''
+    res = [ rel_expr() ]
 
-    return ' '.join(res)
+    op = check("CONJ_OP")
+    while(op):
+        rel = rel_expr()
+        rel['conj_op'] = op
+        res.append(rel)
+        op = check("CONJ_OP")
+
+    return res
+
+def rel_expr():
+    res = {"lhs": val_expr()}
+    op = check("COMP_OP")
+    if op:
+        res['op'] = op
+        res['rhs'] = val_expr()
+    return res
+
+def val_expr():
+    strOrNumber = check("STRING") or check("NUMBER")
+    if strOrNumber:
+        return {"core": strOrNumber}
+
+    id = check("IDENT")
+    if id:
+        r = {"core":id}
+        if check("DOT"):
+            r['postDot'] = expect("IDENT")
+        return r
+
+    fail("Expr")
+
+
