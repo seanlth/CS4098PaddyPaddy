@@ -442,12 +442,18 @@ function createAgentFlowLines(agentArray, actions, startX, endX) {
 }
 
 function drawAgentFlowLines() {
+
     //stringColours = []; // stops colour pollution 
 	var agentArray = [];
 	var startPosition = {x: startX, y: middle};
 	var endPosition = {x: endX, y: middle};
 	createAgentFlowLines(agentArray, program.actions, startPosition.x, endPosition.x);
-	drawFlowLines(startPosition, endPosition, agentArray);
+    if ( agentArray.length > 0 ) {
+	    drawFlowLines(startPosition, endPosition, agentArray);
+    }
+    else {
+        drawingSwimLanes = false;
+    }
 }
 
 function updateActions(sequence, programWidth, index) {
