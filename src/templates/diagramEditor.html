@@ -11,6 +11,12 @@
   <script src="{{url_for('static', filename='js/flowlines.js')}}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='diagramEditor.css') }}">
 
+  {% if 'currentFile' in session%}
+    <title>{{session['currentFile']}}</title>
+  {%else%}
+    <title>Diagram Editor</title>
+  {% endif %}
+
   <body>
   <style type="text/css">
   .navbar{
