@@ -16,7 +16,7 @@ import tempfile
 
 import parser
 
-DEBUG = False
+DEBUG = True
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret'
 app.config['OAUTH_CREDENTIALS'] = {
@@ -283,6 +283,7 @@ def tmp():
 @app.route("/resetCurrent")
 def resetCurrent():
     session.pop('currentFile', None)
+    session.pop('tempFile', None)
     return ""
 @app.route('/authorize/<provider>')
 def oauth_authorize(provider):
