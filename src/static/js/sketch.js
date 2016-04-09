@@ -457,7 +457,7 @@ function addToAgentArray(agentArray, action, start, end) {
 		var array = agentArray[i];
 
 		// found the array
-		if ( array.agent == action.agent && array.y == action.yPixelPosition ) {
+		if ( array.name == action.agent && array.y == action.yPixelPosition ) {
 			foundAgentArray = true;
 			index = i;
 			break;
@@ -514,7 +514,8 @@ function drawAgentFlowLines() {
 	var endPosition = {x: endX, y: middle};
 	createAgentFlowLines(agentArray, program.actions, startPosition.x, endPosition.x);
     if ( agentArray.length > 0 ) {
-        drawLegend(startX, height - startX, "Agents", agentArray);
+        textAlign(LEFT, CENTER);
+        drawLegend(startX, height - startX, "Agents", flatten(agentArray));
 	    drawFlowLines(startPosition, endPosition, agentArray);
     }
     else {
