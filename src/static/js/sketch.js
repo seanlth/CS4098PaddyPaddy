@@ -150,7 +150,7 @@ function draw() {
         names[i].draw();
     }
 
-    if(state != StateEnum.notEditing && drawingSwimLanes == false) {
+    if(state != StateEnum.notEditing && drawingSwimLanes == false ) {
         for(var i = 0; i < nodes.length; i++) {
             nodes[i].draw();
         }
@@ -239,6 +239,9 @@ function windowResized() {
 }
 
 function keyboardInput() {
+	if ( state == StateEnum.form ) {
+		return;
+	}
 
     var lastValueX = offsetX, lastValueY = offsetY;
     var speed = 10;
@@ -434,7 +437,6 @@ function stringColour(name) {
 // adds the actions positional information to an agent array
 // if the array doesn't exist it creates it
 function addToAgentArray(agentArray, action, start, end) {
-    
     // uses y value to distinguish between actions in parallel sequences
     //
     // agentArray : {
@@ -489,7 +491,6 @@ function createAgentFlowLines(agentArray, actions, startX, endX) {
 	// should be using for-each but js is too spooky for me
 	for ( var i = 0; i < actions.length; i++ ) {
 		var primitive = actions[i];
-
 		if ( primitive.hasOwnProperty('control') ) {
             if ( primitive.control == "branch" || primitive.control == "selection" ) {
 			    createAgentFlowLines(agentArray, primitive.actions, primitive.startX, primitive.endX);
@@ -507,7 +508,7 @@ function createAgentFlowLines(agentArray, actions, startX, endX) {
 
 function drawAgentFlowLines() {
 
-    //stringColours = []; // stops colour pollution 
+    //stringColours = []; // stops colour pollution
 	var agentArray = [];
 	var startPosition = {x: startX, y: middle};
 	var endPosition = {x: endX, y: middle};
@@ -902,6 +903,7 @@ function Node(x, y, index) {
             else {
                 fill(255, 0, 0);
             }
+
             stroke(0);
             ellipse(this.x, this.y, this.diameter, this.diameter);
             stroke(255);
@@ -987,6 +989,9 @@ function Name(name, x, y, index) {
 
 function validControlFlow(node) {
     if(selectedIndex.length != node.index.length) return false;
+
+    if((node.index[node.index.length - 1] < 0 && selectedIndex[selectedIndex.length - 1] >= 0) ||
+       (node.index[node.index.length - 1] >= 0 && selectedIndex[selectedIndex.length - 1] < 0)) return false;
 
     return compareArrays(selectedIndex, node.index, selectedIndex.length - 1);
 }
@@ -1409,7 +1414,8 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
     fill(255);
     rect(0, 0, 30, 30);
     resetMatrix();
-    //translate(offsetX, offsetY);
+    
+    translate(offsetX, offsetY);
 
     prog.startX = lineDetails.startX;
     prog.endX = lineDetails.endX;

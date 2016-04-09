@@ -95,7 +95,7 @@ input[type="text"]{
   color: #000;
   overflow: auto;
 }*/
-form {
+#actionEditor, #flowEditor {
     padding: 20px;
     position: absolute;
     margin-left: auto;
@@ -113,4 +113,17 @@ form {
     border-radius: 25px;
     z-index: 2;
     display: none;
+}
+
+#fileUpload {
+    width: 100%;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    padding-left: 20px !important;
+}
+
+#fileUpload:hover{
+  background-color: #f2f2f2;
+  color: #000000 !important;
+  cursor: pointer;
 }
