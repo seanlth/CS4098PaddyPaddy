@@ -183,8 +183,6 @@ function update() {
     background(255);
     var progWidth = sequenceLength(program);
 
-    //resize();
-
     names = [new Name(program.name, startX, middle - 45, [])];
     nodes = [];
     updateActions(program, progWidth, []);
@@ -198,7 +196,7 @@ function update() {
 // check program isn't too crowded and resize if needed
 function resize() {
     var progWidth = sequenceLength(program);
-    var prefferedSize = progWidth * actionWidth * 1.4;
+    var prefferedSize = Math.ceil(progWidth * actionWidth * 1.6);
 
     if(prefferedSize > endX - startX) {
         endX = prefferedSize + startX;
@@ -210,6 +208,7 @@ function resize() {
     }
 
     if(endX < windowWidth - 40) {
+        offsetX = 0;
         endX = windowWidth - 40;
         canvas.position(0, offsetY + initialY);
         update();
@@ -218,19 +217,28 @@ function resize() {
     var lowY = lowestY(program);
     var highY = highestY(program);
 
+    var preferredHeight = (highY - lowY + 1) * 2 * actionHeight;
+    if(preferredHeight < windowHeight - initialY) {
+        preferredHeight = windowHeight - initialY;
+        middle = preferredHeight / 2;
+        offsetY = 0;
+    }
 
-    var heightP = (highY - lowY + 1) * 2 * actionHeight;
-
-    if(width != endX + startX && heightP > height) {
-        resizeCanvas(endX + startX, heightP);
+    if(width != endX + startX && preferredHeight != height) {
+        resizeCanvas(endX + startX, preferredHeight);
         update();
     }
     else if(width != endX + startX) {
         resizeCanvas(endX + startX, height);
     }
-    else if(heightP > height) {
-        resizeCanvas(endX + startX, heightP);
-        middle = (-lowY / sequenceHeight(program)) * height;
+    else if(preferredHeight != height) {
+        resizeCanvas(endX + startX, preferredHeight);
+        if(highY == -lowY) {
+            middle = height / 2;
+        }
+        else {
+            middle = (-lowY / sequenceHeight(program)) * height;
+        }
         update();
     }
     else if(((highY + 0.5) * 2 * actionHeight) + middle > height) {
@@ -250,9 +258,9 @@ function windowResized() {
 }
 
 function keyboardInput() {
-	if ( state == StateEnum.form ) {
-		return;
-	}
+    if ( state == StateEnum.form ) {
+        return;
+    }
 
     var lastValueX = offsetX, lastValueY = offsetY;
     var speed = 10;
@@ -292,12 +300,12 @@ function keyboardInput() {
     }
 
     // zoooooooooooom
-    if(keyIsDown(107) || keyIsDown(187)) {
+    if(keyIsDown(107) || keyIsDown(187) || keyIsDown(61)) {
         scaleY = scaleY < 2 ? scaleY + 0.02 : 2;
         scaleX = scaleX < 2 ? scaleX + 0.02 : 2;
         update();
     }
-    if(keyIsDown(109) || keyIsDown(189)) {
+    if(keyIsDown(109) || keyIsDown(189) || keyIsDown(173)) {
         scaleY = scaleY > 0.3 ? scaleY - 0.02 : 0.3;
         scaleX = scaleX > 0.3 ? scaleX - 0.02 : 0.3;
         update();
@@ -366,7 +374,7 @@ function drawActions(sequence, programWidth, index) {
 //x and y position bottom left corner of the legend(easiest way to keep on canvas)
 function drawLegend(x, y, title, content) {
     var yPos = y;
-    textAlign(LEFT);
+    textAlign(LEFT, CENTER);
 
     var contentHeight = textSize();
     for(var i = content.length - 1; i >= 0; i--) {
@@ -512,7 +520,6 @@ function createAgentFlowLines(agentArray, actions, start, end) {
             else {
                 createAgentFlowLines(agentArray, primitive.actions, start, end);
             }
-
 		}
 		else {
 			addToAgentArray(agentArray, primitive, start, end);
@@ -570,10 +577,10 @@ function allActions(actionsArray, primitiveActions) {
 }
 
 // creates resouce flow lines
-//  
+//
 function createResourceFlowLines() {
-    
-    // get all the actions 
+
+    // get all the actions
     var actionArray = [];
     allActions(actionArray, program.actions);
 
@@ -583,13 +590,13 @@ function createResourceFlowLines() {
     // loop over each provides
 	for ( var i = 0; i < actionArray.length; i++ ) {
 		var providesAction = actionArray[i];
-            
+
         if ( providesAction.provides != "" ) {
 
             // create flowLine
             var flowLine = {name: providesAction.provides, colour: stringColour(providesAction.name), x: providesAction.xPixelPosition, y: providesAction.yPixelPosition};
-        
-            // add the flowLine 
+
+            // add the flowLine
             resourceFlowLines.push(flowLine);
         }
 	}
@@ -652,6 +659,12 @@ function updateActions(sequence, programWidth, index) {
                     nameY = middle + (lowest * actionHeight * 2) - actionHeight * 0.75;
                 }
 
+                if(sequence.control == FlowControlEnum.branch || sequence.control == FlowControlEnum.selection) {
+                    pos.x += sequenceLength(sequence.actions[i]);
+                    nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+                    nodes.push(new Node(nodeX, yPixels, index.concat([i, -2])));
+                }
+
                 names.push(new Name(sequence.actions[i].name, nameX, nameY, nextIndex.slice()));
             }
 
@@ -659,10 +672,7 @@ function updateActions(sequence, programWidth, index) {
             if(i == sequence.actions.length - 1) {
                 pos.x += sequenceLength(sequence.actions[i]);
                 var nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
-                if(sequence.control == FlowControlEnum.branch || sequence.control == FlowControlEnum.selection) {
-                    nodes.push(new Node(nodeX, yPixels, index.concat([i, -2])));
-                }
-                else {
+                if(!(sequence.control == FlowControlEnum.branch || sequence.control == FlowControlEnum.selection)) {
                     nodes.push(new Node(nodeX, yPixels, index.concat([i + 1])));
                 }
             }
@@ -779,7 +789,7 @@ function addAction(index) {
 function highestY(sequence) {
     if(sequence.constructor == Action) return sequence.y;
 
-    var maxY = Number.MIN_VALUE;
+    var maxY = -Number.MAX_VALUE;
     for(var i = 0; i < sequence.actions.length; i++) {
         var y;
         if(sequence.actions[i].constructor == Action) {
@@ -794,7 +804,7 @@ function highestY(sequence) {
         }
     }
 
-    return maxY != Number.MIN_VALUE ? maxY : 0;
+    return maxY != -Number.MAX_VALUE ? maxY : 0;
 }
 
 function lowestY(sequence) {
@@ -1092,22 +1102,22 @@ function Action(action) {
     // All the PML important details
     if(action) {
         this.name     = action.name     || "Action"+numActions;
-        this.type     = action.type     || "";
-        this.agent    = action.agent    || "";
+        this.type     = action.type     || "none";
         this.script   = action.script   || "";
         this.tool     = action.tool     || "";
-        this.requires = action.requires || "";
-        this.provides = action.provides || "";
+        this.agent    = action.agent    || [];
+        this.requires = action.requires || [];
+        this.provides = action.provides || [];
         this.selected = action.selected || false;
     }
     else {
         this.name     = "Action"+numActions;
-        this.type     = "";
-        this.agent    = "";
+        this.type     = "none";
         this.script   = "";
         this.tool     = "";
-        this.requires = "";
-        this.provides = "";
+        this.agent    = [];
+        this.requires = [];
+        this.provides = [];
         this.selected = false;
     }
 
@@ -1122,14 +1132,15 @@ function Action(action) {
 
             $("#actionEditor").show();
 
-            document.getElementById('name').value = this.name;
-            document.getElementById('type').value = this.type;
-            document.getElementById('agent').value = this.agent;
-            document.getElementById('script').value = this.script;
-            document.getElementById('tool').value = this.tool;
-            document.getElementById('requires').value = this.requires;
-            document.getElementById('provides').value = this.provides;
+            $('#name').val(this.name);
+            $('#type').val(this.type);
 
+            $('#script').val(this.script);
+            $('#tool').val(this.tool);
+
+            $('#agent').html(predicate_to_string(this.agent) || "&lt;None&gt;");
+            $('#requires').html(predicate_to_string(this.requires) || "&lt;None&gt;");
+            $('#provides').html(predicate_to_string(this.provides) || "&lt;None&gt;");
             return true;
         }
         return false;
@@ -1210,8 +1221,10 @@ function Action(action) {
         fill(255);
 
         if(actionColour == ActionColourEnum.analysis) {
-            var requiresIdentifiers = this.requires.split(/[\s,&&,==,||]+/);
-            var providesIdentifiers = this.provides.split(/[\s,&&,==,||]+/);
+            var requires = predicate_to_string(this.requires);
+            var provides = predicate_to_string(this.provides);
+            var requiresIdentifiers = requires.split(/[\s,&&,==,||]+/);
+            var providesIdentifiers = provides.split(/[\s,&&,==,||]+/);
 
             var transforms = true;
             for(var i = 0; i < providesIdentifiers.length; i++) {
@@ -1226,19 +1239,19 @@ function Action(action) {
             }
 
             var r, g, b;
-            if(this.requires.length == 0 && this.provides.length == 0) {
+            if(requires.length == 0 && provides.length == 0) {
                 //empty
                 r = analysisLegendContent[1].colour.r;
                 g = analysisLegendContent[1].colour.g;
                 b = analysisLegendContent[1].colour.b;
             }
-            else if(this.provides.length == 0) {
+            else if(provides.length == 0) {
                 //blackhole
                 r = analysisLegendContent[2].colour.r;
                 g = analysisLegendContent[2].colour.g;
                 b = analysisLegendContent[2].colour.b;
             }
-            else if(this.requires.length == 0) {
+            else if(requires.length == 0) {
                 //miracle
                 r = analysisLegendContent[3].colour.r;
                 g = analysisLegendContent[3].colour.g;
@@ -1511,8 +1524,6 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
     rect(0, 0, 30, 30);
     resetMatrix();
 
-    translate(offsetX, offsetY);
-
     prog.startX = lineDetails.startX;
     prog.endX = lineDetails.endX;
     prog.y = lineDetails.y;
@@ -1572,14 +1583,7 @@ function ControlFlow(firstIndex, secondIndex) {
     //selected same node twice, add iteration with new Action
     if(start[length - 1] == end[length - 1]) {
         var flowType = whatControlAction();
-        var blankControlFlow =  {name: '' + currentControlFlow+ flowType, control: currentControlFlow, actions: [new Action()], startX: 0, endX: 0, y: 0};
-        // if the new action is to be in a branch/selection, surround it in a sequence
-        if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
-            array.splice(start[length - 1], 0,
-                {name: "Sequence"+sequenceNum++, control: FlowControlEnum.sequence, actions: [blankControlFlow], startX: 0, endX: 0, y: 0});
-            return;
-        }
-
+        var blankControlFlow =  {name: '' + currentControlFlow+ flowType, control: currentControlFlow, actions: [new Action()]};
         array.splice(start[length - 1], 0, blankControlFlow);
         return;
     }
@@ -1630,6 +1634,7 @@ function Sequence(index, replace){
 function mousePressedCanvas(event) {
     $('#actionEditor').hide();
     $('#flowEditor').hide();
+    $('#predicateEditor').hide();
     $('#outputPanel').hide();
 
     var x = mouseX;
@@ -1755,97 +1760,19 @@ function mouseDragged(event) {
 }
 
 function editAction() {
-
-    // variable regex stuff here
-    var variableRegex = new RegExp('^ *([a-zA-Z_][a-zA-Z_0-9]*) *$')
-    var name = document.getElementById('name').value;
-    if (!variableRegex.test(name)) {
-        alert(  "The name " + name + " of the Action is invalid, "
-              + "Action names must start with an underscore or letter and contain"
-              + " only letters, numbers and underscrores.");
-        return
+    if (!isValidVal($('#name').val())){
+      alert("'"+ $('#name').val() +"' is not a valid action name");
+      $('#name').addClass('invalid');
+    } else {
+      selectedAction.selected = false;
+      selectedAction.name = $('#name').val();
+      selectedAction.script = $('#script').val();
+      selectedAction.tool = $('#tool').val();
+      selectedAction.type = $('#type').val();
+      $("#actionEditor").hide();
+      state = StateEnum.normal;
+      update();
     }
-
-    var predicateRegex = new RegExp('^ *((([a-zA-Z_.0-9]+|\"[^\"]*\")( *([|][|]|&&) *([a-zA-Z_.0-9]+|\"[^\"]*\"))*))| * *$');
-
-    // agent regex stuff here
-    var agent = document.getElementById('agent').value;
-    if ( !predicateRegex.test(agent) && agent.length != 0) {
-        alert(  "The agent " + agent + " of the Action is invalid, "
-              + "agents must be be strings or start with an underscore or letter and contain "
-              + "only letters, numbers and underscrores.");
-        return
-    }
-    var agentResult = predicateRegex.exec(agent);
-    if  ( agentResult[1] == null || agent.length == 0 ) {
-        agent = "";
-    }
-    else {
-        agent = agentResult[1];
-    }
-
-    // tool regex stuff here
-    var toolRegex = new RegExp('^ *([^\"]*) *$');
-    var tool = document.getElementById('tool').value;
-
-    if ( !toolRegex.test(tool) && tool.length != 0) {
-        alert(  "The tool " + tool + " of the Action is invalid, "
-              + "the tool must not contain \" characters.");
-        return
-    }
-    var toolResult = toolRegex.exec(tool);
-    if ( toolResult[1] == null || toolResult.length == 0 ) {
-        tool = "";
-    }
-    else {
-        tool = toolResult[1];
-    }
-
-    // requires regex stuff here
-    var requires = document.getElementById('requires').value
-    if(!predicateRegex.test(requires) && requires.length != 0) {
-        alert(  "The requirement \"" + requires + "\" of the Action is invalid, "
-              + "requirements must start with an underscore or letter and contain "
-              + "only letters, numbers and underscrores.");
-        return
-    }
-    var requiresResult = predicateRegex.exec(requires);
-    if ( requiresResult[1] == null || requiresResult.length == 0 ) {
-        requires = "";
-    }
-    else {
-        requires = requiresResult[1];
-    }
-
-    // provides regex stuff here
-    var provides = document.getElementById('provides').value;
-    if(!predicateRegex.test(provides) && provides.length != 0) {
-        alert(  "The provision \"" + provides + "\" of the Action is invalid, "
-              + "provisions must start with an underscore or  letter and contain "
-              + "only letters, numbers and underscrores.");
-        return
-    }
-    var providesResult = predicateRegex.exec(provides);
-    if ( providesResult[1] == null || providesResult.legnth == 0 ) {
-        provides = "";
-    }
-    else {
-        provides = providesResult[1];
-    }
-
-
-    selectedAction.name = variableRegex.exec(name)[1];
-    selectedAction.type = document.getElementById('type').value;
-    selectedAction.agent = agent
-    selectedAction.script = document.getElementById('script').value;
-    selectedAction.tool = tool;
-    selectedAction.requires = requires;
-    selectedAction.provides = provides;
-    selectedAction.selected = false;
-
-    $("#actionEditor").hide();
-    state = StateEnum.normal;
-    update();
 }
 
 // deletes an action with matching id from program prog

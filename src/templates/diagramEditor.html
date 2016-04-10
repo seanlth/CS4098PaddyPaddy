@@ -1,20 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-
-
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/p5.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/addons/p5.dom.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/addons/p5.sound.min.js"></script>
   <script src="{{url_for('static', filename='js/sketch.js')}}"></script>
   <script src="{{url_for('static', filename='js/pml_generator.js')}}"></script>
+  <script src="{{url_for('static', filename='js/predicateEditor.js')}}"></script>
   <script src="{{url_for('static', filename='js/flowlines.js')}}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='diagramEditor.css') }}">
+
+  {% if 'currentFile' in session%}
+    <title>{{session['currentFile'][:-4]}}</title>
+  {%else%}
+    <title>Diagram Editor</title>
+  {% endif %}
 
   <body>
   <style type="text/css">
   .navbar{
     background:url("static/images/dark_wall.png");
+  }
+
+  /* TODO: better styling */
+  input[class~='invalid']{
+    background-color: red;
   }
   </style>
   <nav class="navbar navbar-default" role="navigation">
@@ -82,13 +92,15 @@
               </li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            <li>
-              {% if not 'email' in session %}
-              <a href="javascript:login_hook()"><r>Login</r></a>
-              {% else %}
-              <a href="/logout?return_url=diagram"><r>Logout</r></a>
-              {% endif %}
-            </li>
+              <li>
+                {% if 'social' in session %}
+                  <a href="/logout?return_url=diagram"><r>Logout</r></a>
+                {% elif 'email' in session %}
+                    <a href="/logout?return_url=diagram"><r>Logout</r></a>
+                {% else %}
+                  <a href="javascript:login_hook()"><r>Login</r></a>
+                {% endif %}
+              </li>
           </ul>
       </div><!-- /.navbar-collapse -->
   </nav>
@@ -110,7 +122,7 @@
 
   <form id="actionEditor" style="background-image:url('static/images/dark_wall.png');">
     <table>
-      <p>Name: <Input type="text" name="name" id="name"/></p>
+      <p>Name: <input type="text" name="name" id="name"/></p>
       <p> Type:
         <select id="type" name="type" style="color:#000">
           <option value="none">None</option>
@@ -118,32 +130,17 @@
           <option value="executable">Executable</option>
         </select>
       </p>
-      <br>
-      <p> Agent:
-        <input type="text" id="agent" name="agent"/>
-      </p>
+      <p> Agent: <span id="agent" name="agent">&lt;None&gt;</span> <button type="button" id="agent-edit" >edit <span class="glyphicon glyphicon-edit"></span></button> </p>
+      <p> Requires: <span id="requires" name="requires">&lt;None&gt;</span> <button type="button" id="requires-edit">edit <span class="glyphicon glyphicon-edit"></span></button> </p>
+      <p> Provides: <span id="provides" name="provides">&lt;None&gt;</span> <button type="button" id="provides-edit">edit <span class="glyphicon glyphicon-edit"></span></button> </p>
+      <p> Tool: <input type="text" id="tool" name="tool"></textarea> </p>
       <p> Script: </p>
-      <textarea id="script" name="script" style="color: #000;"></textarea>
-      <p> Tool:
-        <input type="text" id="tool" name="tool"/>
-      </p>
-      <p> Requires:
-        <input type="text" id="requires" name="tool"/>
-      </p>
-      <p> Provides:
-        <input type="text" id="provides" name="tool"/>
-      </p>
-      <p align="center">
-        <button type="button" value="enter" onClick="editAction()">Done</button>
-      </p>
-      <p align="center">
-        <button type="button" value="enter" onClick="removeAction()">Remove Action</button>
-      </p>
-      <p align="center">
-        <button type="button" value="enter" onClick="cutAction()">Cut Action</button>
-      </p>
+      <textarea type="text" id="script" name="script"></textarea>
       <p align="center">
         <button type="button" value="enter" onClick="cancel()">Cancel</button>
+        <button type="button" value="enter" onClick="removeAction()">Remove Action</button>
+        <button type="button" value="enter" onClick="cutAction()">Cut Action</button>
+        <button type="button" value="enter" onClick="editAction()">Done</button>
       </p>
       </table>
     </form>
@@ -160,19 +157,38 @@
         </p>
 	<br>
         <p align="center">
-          <button type="button" value="enter" onClick="editSequence()">Done</button>
-        </p>
-        <p align="center">
-          <button type="button" value="enter" onClick="removeSequence()">Remove</button>
-        </p>
-        <p align="center">
-          <button type="button" value="enter" onClick="cutSequence()">Cut</button>
-        </p>
-        <p align="center">
           <button type="button" value="enter" onClick="cancel()">Cancel</button>
+          <button type="button" value="enter" onClick="removeSequence()">Remove</button>
+          <button type="button" value="enter" onClick="cutSequence()">Cut</button>
+          <button type="button" value="enter" onClick="editSequence()">Done</button>
         </p>
         </table>
       </form>
+    <form id="predicateEditor" style="background-image:url('static/images/dark_wall.png');">
+        current predicate:
+        <p id="current_pred">&lt;None&gt;</p>
+        <div id="base_conjunct">
+          <input type="text" class='base' />
+          <button class="addDot" id="base_addDot">+.</button>
+          <select class="comparison" id="base_operator">
+            <option>None</option>
+            <option selected>==</option>
+            <option>!=</option>
+            <option>&lt;</option>
+            <option>&gt;</option>
+            <option>&gt;=</option>
+            <option>&lt;=</option>
+          </select>
+          <button class="addOp" id="base_addOp">+op</button>
+        </div>
+
+        <div id='form'></div>
+        <p>
+          <button id='adder'> + </button>
+          <button id='finished'>Done</button>
+        </p>
+      <button type="button" value="enter" onClick="exitPredicateEditor()">Cancel</button>
+    </form>
   </body>
   <textarea id="outputPanel" disabled="disabled">Output</textarea>
   <script type="text/javascript">
@@ -196,6 +212,15 @@
         return "Any progress you made on the diagram will be lost.";
     };
 
+    $(function(){
+      $("#agent-edit").on('click',    editAgent);
+      $("#requires-edit").on('click', editRequires);
+      $("#provides-edit").on('click', editProvides);
+      $("#name").on("change input paste", function (){
+          $(this).removeClass('invalid');
+      });
+    });
+
     function pushTemp(callback){
       var content = btoa(json_to_pml(program)); // encode editor content
 
@@ -209,7 +234,6 @@
           }
       });
     }
-
 
 	function download() {
 		toggle_editing();
@@ -250,7 +274,8 @@
         program = {name: "new_process", actions: new Array()};
         update();
         $.ajax({url:"/resetCurrent", success:function(){
-          window.location.href = "/diagram";
+            window.onbeforeunload = function () {};
+            window.location.href = "/diagram";
         }});
     }
 

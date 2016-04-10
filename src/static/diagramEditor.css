@@ -11,6 +11,10 @@ element.style {
     position: fixed;
 }
 
+a {
+    cursor: pointer;
+}
+
 a:focus {
     color: #777 !important;
 }
@@ -88,14 +92,17 @@ button:hover{
   opacity:1;
   cursor:pointer;
 }
+
 input[type="text"]{
   color: #000;
 }
+
 /*textarea{
   color: #000;
   overflow: auto;
 }*/
-#actionEditor, #flowEditor {
+
+#actionEditor, #flowEditor, #predicateEditor {
     padding: 20px;
     position: absolute;
     margin-left: auto;
@@ -109,10 +116,15 @@ input[type="text"]{
     padding-bottom: 10px;
     left: 0;
     right: 0;
-    width: 300px;
+    width: 350px;
     border-radius: 25px;
     z-index: 2;
     display: none;
+}
+
+#predicateEditor {
+    z-index: 3;
+    width: auto;
 }
 
 #fileUpload {
@@ -127,3 +139,4 @@ input[type="text"]{
   color: #000000 !important;
   cursor: pointer;
 }
+
