@@ -587,6 +587,12 @@ function updateActions(sequence, programWidth, index) {
                     nameY = middle + (lowest * actionHeight * 2) - actionHeight * 0.75;
                 }
 
+                if(sequence.control == FlowControlEnum.branch || sequence.control == FlowControlEnum.selection) {
+                    pos.x += sequenceLength(sequence.actions[i]);
+                    nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
+                    nodes.push(new Node(nodeX, yPixels, index.concat([i, -2])));
+                }
+
                 names.push(new Name(sequence.actions[i].name, nameX, nameY, nextIndex.slice()));
             }
 
@@ -594,10 +600,7 @@ function updateActions(sequence, programWidth, index) {
             if(i == sequence.actions.length - 1) {
                 pos.x += sequenceLength(sequence.actions[i]);
                 var nodeX = (endX - startX) * ((pos.x * 2 + 1) / (programWidth * 2 + 2)) + startX;
-                if(sequence.control == FlowControlEnum.branch || sequence.control == FlowControlEnum.selection) {
-                    nodes.push(new Node(nodeX, yPixels, index.concat([i, -2])));
-                }
-                else {
+                if(!(sequence.control == FlowControlEnum.branch || sequence.control == FlowControlEnum.selection)) {
                     nodes.push(new Node(nodeX, yPixels, index.concat([i + 1])));
                 }
             }
