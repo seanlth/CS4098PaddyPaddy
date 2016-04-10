@@ -213,7 +213,8 @@ function drawFlowLines(start, end, agents) {
             }
         }
         if(last) {
-            text(node.name, node.x, node.y + node.yOffset - 15);
+            var textY = node.yOffset >= 0 ? node.y + node.yOffset - 15 : node.y + node.yOffset + 15;
+            text(node.name, node.x, textY);
         }
 		drawNode(node.x, node.y + node.yOffset, 15, node.colour);
 	}
