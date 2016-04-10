@@ -11,6 +11,10 @@ element.style {
     position: fixed;
 }
 
+a {
+    cursor: pointer;
+}
+
 a:focus {
     color: #777 !important;
 }
