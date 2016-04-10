@@ -115,7 +115,7 @@ function flatten(agentFlowLines) {
     return flattenedArray;
 }
 
-function drawFlowLine(prog, agent, yOffset, colour, xStart, xEnd, y) {
+function drawAgentFlowLine(prog, agent, yOffset, colour, xStart, xEnd, y) {
     var xPositions = [];
     var yPositions = [];
     var match = false;
@@ -124,12 +124,14 @@ function drawFlowLine(prog, agent, yOffset, colour, xStart, xEnd, y) {
     for(var i = 0; i < prog.actions.length; i++) {
         var action = prog.actions[i];
         if(!action.control) {
-            var agents = action.agent.split(/[\s,&&,==,||]+/);
+            var agents = action.agent.split(/("[^"]*")|([\s,&&,==,||])+/);
 
             var width = actionWidth / agents.length;
             var found = false;
 
             for(var j = 0; j < agents.length; j++) {
+                if(!agents[j]) continue;
+
                 var a = agents[j].split(/[.]+/)[0];
                 if(a == agent) {
                     match = true;
@@ -183,8 +185,8 @@ function drawFlowLine(prog, agent, yOffset, colour, xStart, xEnd, y) {
 
 var nodeLocations;
 
-function drawFlowLines(start, end, agents) {
-
+function drawAgentFlowLines(start, end, agents) {
+    if(!agents) return;
     // var lanesPerLevel = numberOfFlowLinesPerLevel(agentFlowLines);
 	// var numberOfFlowLines = lanesPerLevel[0].count;
     nodeLocations = [];
@@ -195,17 +197,16 @@ function drawFlowLines(start, end, agents) {
         var colour = agents[i].colour;
         stroke(colour.r, colour.g, colour.b);
         strokeWeight(2);
-        drawFlowLine(program, agents[i].name, yOffset, colour, startX, endX, middle);
-
+        drawAgentFlowLine(program, agents[i].name, yOffset, colour, startX, endX, middle);
     }
 
-	var c = {r: 0, g: 0, b: 0};
-	drawNode(start.x, start.y, 15 + agents.length * gap, c);
-	for ( var i = 0; i < nodeLocations.length; i++ ) {
-		var node = nodeLocations[i];
-		textAlign(CENTER, CENTER);
-		stroke(255);
-		fill(0);
+    var c = {r: 0, g: 0, b: 0};
+    drawNode(start.x, start.y, 15 + agents.length * gap, c);
+    for ( var i = 0; i < nodeLocations.length; i++ ) {
+        var node = nodeLocations[i];
+        textAlign(CENTER, CENTER);
+        stroke(255);
+        fill(0);
         var last = true;
         for(var j = i + 1; j < nodeLocations.length; j++) {
             if(nodeLocations[j].x == node.x && nodeLocations[j].y == node.y) {
@@ -216,12 +217,12 @@ function drawFlowLines(start, end, agents) {
             var textY = node.yOffset >= 0 ? node.y + node.yOffset - 15 : node.y + node.yOffset + 15;
             text(node.name, node.x, textY);
         }
-		drawNode(node.x, node.y + node.yOffset, 15, node.colour);
-	}
-	drawNode(end.x, end.y, 10 + agents.length * gap, c);
+        drawNode(node.x, node.y + node.yOffset, 15, node.colour);
+    }
+    drawNode(end.x, end.y, 10 + agents.length * gap, c);
 
-	// reset drawing variables
-	fill(0);
-	strokeWeight(1);
-	stroke(255);
+    // reset drawing variables
+    fill(0);
+    strokeWeight(1);
+    stroke(255);
 }

@@ -3,7 +3,7 @@ var state, selectedAction, selectedIndex, currentControlFlow, generatePML; // va
 var offsetX, initialY, offsetY, scaleX, scaleY, actionHeight, actionWidth;
 var clipBoard;
 var sequenceNum, selectionNum, iterationNum, branchNum, actionNum;
-var actionColour, agentActionLegendContent;
+var actionColour, agentActionLegendContent, flowLine;
 
 var analysisLegendContent = [
     {name: 'Normal', colour: { r: 255, g: 255, b: 255}},
@@ -17,8 +17,6 @@ var ACTION_HEIGHT = 50;
 var ACTION_WIDTH = 120;
 
 var numActions = 0;
-
-var drawingSwimLanes = false;
 
 var stringColours = [];
 var hslOffset = 90;
@@ -44,6 +42,12 @@ var ActionColourEnum = {
     agent: 2
 }
 
+var FlowLineEnum = {
+    none: 0,
+    agent: 1,
+    resource: 2
+}
+
 function setup() {
     state = StateEnum.normal;
     editing = true;
@@ -66,6 +70,7 @@ function setup() {
     selectedIndex = [];
     clipBoard = [];
     actionColour = ActionColourEnum.none;
+    flowLine = FlowLineEnum.none;
 
     sequenceNum = 1;
     selectionNum = 1;
@@ -125,7 +130,7 @@ function draw() {
     actionHeight = ACTION_HEIGHT * scaleY;
     actionWidth = ACTION_WIDTH * scaleX;
 
-    if ( drawingSwimLanes == true ) {
+    if (flowLine != FlowLineEnum.none) {
         stroke(0, 0, 0, 50);
     }
     else {
@@ -133,7 +138,7 @@ function draw() {
     }
     line(startX, middle, endX, middle);
 
-    if ( drawingSwimLanes == false ) {
+    if (flowLine == FlowLineEnum.none) {
         fill(0);
         ellipse(startX, middle, 30, 30);
         fill(255);
@@ -151,17 +156,17 @@ function draw() {
         names[i].draw();
     }
 
-    if(state != StateEnum.notEditing && drawingSwimLanes == false ) {
+    if(state != StateEnum.notEditing ) {
         for(var i = 0; i < nodes.length; i++) {
             nodes[i].draw();
         }
     }
 
-    if ( drawingSwimLanes == true ) {
+    if ( flowLine == FlowLineEnum.agent ) {
         //background(255, 255, 255, 220);
-        drawAgentFlowLines();
+        agentFlowLines();
     }
-    else if (actionColour == ActionColourEnum.analysis) {
+    if (actionColour == ActionColourEnum.analysis) {
         drawLegend(startX, height - startX, "Action Analysis Colours", analysisLegendContent);
     }
     else if (actionColour == ActionColourEnum.agent) {
@@ -449,19 +454,21 @@ function addToAgentArray(agentArray, action, start, end) {
     //  Colour
     // }
 
-    var agents = action.agent.split(/[\s,&&,==,||]+/);
+    var agents = action.agent.split(/("[^"]*")|([\s,&&,==,||])+/);
 
     var width = actionWidth / agents.length;
 
     for(var i = 0; i < agents.length; i++) {
+        if(!agents[i]) continue;
+
         var agent = agents[i].split(/[.]+/)[0];
         if(agent != "") {
             var foundAgentArray = false;
             var index = -1;
 
             // search for the array with the same agent
-            for ( var i = 0; i < agentArray.length; i++ ) {
-                var array = agentArray[i];
+            for ( var j = 0; j < agentArray.length; j++ ) {
+                var array = agentArray[j];
 
                 // found the array
                 if ( array.name == agent) {
@@ -508,7 +515,7 @@ function createAgentFlowLines(agentArray, actions, start, end) {
 	}
 }
 
-function drawAgentFlowLines() {
+function agentFlowLines() {
 
     //stringColours = []; // stops colour pollution
 	var agentArray = [];
@@ -521,12 +528,9 @@ function drawAgentFlowLines() {
             drawLegend(startX, height - startX, "Agents", agentArray);
         }
         else {
-
+            drawLegend(startX + 500, height - startX, "Agents", agentArray);
         }
-	    drawFlowLines(startPosition, endPosition, agentArray);
-    }
-    else {
-        drawingSwimLanes = false;
+        drawAgentFlowLines(startPosition, endPosition, agentArray);
     }
 }
 
@@ -1195,11 +1199,21 @@ function Action(action) {
             fill(0);
         }
         else if(actionColour == ActionColourEnum.agent) {
-            var agents = this.agent.split(/[\s,&&,==,||]+/);
+            var agents = this.agent.split(/("[^"]*")|([\s,&&,==,||])+/);
+
+            for(var i = agents.length - 1; i >= 0; i--) {
+                if(!agents[i]) {
+                    agents.splice(i, 1);
+                }
+                else if(agents[i] == "") {
+                    agents.splice(i, 1);
+                }
+            }
 
             var width = actionWidth / agents.length;
 
             for(var i = 0; i < agents.length; i++) {
+
                 var a = agents[i].split(/[.]+/)[0];
                 if(a != "") {
                     var colour = null;
@@ -1231,7 +1245,8 @@ function Action(action) {
             fill(0);
         }
 
-        if ( drawingSwimLanes == false || this.agent == "" ) {
+        if ( flowLine == FlowLineEnum.none || (flowLine == FlowLineEnum.agent && this.agent == "") ||
+                (flowLine == FlowLineEnum.resource && this.requires == "" && this.provides == "")) {
             fill(0);
             stroke(255);
             strokeWeight(2);
@@ -1255,7 +1270,7 @@ function drawLine(prog, x, y, programWidth) {
     var endLineXPixels = diagramWidth * (endLineX / (programWidth + 1)) + startX;
 
     var yPixels = (y * actionHeight * 2) + middle;
-    if ( drawingSwimLanes == true ) {
+    if ( flowLine != FlowLineEnum.none ) {
         stroke(0, 0, 0, 50);
     }
     else {
@@ -1420,7 +1435,7 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
 
     line(lineDetails.startX, linePositionYStart, lineDetails.startX, linePositionYEnd);
     line(lineDetails.endX, linePositionYStart, lineDetails.endX, linePositionYEnd);
-    if ( drawingSwimLanes == true ) {
+    if ( flowLine != FlowLineEnum.none ) {
         fill(0, 0, 0, 50);
     }
     else {
