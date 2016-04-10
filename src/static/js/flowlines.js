@@ -159,7 +159,7 @@ function drawAgentFlowLine(prog, agent, yOffset, colour, xStart, xEnd, y) {
             }
         }
         else {
-            if(drawFlowLine(action, agent, yOffset, colour, action.startX, action.endX, action.y)) {
+            if(drawAgentFlowLine(action, agent, yOffset, colour, action.startX, action.endX, action.y)) {
                 if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
                     line(lastX, action.y + yOffset, action.startX, action.y + yOffset);
                     line(action.endX, action.y + yOffset, xEnd, action.y + yOffset);
