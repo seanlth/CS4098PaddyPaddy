@@ -3,7 +3,7 @@ var state, selectedAction, selectedIndex, currentControlFlow, generatePML; // va
 var offsetX, initialY, offsetY, scaleX, scaleY, actionHeight, actionWidth;
 var clipBoard;
 var sequenceNum, selectionNum, iterationNum, branchNum, actionNum;
-var actionColour, agentActionLegendContent;
+var actionColour, agentActionLegendContent, flowLine;
 
 var analysisLegendContent = [
     {name: 'Normal', colour: { r: 255, g: 255, b: 255}},
@@ -17,8 +17,6 @@ var ACTION_HEIGHT = 50;
 var ACTION_WIDTH = 120;
 
 var numActions = 0;
-
-var drawingSwimLanes = false;
 
 var stringColours = [];
 var hslOffset = 90;
@@ -44,6 +42,12 @@ var ActionColourEnum = {
     agent: 2
 }
 
+var FlowLineEnum = {
+    none: 0,
+    agent: 1,
+    resource: 2
+}
+
 function setup() {
     state = StateEnum.normal;
     editing = true;
@@ -66,6 +70,7 @@ function setup() {
     selectedIndex = [];
     clipBoard = [];
     actionColour = ActionColourEnum.none;
+    flowLine = FlowLineEnum.none;
 
     sequenceNum = 1;
     selectionNum = 1;
@@ -113,6 +118,7 @@ function drawJSON(json) {
 
 var lastZoom = false;
 function draw() {
+
     background(255);
 
     //drawAgentFlowLines();
@@ -124,7 +130,7 @@ function draw() {
     actionHeight = ACTION_HEIGHT * scaleY;
     actionWidth = ACTION_WIDTH * scaleX;
 
-    if ( drawingSwimLanes == true ) {
+    if (flowLine != FlowLineEnum.none) {
         stroke(0, 0, 0, 50);
     }
     else {
@@ -132,7 +138,7 @@ function draw() {
     }
     line(startX, middle, endX, middle);
 
-    if ( drawingSwimLanes == false ) {
+    if (flowLine == FlowLineEnum.none) {
         fill(0);
         ellipse(startX, middle, 30, 30);
         fill(255);
@@ -150,21 +156,25 @@ function draw() {
         names[i].draw();
     }
 
-    if(state != StateEnum.notEditing && drawingSwimLanes == false ) {
+    if(state != StateEnum.notEditing ) {
         for(var i = 0; i < nodes.length; i++) {
             nodes[i].draw();
         }
     }
 
-    if ( drawingSwimLanes == true ) {
+    if ( flowLine == FlowLineEnum.agent ) {
         //background(255, 255, 255, 220);
-        drawAgentFlowLines();
+        agentFlowLines();
+    }
+    else  if ( flowLine == FlowLineEnum.resource ) {
+        //background(255, 255, 255, 220);
+        resourceFlowLines();
     }
 
-    if(actionColour == ActionColourEnum.analysis) {
+    if (actionColour == ActionColourEnum.analysis) {
         drawLegend(startX, height - startX, "Action Analysis Colours", analysisLegendContent);
     }
-    else if(actionColour == ActionColourEnum.agent) {
+    else if (actionColour == ActionColourEnum.agent) {
         drawLegend(startX, height - startX, "Action Agent Colours", agentActionLegendContent);
     }
 }
@@ -457,37 +467,49 @@ function addToAgentArray(agentArray, action, start, end) {
     //  Colour
     // }
 
+    var agents = predicate_to_string(action.agent).split(/("[^"]*")|([\s,&&,==,||])+/);
 
-	var foundAgentArray = false;
-	var index = -1;
-
-	// search for the array with the same agent
-	for ( var i = 0; i < agentArray.length; i++ ) {
-		var array = agentArray[i];
-
-		// found the array
-		if ( array.agent == action.agent && array.y == action.yPixelPosition ) {
-			foundAgentArray = true;
-			index = i;
-			break;
-		}
-	}
-
-	// add to or create the array
-	if ( foundAgentArray == true ) {
-		var p = {x: action.xPixelPosition, name: action.name};
-		agentArray[index].positions.push(p);
-	}
-	else if ( action.agent != "" ) {
-        if ( action.yPixelPosition == middle ) {
-             var p = {x: action.xPixelPosition, name: action.name};
-		    var newArray = {agent: action.agent, y: action.yPixelPosition, start: startX, end: endX, positions: [p], colour: stringColour(action.agent)};
-	        agentArray.push(newArray);
+    for(var i = agents.length - 1; i >= 0; i--) {
+        if(!agents[i]) {
+            agents.splice(i, 1);
         }
-        else {
-            var p = {x: action.xPixelPosition, name: action.name};
-		    var newArray = {agent: action.agent, y: action.yPixelPosition, start: start, end: end, positions: [p], colour: stringColour(action.agent)};
-	        agentArray.push(newArray);
+        else if(agents[i] == "" || agents[i] == " ") {
+            agents.splice(i, 1);
+        }
+    }
+
+    var width = actionWidth / agents.length;
+
+    for(var i = 0; i < agents.length; i++) {
+        if(!agents[i]) continue;
+
+        var agent = agents[i].split(/[.]+/)[0];
+        if(agent != "") {
+            var foundAgentArray = false;
+            var index = -1;
+
+            // search for the array with the same agent
+            for ( var j = 0; j < agentArray.length; j++ ) {
+                var array = agentArray[j];
+
+                // found the array
+                if ( array.name == agent) {
+                    foundAgentArray = true;
+                    break;
+                }
+            }
+
+            // add to or create the array
+            if ( !foundAgentArray && action.agent != "" ) {
+                if ( action.yPixelPosition == middle ) {
+                    var newArray = {name: agent, colour: stringColour(agent)};
+                    agentArray.push(newArray);
+                }
+                else {
+                    var newArray = {name: agent, colour: stringColour(agent)};
+                    agentArray.push(newArray);
+                }
+            }
         }
     }
 }
@@ -495,28 +517,26 @@ function addToAgentArray(agentArray, action, start, end) {
 // takes all the actions
 // returns arrays of locatiosn
 // each actions in an array share an agent
-function createAgentFlowLines(agentArray, actions, startX, endX) {
+function createAgentFlowLines(agentArray, actions, start, end) {
 
-    // should be using for-each but js is too spooky for me
-    for ( var i = 0; i < actions.length; i++ ) {
-        var primitive = actions[i];
-
+	// should be using for-each but js is too spooky for me
+	for ( var i = 0; i < actions.length; i++ ) {
+		var primitive = actions[i];
 		if ( primitive.hasOwnProperty('control') ) {
             if ( primitive.control == "branch" || primitive.control == "selection" ) {
 			    createAgentFlowLines(agentArray, primitive.actions, primitive.startX, primitive.endX);
             }
             else {
-                createAgentFlowLines(agentArray, primitive.actions, startX, endX);
+                createAgentFlowLines(agentArray, primitive.actions, start, end);
             }
-
 		}
 		else {
-			addToAgentArray(agentArray, primitive, startX, endX);
+			addToAgentArray(agentArray, primitive, start, end);
 		}
 	}
 }
 
-function drawAgentFlowLines() {
+function agentFlowLines() {
 
     //stringColours = []; // stops colour pollution
 	var agentArray = [];
@@ -524,11 +544,72 @@ function drawAgentFlowLines() {
 	var endPosition = {x: endX, y: middle};
 	createAgentFlowLines(agentArray, program.actions, startPosition.x, endPosition.x);
     if ( agentArray.length > 0 ) {
-	    drawFlowLines(startPosition, endPosition, agentArray);
+        textAlign(LEFT, CENTER);
+        if(actionColour != ActionColourEnum.analysis && actionColour != ActionColourEnum.agent) {
+            drawLegend(startX, height - startX, "Agents", agentArray);
+        }
+        else {
+            drawLegend(startX + 500, height - startX, "Agents", agentArray);
+        }
+        drawAgentFlowLines(startPosition, endPosition, agentArray);
     }
-    else {
-        drawingSwimLanes = false;
+}
+
+function resourceFlowLines() {
+	var startPosition = {x: startX, y: middle};
+	var endPosition = {x: endX, y: middle};
+	var resourceArray = createResourceFlowLines();
+    if ( resourceArray.length > 0 ) {
+        textAlign(LEFT, CENTER);
+        if(actionColour != ActionColourEnum.analysis && actionColour != ActionColourEnum.agent) {
+            drawLegend(startX, height - startX, "Resources", resourceArray);
+        }
+        else {
+            drawLegend(startX + 500, height - startX, "Resources", resourceArray);
+        }
+        drawResourceFlowLines(startPosition, endPosition, resourceArray);
     }
+}
+
+
+// return an array of all the action in the program
+function allActions(actionsArray, primitiveActions) {
+    for (var i = 0; i < primitiveActions.length; i++) {
+        var primitive = primitiveActions[i];
+        if ( primitive.hasOwnProperty('control') ) {
+            createAgentFlowLines(actionsArray, primitive.actions);
+		}
+		else {
+            actionsArray.push(primitive);
+		}
+    }
+}
+
+// creates resouce flow lines
+//
+function createResourceFlowLines() {
+
+    // get all the actions
+    var actionArray = [];
+    allActions(actionArray, program.actions);
+
+    // array of flow liens for resources
+    var resourceFlowLines = [];
+
+    // loop over each provides
+	for ( var i = 0; i < actionArray.length; i++ ) {
+		var providesAction = actionArray[i];
+
+        if ( predicate_to_string(providesAction.provides) != "" ) {
+
+            // create flowLine
+            var flowLine = {name: predicate_to_string(providesAction.provides), colour: stringColour(providesAction.name), x: providesAction.xPixelPosition, y: providesAction.yPixelPosition};
+
+            // add the flowLine
+            resourceFlowLines.push(flowLine);
+        }
+	}
+    return resourceFlowLines;
 }
 
 function updateActions(sequence, programWidth, index) {
@@ -850,11 +931,11 @@ function Node(x, y, index) {
                     var action = prog.actions.splice(this.index[this.index.length - 2], 1);
                     if(this.index[this.index.length - 1] == -1) {
                         prog.actions.splice(this.index[this.index.length - 2], 0,
-                            {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: [clipBoard.pop()].concat(action), startX: 0, endX: 0});
+                            {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: [clipBoard.pop()].concat(action), startX: 0, endX: 0, y: 0});
                     }
                     else {
                         prog.actions.splice(this.index[this.index.length - 2], 0,
-                            {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: action.concat([clipBoard.pop()]), startX: 0, endX: 0});
+                            {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: action.concat([clipBoard.pop()]), startX: 0, endX: 0, y: 0});
                     }
                 }
 
@@ -1021,6 +1102,7 @@ function compareArrays(array1, array2, length) {
 
 function Action(action) {
     this.id = numActions++;
+    this.index;
     this.x;
     this.y;
     this.xPixelPosition;
@@ -1082,6 +1164,7 @@ function Action(action) {
 
     this.update = function(index, programWidth) {
         var pos = indexToXY(index);
+        this.index = index;
         this.x = pos.x;
         this.y = pos.y;
 
@@ -1200,11 +1283,21 @@ function Action(action) {
             fill(0);
         }
         else if(actionColour == ActionColourEnum.agent) {
-            var agents = predicate_to_string(this.agent).split(/[\s,&&,==,||]+/);
+            var agents = predicate_to_string(this.agent).split(/("[^"]*")|([\s,&&,==,||])+/);
+
+            for(var i = agents.length - 1; i >= 0; i--) {
+                if(!agents[i]) {
+                    agents.splice(i, 1);
+                }
+                else if(agents[i] == "" || agents[i] == " ") {
+                    agents.splice(i, 1);
+                }
+            }
 
             var width = actionWidth / agents.length;
 
             for(var i = 0; i < agents.length; i++) {
+
                 var a = agents[i].split(/[.]+/)[0];
                 if(a != "") {
                     var colour = null;
@@ -1224,10 +1317,6 @@ function Action(action) {
                 }
             }
 
-            //draw box around name for legibility's sake
-            fill(255);
-            rect(x, yPixels - textSize() / 2, actionWidth, textSize());
-
             //draw outline box
             fill(0, 0, 0, 0);
             stroke(0);
@@ -1240,9 +1329,11 @@ function Action(action) {
             fill(0);
         }
 
-        if ( drawingSwimLanes == false ) {
+        if ( flowLine == FlowLineEnum.none || (flowLine == FlowLineEnum.agent && this.agent == "") ||
+                (flowLine == FlowLineEnum.resource && this.requires == "" && this.provides == "")) {
             fill(0);
             stroke(255);
+            strokeWeight(2);
             textAlign(CENTER, CENTER);
             if(this.name.length <= 17 * scaleX) {
                 text(this.name, xPixels, yPixels);
@@ -1250,6 +1341,7 @@ function Action(action) {
             else {
                 text(this.name.substring(0, 14 * scaleX) + '...', xPixels, yPixels);
             }
+            strokeWeight(1);
         }
         stroke(0);
     }
@@ -1262,7 +1354,7 @@ function drawLine(prog, x, y, programWidth) {
     var endLineXPixels = diagramWidth * (endLineX / (programWidth + 1)) + startX;
 
     var yPixels = (y * actionHeight * 2) + middle;
-    if ( drawingSwimLanes == true ) {
+    if ( flowLine != FlowLineEnum.none ) {
         stroke(0, 0, 0, 50);
     }
     else {
@@ -1292,6 +1384,11 @@ function drawIterationLoop(prog, x, y, index, programWidth) {
     endXRectPixels = endXRectPixels;
     fill(255, 255, 255, 0);
     rect(startXRectPixels, rectPositionY - offset, endXRectPixels - startXRectPixels, rectHeight + offset * 2, 20, 20, 20, 20);
+
+    var lineDetails = drawLine(prog, x, y, programWidth);
+    prog.startX = lineDetails.startX;
+    prog.endX = lineDetails.endX;
+    prog.y = lineDetails.y;
 }
 
 function drawSequenceBox(prog, x, y, index, programWidth) {
@@ -1313,6 +1410,11 @@ function drawSequenceBox(prog, x, y, index, programWidth) {
     endXRectPixels = endXRectPixels;
     fill(255, 255, 255, 0);
     rect(startXRectPixels, rectPositionY - offset, endXRectPixels - startXRectPixels, rectHeight + offset * 2);
+
+    var lineDetails = drawLine(prog, x, y, programWidth);
+    prog.startX = lineDetails.startX;
+    prog.endX = lineDetails.endX;
+    prog.y = lineDetails.y;
 }
 
 function nestedBoxes(prog) {
@@ -1387,6 +1489,7 @@ function drawBranchBars(prog, x, y, index, programWidth) {
     rect(lineDetails.endX - 5, rectPositionY, 10, rectHeight);
     prog.startX = lineDetails.startX - 5;
     prog.endX = lineDetails.endX - 5;
+    prog.y = lineDetails.y;
 }
 
 function drawSelectionDiamond(prog, x, y, index, programWidth) {
@@ -1416,7 +1519,7 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
 
     line(lineDetails.startX, linePositionYStart, lineDetails.startX, linePositionYEnd);
     line(lineDetails.endX, linePositionYStart, lineDetails.endX, linePositionYEnd);
-    if ( drawingSwimLanes == true ) {
+    if ( flowLine != FlowLineEnum.none ) {
         fill(0, 0, 0, 50);
     }
     else {
@@ -1432,6 +1535,7 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
 
     prog.startX = lineDetails.startX;
     prog.endX = lineDetails.endX;
+    prog.y = lineDetails.y;
 }
 
 function selectAction(actions, id){
@@ -1495,7 +1599,7 @@ function ControlFlow(firstIndex, secondIndex) {
     var controlType = whatControlAction();
     //adds a control flow to program
     array.splice(start[length - 1], end[length - 1] - start[length - 1],
-        {name: "" + currentControlFlow+ controlType, control: currentControlFlow, actions: array.slice(start[length - 1], end[length - 1]), startX: 0, endX: 0});
+        {name: "" + currentControlFlow+ controlType, control: currentControlFlow, actions: array.slice(start[length - 1], end[length - 1]), startX: 0, endX: 0, y: 0});
 }
 
 function Sequence(index, replace){
@@ -1510,12 +1614,12 @@ function Sequence(index, replace){
         if(replace) {
             var flowType = whatControlAction();
             array.splice(index[index.length - 2], 1,
-                {name: '' + currentControlFlow+ flowType, control: currentControlFlow, actions: [array[index[index.length - 2]]], startX: 0, endX: 0});
+                {name: '' + currentControlFlow+ flowType, control: currentControlFlow, actions: [array[index[index.length - 2]]], startX: 0, endX: 0, y: 0});
             return;
         }
         else {
             var controlType = whatControlAction();
-            newAction = {name: '' + currentControlFlow+ controlType, control: currentControlFlow, actions: [new Action()], startX: 0, endX: 0};
+            newAction = {name: '' + currentControlFlow+ controlType, control: currentControlFlow, actions: [new Action()], startX: 0, endX: 0, y: 0};
         }
     }
     else {
@@ -1533,7 +1637,7 @@ function Sequence(index, replace){
 
     //adds a sequence to program.actions
     array.splice(index[index.length - 2], 1,
-        {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: sequenceArray, startX: 0, endX: 0});
+        {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: sequenceArray, startX: 0, endX: 0, y: 0});
 }
 
 function mousePressedCanvas(event) {
@@ -1770,4 +1874,3 @@ function cancel() {
     $('#flowEditor').hide();
     state = StateEnum.normal;
 }
-
