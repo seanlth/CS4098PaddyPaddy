@@ -58,7 +58,7 @@ body {
     background-color: grey !important;
 }
 
-button{
+button, select{
   padding:5px;
   border-radius:5px;
   @include disable;
@@ -79,6 +79,8 @@ button{
   border-top:1px solid rgba(255,255,255,0.8)!important;
   -webkit-box-reflect: below 0px -webkit-gradient(linear, left top, left bottom, from(transparent), color-stop(50%, transparent), to(rgba(255,255,255,0.2)));
 }
+option {
+    color: #000;
 }
 button:focus{
   box-shadow:inset 4px 6px 10px -4px rgba(0,0,0,0.7), 0 1px 1px -1px rgba(255,255,255,0.3);
@@ -139,4 +141,3 @@ input[type="text"]{
   color: #000000 !important;
   cursor: pointer;
 }
-
