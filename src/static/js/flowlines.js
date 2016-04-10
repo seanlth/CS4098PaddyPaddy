@@ -136,16 +136,23 @@ function drawFlowLine(prog, agent, yOffset, colour, xStart, xEnd, y) {
                     }
                 }
                 else {
-                	line(lastX, action.yPixelPosition + yOffset, action.xPixelPosition, action.yPixelPosition + yOffset);
-                	lastX = action.xPixelPosition;
+                    line(lastX, action.yPixelPosition + yOffset, action.xPixelPosition, action.yPixelPosition + yOffset);
+                    lastX = action.xPixelPosition;
                 }
                 nodeLocations.push( {x: action.xPixelPosition, y: action.yPixelPosition + yOffset, colour: {r: colour.r, g: colour.g, b: colour.b}, name: action.name} );
             }
         }
         else {
             if(drawFlowLine(action, agent, yOffset, colour, action.startX, action.endX, action.y)) {
-                line(lastX, y + yOffset, action.startX, y + yOffset);
-                lastX = action.endX;
+                if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
+                    line(lastX, action.y + yOffset, action.startX, action.y + yOffset);
+                    line(action.endX, action.y + yOffset, xEnd, action.y + yOffset);
+                    match = true;
+                }
+                else {
+                    line(lastX, action.y + yOffset, action.startX, action.y + yOffset);
+                    lastX = action.endX;
+                }
             }
         }
     }

@@ -1229,7 +1229,7 @@ function Action(action) {
             fill(0);
         }
 
-        if ( drawingSwimLanes == false ) {
+        if ( drawingSwimLanes == false || this.agent == "" ) {
             fill(0);
             stroke(255);
             textAlign(CENTER, CENTER);
