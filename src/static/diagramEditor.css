@@ -92,14 +92,17 @@ button:hover{
   opacity:1;
   cursor:pointer;
 }
+
 input[type="text"]{
   color: #000;
 }
+
 /*textarea{
   color: #000;
   overflow: auto;
 }*/
-#actionEditor, #flowEditor {
+
+#actionEditor, #flowEditor, #predicateEditor {
     padding: 20px;
     position: absolute;
     margin-left: auto;
@@ -119,6 +122,11 @@ input[type="text"]{
     display: none;
 }
 
+#predicateEditor {
+    z-index: 3;
+    width: auto;
+}
+
 #fileUpload {
     width: 100%;
     margin-top: 5px;
@@ -131,3 +139,4 @@ input[type="text"]{
   color: #000000 !important;
   cursor: pointer;
 }
+

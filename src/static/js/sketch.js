@@ -1029,22 +1029,22 @@ function Action(action) {
     // All the PML important details
     if(action) {
         this.name     = action.name     || "Action"+numActions;
-        this.type     = action.type     || "";
-        this.agent    = action.agent    || "";
+        this.type     = action.type     || "none";
         this.script   = action.script   || "";
         this.tool     = action.tool     || "";
-        this.requires = action.requires || "";
-        this.provides = action.provides || "";
+        this.agent    = action.agent    || [];
+        this.requires = action.requires || [];
+        this.provides = action.provides || [];
         this.selected = action.selected || false;
     }
     else {
         this.name     = "Action"+numActions;
-        this.type     = "";
-        this.agent    = "";
+        this.type     = "none";
         this.script   = "";
         this.tool     = "";
-        this.requires = "";
-        this.provides = "";
+        this.agent    = [];
+        this.requires = [];
+        this.provides = [];
         this.selected = false;
     }
 
@@ -1059,14 +1059,15 @@ function Action(action) {
 
             $("#actionEditor").show();
 
-            document.getElementById('name').value = this.name;
-            document.getElementById('type').value = this.type;
-            document.getElementById('agent').value = this.agent;
-            document.getElementById('script').value = this.script;
-            document.getElementById('tool').value = this.tool;
-            document.getElementById('requires').value = this.requires;
-            document.getElementById('provides').value = this.provides;
+            $('#name').val(this.name);
+            $('#type').val(this.type);
 
+            $('#script').val(this.script);
+            $('#tool').val(this.tool);
+
+            $('#agent').html(predicate_to_string(this.agent) || "&lt;None&gt;");
+            $('#requires').html(predicate_to_string(this.requires) || "&lt;None&gt;");
+            $('#provides').html(predicate_to_string(this.provides) || "&lt;None&gt;");
             return true;
         }
         return false;
@@ -1146,8 +1147,10 @@ function Action(action) {
         fill(255);
 
         if(actionColour == ActionColourEnum.analysis) {
-            var requiresIdentifiers = this.requires.split(/[\s,&&,==,||]+/);
-            var providesIdentifiers = this.provides.split(/[\s,&&,==,||]+/);
+            var requires = predicate_to_string(this.requires);
+            var provides = predicate_to_string(this.provides);
+            var requiresIdentifiers = requires.split(/[\s,&&,==,||]+/);
+            var providesIdentifiers = provides.split(/[\s,&&,==,||]+/);
 
             var transforms = true;
             for(var i = 0; i < providesIdentifiers.length; i++) {
@@ -1162,19 +1165,19 @@ function Action(action) {
             }
 
             var r, g, b;
-            if(this.requires.length == 0 && this.provides.length == 0) {
+            if(requires.length == 0 && provides.length == 0) {
                 //empty
                 r = analysisLegendContent[1].colour.r;
                 g = analysisLegendContent[1].colour.g;
                 b = analysisLegendContent[1].colour.b;
             }
-            else if(this.provides.length == 0) {
+            else if(provides.length == 0) {
                 //blackhole
                 r = analysisLegendContent[2].colour.r;
                 g = analysisLegendContent[2].colour.g;
                 b = analysisLegendContent[2].colour.b;
             }
-            else if(this.requires.length == 0) {
+            else if(requires.length == 0) {
                 //miracle
                 r = analysisLegendContent[3].colour.r;
                 g = analysisLegendContent[3].colour.g;
@@ -1197,7 +1200,7 @@ function Action(action) {
             fill(0);
         }
         else if(actionColour == ActionColourEnum.agent) {
-            var agents = this.agent.split(/[\s,&&,==,||]+/);
+            var agents = predicate_to_string(this.agent).split(/[\s,&&,==,||]+/);
 
             var width = actionWidth / agents.length;
 
@@ -1536,6 +1539,7 @@ function Sequence(index, replace){
 function mousePressedCanvas(event) {
     $('#actionEditor').hide();
     $('#flowEditor').hide();
+    $('#predicateEditor').hide();
     $('#outputPanel').hide();
 
     var x = mouseX;
@@ -1661,97 +1665,19 @@ function mouseDragged(event) {
 }
 
 function editAction() {
-
-    // variable regex stuff here
-    var variableRegex = new RegExp('^ *([a-zA-Z_][a-zA-Z_0-9]*) *$')
-    var name = document.getElementById('name').value;
-    if (!variableRegex.test(name)) {
-        alert(  "The name " + name + " of the Action is invalid, "
-              + "Action names must start with an underscore or letter and contain"
-              + " only letters, numbers and underscrores.");
-        return
+    if (!isValidVal($('#name').val())){
+      alert("'"+ $('#name').val() +"' is not a valid action name");
+      $('#name').addClass('invalid');
+    } else {
+      selectedAction.selected = false;
+      selectedAction.name = $('#name').val();
+      selectedAction.script = $('#script').val();
+      selectedAction.tool = $('#tool').val();
+      selectedAction.type = $('#type').val();
+      $("#actionEditor").hide();
+      state = StateEnum.normal;
+      update();
     }
-
-    var predicateRegex = new RegExp('^ *((([a-zA-Z_.0-9]+|\"[^\"]*\")( *([|][|]|&&) *([a-zA-Z_.0-9]+|\"[^\"]*\"))*))| * *$');
-
-    // agent regex stuff here
-    var agent = document.getElementById('agent').value;
-    if ( !predicateRegex.test(agent) && agent.length != 0) {
-        alert(  "The agent " + agent + " of the Action is invalid, "
-              + "agents must be be strings or start with an underscore or letter and contain "
-              + "only letters, numbers and underscrores.");
-        return
-    }
-    var agentResult = predicateRegex.exec(agent);
-    if  ( agentResult[1] == null || agent.length == 0 ) {
-        agent = "";
-    }
-    else {
-        agent = agentResult[1];
-    }
-
-    // tool regex stuff here
-    var toolRegex = new RegExp('^ *([^\"]*) *$');
-    var tool = document.getElementById('tool').value;
-
-    if ( !toolRegex.test(tool) && tool.length != 0) {
-        alert(  "The tool " + tool + " of the Action is invalid, "
-              + "the tool must not contain \" characters.");
-        return
-    }
-    var toolResult = toolRegex.exec(tool);
-    if ( toolResult[1] == null || toolResult.length == 0 ) {
-        tool = "";
-    }
-    else {
-        tool = toolResult[1];
-    }
-
-    // requires regex stuff here
-    var requires = document.getElementById('requires').value
-    if(!predicateRegex.test(requires) && requires.length != 0) {
-        alert(  "The requirement \"" + requires + "\" of the Action is invalid, "
-              + "requirements must start with an underscore or letter and contain "
-              + "only letters, numbers and underscrores.");
-        return
-    }
-    var requiresResult = predicateRegex.exec(requires);
-    if ( requiresResult[1] == null || requiresResult.length == 0 ) {
-        requires = "";
-    }
-    else {
-        requires = requiresResult[1];
-    }
-
-    // provides regex stuff here
-    var provides = document.getElementById('provides').value;
-    if(!predicateRegex.test(provides) && provides.length != 0) {
-        alert(  "The provision \"" + provides + "\" of the Action is invalid, "
-              + "provisions must start with an underscore or  letter and contain "
-              + "only letters, numbers and underscrores.");
-        return
-    }
-    var providesResult = predicateRegex.exec(provides);
-    if ( providesResult[1] == null || providesResult.legnth == 0 ) {
-        provides = "";
-    }
-    else {
-        provides = providesResult[1];
-    }
-
-
-    selectedAction.name = variableRegex.exec(name)[1];
-    selectedAction.type = document.getElementById('type').value;
-    selectedAction.agent = agent
-    selectedAction.script = document.getElementById('script').value;
-    selectedAction.tool = tool;
-    selectedAction.requires = requires;
-    selectedAction.provides = provides;
-    selectedAction.selected = false;
-
-    $("#actionEditor").hide();
-    state = StateEnum.normal;
-    update();
 }
 
 // deletes an action with matching id from program prog
@@ -1844,3 +1770,4 @@ function cancel() {
     $('#flowEditor').hide();
     state = StateEnum.normal;
 }
+
