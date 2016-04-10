@@ -111,7 +111,23 @@ function getCurrent(){
   var success = true;
 
   function isValidVal(v){
-    return /^(([a-zA-Z_][a-zA-Z_0-9]*)|(\".*\")|(\'.*\')|[0-9]+)$/.test(v);
+    var baseReg = /^(([a-zA-Z_][a-zA-Z_0-9]*)|(\".*\")|(\'.*\')|[0-9]+)$/;
+    var keywordReg = new RegExp(["(script)",
+                                "|(process)",
+                                "|(select(ion)?)",
+                                "|(sequence)",
+                                "|(iteration)",
+                                "|(branch)",
+                                "|(action)",
+                                "|(manual)",
+                                "|(executable)",
+                                "|(requires)",
+                                "|(provides)",
+                                "|(tool)",
+                                "|(agent)"
+                                ]);
+
+    return baseReg.test(v) && !keywordReg.test(v)
   }
 
   function getConjunct(base){
