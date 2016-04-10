@@ -63,7 +63,7 @@ function setPredicate(pred){
 
   var selector = base.children('.comparison');
   selector.css('visibility', 'hidden');
-  selector.siblings('.addOp').css('visibility', 'visible');
+  selector.siblings('.addOp').css('visibility', 'visible').css('width', '70px');
 
   $('#form').empty();
 
@@ -253,7 +253,7 @@ function onOpChange(selector){
   if (selector.val() == "None"){
     selector.siblings('.postOp').remove();
     selector.css('visibility', 'hidden');
-    selector.siblings('.addOp').css('visibility', 'visible');
+    selector.siblings('.addOp').css('visibility', 'visible').css('width', '70px');
   }
 }
 
