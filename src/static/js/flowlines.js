@@ -124,22 +124,36 @@ function drawFlowLine(prog, agent, yOffset, colour, xStart, xEnd, y) {
     for(var i = 0; i < prog.actions.length; i++) {
         var action = prog.actions[i];
         if(!action.control) {
-            if(action.agent == agent) {
-                match = true;
-                if(prog.control) {
-                    if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
-                        line(lastX, action.yPixelPosition + yOffset, xEnd, action.yPixelPosition + yOffset);
+            var agents = action.agent.split(/[\s,&&,==,||]+/);
+
+            var width = actionWidth / agents.length;
+            var found = false;
+
+            for(var j = 0; j < agents.length; j++) {
+                var a = agents[j].split(/[.]+/)[0];
+                if(a == agent) {
+                    match = true;
+                    if(prog.control) {
+                        if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
+                            line(lastX, action.yPixelPosition + yOffset, xEnd, action.yPixelPosition + yOffset);
+                        }
+                        else {
+                            line(lastX, action.yPixelPosition + yOffset, action.xPixelPosition, action.yPixelPosition + yOffset);
+                            lastX = action.xPixelPosition;
+                        }
                     }
                     else {
                         line(lastX, action.yPixelPosition + yOffset, action.xPixelPosition, action.yPixelPosition + yOffset);
                         lastX = action.xPixelPosition;
                     }
+                    if(!found) {
+                        found = true;
+                        nodeLocations.push( {x: action.xPixelPosition, y: action.yPixelPosition, yOffset: yOffset, colour: {r: colour.r, g: colour.g, b: colour.b}, name: action.name} );
+                    }
+                    else {
+                        nodeLocations.push( {x: action.xPixelPosition, y: action.yPixelPosition, yOffset: yOffset, colour: {r: colour.r, g: colour.g, b: colour.b}, name: ""} );
+                    }
                 }
-                else {
-                    line(lastX, action.yPixelPosition + yOffset, action.xPixelPosition, action.yPixelPosition + yOffset);
-                    lastX = action.xPixelPosition;
-                }
-                nodeLocations.push( {x: action.xPixelPosition, y: action.yPixelPosition, yOffset: yOffset, colour: {r: colour.r, g: colour.g, b: colour.b}, name: action.name} );
             }
         }
         else {
@@ -192,8 +206,15 @@ function drawFlowLines(start, end, agents) {
 		textAlign(CENTER, CENTER);
 		stroke(255);
 		fill(0);
-        var textY = node.yOffset >= 0 ? node.y + node.yOffset - 15 : node.y + node.yOffset + 15;
-		text(node.name, node.x, textY);
+        var last = true;
+        for(var j = i + 1; j < nodeLocations.length; j++) {
+            if(nodeLocations[j].x == node.x && nodeLocations[j].y == node.y) {
+                last = false;
+            }
+        }
+        if(last) {
+            text(node.name, node.x, node.y + node.yOffset - 15);
+        }
 		drawNode(node.x, node.y + node.yOffset, 15, node.colour);
 	}
 	drawNode(end.x, end.y, 10 + agents.length * gap, c);

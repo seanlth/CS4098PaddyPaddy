@@ -449,33 +449,38 @@ function addToAgentArray(agentArray, action, start, end) {
     //  Colour
     // }
 
+    var agents = action.agent.split(/[\s,&&,==,||]+/);
 
-	var foundAgentArray = false;
-	var index = -1;
+    var width = actionWidth / agents.length;
 
-    // search for the array with the same agent
-    for ( var i = 0; i < agentArray.length; i++ ) {
-        var array = agentArray[i];
+    for(var i = 0; i < agents.length; i++) {
+        var agent = agents[i].split(/[.]+/)[0];
+        if(agent != "") {
+            var foundAgentArray = false;
+            var index = -1;
 
-        // found the array
-        if ( array.name == action.agent) {
-            foundAgentArray = true;
-            break;
-        }
-    }
+            // search for the array with the same agent
+            for ( var i = 0; i < agentArray.length; i++ ) {
+                var array = agentArray[i];
 
-	// add to or create the array
-    if ( foundAgentArray == true ) {
-        return;
-    }
-	else if ( action.agent != "" ) {
-        if ( action.yPixelPosition == middle ) {
-		    var newArray = {name: action.agent, colour: stringColour(action.agent)};
-	        agentArray.push(newArray);
-        }
-        else {
-		    var newArray = {name: action.agent, colour: stringColour(action.agent)};
-	        agentArray.push(newArray);
+                // found the array
+                if ( array.name == agent) {
+                    foundAgentArray = true;
+                    break;
+                }
+            }
+
+            // add to or create the array
+            if ( !foundAgentArray && action.agent != "" ) {
+                if ( action.yPixelPosition == middle ) {
+                    var newArray = {name: agent, colour: stringColour(agent)};
+                    agentArray.push(newArray);
+                }
+                else {
+                    var newArray = {name: agent, colour: stringColour(agent)};
+                    agentArray.push(newArray);
+                }
+            }
         }
     }
 }
