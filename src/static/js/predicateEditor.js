@@ -121,7 +121,7 @@ function isValidVal(v){
                               "|(requires)",
                               "|(provides)",
                               "|(tool)",
-                              "|(agent)"
+                              "|(agent)",
                               ]);
 
   return baseReg.test(v) && !keywordReg.test(v)

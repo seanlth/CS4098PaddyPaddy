@@ -1624,18 +1624,16 @@ function mouseDragged(event) {
 }
 
 function editAction() {
-    // selectedAction.name     = $('#name').val();
-    // selectedAction.type     = $('#type').val();
-    // selectedAction.agent    = $('#agent').val();
-    // selectedAction.script   = $('#script').val();
-    // selectedAction.tool     = $('#tool').val();
-    // selectedAction.requires = $('#requires').val();
-    // selectedAction.provides = $('#provides').val();
-    selectedAction.selected = false;
-
-    $("#actionEditor").hide();
-    state = StateEnum.normal;
-    update();
+    if (!isValidVal($('#name').val())){
+      //TODO: better error
+      alert("name fail");
+      $('#name').addClass('invalid');
+    } else {
+      selectedAction.selected = false;
+      $("#actionEditor").hide();
+      state = StateEnum.normal;
+      update();
+    }
 }
 
 // deletes an action with matching id from program prog

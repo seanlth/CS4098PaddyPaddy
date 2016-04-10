@@ -109,7 +109,7 @@
 
   <form id="actionEditor" style="background-image:url('static/images/dark_wall.png');">
     <table>
-      <p>Name: <Input type="text" name="name" id="name"/></p>
+      <p>Name: <input type="text" name="name" id="name"/></p>
       <p> Type:
         <select id="type" name="type" style="color:#000">
           <option value="none">None</option>
@@ -211,6 +211,9 @@
       $("#agent-edit").on('click',    editAgent);
       $("#requires-edit").on('click', editRequires);
       $("#provides-edit").on('click', editProvides);
+      $("#name").on("change input paste", function (){
+          $(this).removeClass('invalid');
+      });
     });
 
     function pushTemp(callback){
