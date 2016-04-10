@@ -308,7 +308,7 @@ function drawResourceFlowLines(start, end, resources) {
         var colour = resources[i].colour;
         stroke(colour.r, colour.g, colour.b);
         strokeWeight(2);
-        drawResourceFlowLine(program, resources[i].name, yOffset, colour, start.x, endX, middle);
+        drawResourceFlowLine(program, resources[i].name, yOffset, colour, resources[i].x, endX, middle);
     }
 
     var c = {r: 0, g: 0, b: 0};

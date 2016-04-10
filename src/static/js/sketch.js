@@ -551,10 +551,7 @@ function resourceFlowLines() {
         else {
             drawLegend(startX + 500, height - startX, "Resources", resourceArray);
         }
-        for (var i = 0; i < resourceArray.length; i++) {
-            var provides = resourceArray[i];
-            drawResourceFlowLines({x: provides.x, y: provides.y}, endPosition, [provides]);
-        }
+        drawResourceFlowLines(startPosition, endPosition, resourceArray);
     }
 }
 
@@ -586,23 +583,15 @@ function createResourceFlowLines() {
     // loop over each provides
 	for ( var i = 0; i < actionArray.length; i++ ) {
 		var providesAction = actionArray[i];
-        
-        // create flowLine
-        var flowLine = {name: providesAction.provides, colour: stringColour(providesAction.name), x: providesAction.xPixelPosition, y: providesAction.yPixelPosition};
-        
-        /*
-        // loop over each requires
-        for ( var j = 0; j < actionArray.length; j++ ) {
-		    var requiresAction = actions[i];
+            
+        if ( providesAction.provides != "" ) {
 
-            // if this action requires the resource
-            if ( providesActions.provides == requresAction.requires ) {
-                requiresAction.push(requiresAction.name);
-            }
-	    }
-        */
-        // add the flowLine 
-        resourceFlowLines.push(flowLine);
+            // create flowLine
+            var flowLine = {name: providesAction.provides, colour: stringColour(providesAction.name), x: providesAction.xPixelPosition, y: providesAction.yPixelPosition};
+        
+            // add the flowLine 
+            resourceFlowLines.push(flowLine);
+        }
 	}
     return resourceFlowLines;
 }
