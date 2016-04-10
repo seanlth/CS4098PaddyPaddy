@@ -226,3 +226,116 @@ function drawAgentFlowLines(start, end, agents) {
     strokeWeight(1);
     stroke(255);
 }
+
+function drawResourceFlowLine(prog, resource, yOffset, colour, xStart, xEnd, y) {
+    var xPositions = [];
+    var yPositions = [];
+    var match = false;
+    var lastX = xStart;
+
+    for(var i = 0; i < prog.actions.length; i++) {
+        var action = prog.actions[i];
+        if(!action.control) {
+            var resources = action.requires.split(/("[^"]*")|([\s,&&,==,||])+/).concat(action.provides.split(/("[^"]*")|([\s,&&,==,||])+/));
+            
+
+            var width = actionWidth / resources.length;
+            var found = false;
+
+            for(var j = 0; j < resources.length; j++) {
+                if(!resources[j]) continue;
+
+                var a = resources[j].split(/[.]+/)[0];
+                if(a == resource) {
+                    match = true;
+                    if(prog.control) {
+                        if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
+                            line(lastX, action.yPixelPosition + yOffset, xEnd, action.yPixelPosition + yOffset);
+                        }
+                        else {
+                            line(lastX, action.yPixelPosition + yOffset, action.xPixelPosition, action.yPixelPosition + yOffset);
+                            lastX = action.xPixelPosition;
+                        }
+                    }
+                    else {
+                        line(lastX, action.yPixelPosition + yOffset, action.xPixelPosition, action.yPixelPosition + yOffset);
+                        lastX = action.xPixelPosition;
+                    }
+                    if(!found) {
+                        found = true;
+                        nodeLocations.push( {x: action.xPixelPosition, y: action.yPixelPosition, yOffset: yOffset, colour: {r: colour.r, g: colour.g, b: colour.b}, name: action.name} );
+                    }
+                    else {
+                        nodeLocations.push( {x: action.xPixelPosition, y: action.yPixelPosition, yOffset: yOffset, colour: {r: colour.r, g: colour.g, b: colour.b}, name: ""} );
+                    }
+                }
+            }
+        }
+        else {
+            if(drawResourceFlowLine(action, resource, yOffset, colour, action.startX, action.endX, action.y)) {
+                if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
+                    line(lastX, action.y + yOffset, action.startX, action.y + yOffset);
+                    line(action.endX, action.y + yOffset, xEnd, action.y + yOffset);
+                    match = true;
+                }
+                else {
+                    line(lastX, action.y + yOffset, action.startX, action.y + yOffset);
+                    lastX = action.endX;
+                }
+            }
+        }
+    }
+
+    if(!prog.control) {
+        line(lastX, y + yOffset, xEnd, y + yOffset);
+    }
+    else if(match && prog.control != FlowControlEnum.branch && prog.control != FlowControlEnum.selection) {
+        line(lastX, y + yOffset, xEnd, y + yOffset);
+    }
+
+    return match;
+}
+
+function drawResourceFlowLines(start, end, resources) {
+    if(!resources) return;
+    // var lanesPerLevel = numberOfFlowLinesPerLevel(agentFlowLines);
+	// var numberOfFlowLines = lanesPerLevel[0].count;
+    nodeLocations = [];
+	var gap = 10;
+
+    for(var i = 0; i < resources.length; i++) {
+        var yOffset = i % 2 == 0 ? (i / 2) * gap : ((i + 1) / 2) * -gap;
+        var colour = resources[i].colour;
+        stroke(colour.r, colour.g, colour.b);
+        strokeWeight(2);
+        drawResourceFlowLine(program, resources[i].name, yOffset, colour, start.x, endX, middle);
+    }
+
+    var c = {r: 0, g: 0, b: 0};
+    drawNode(start.x, start.y, 15 + resources.length * gap, c);
+    for ( var i = 0; i < nodeLocations.length; i++ ) {
+        var node = nodeLocations[i];
+        textAlign(CENTER, CENTER);
+        stroke(255);
+        fill(0);
+        var last = true;
+        for(var j = i + 1; j < nodeLocations.length; j++) {
+            if(nodeLocations[j].x == node.x && nodeLocations[j].y == node.y) {
+                last = false;
+            }
+        }
+        if(last) {
+            var textY = node.yOffset >= 0 ? node.y + node.yOffset - 15 : node.y + node.yOffset + 15;
+            text(node.name, node.x, textY);
+        }
+        drawNode(node.x, node.y + node.yOffset, 15, node.colour);
+    }
+    drawNode(end.x, end.y, 10 + resources.length * gap, c);
+
+    // reset drawing variables
+    fill(0);
+    strokeWeight(1);
+    stroke(255);
+}
+
+

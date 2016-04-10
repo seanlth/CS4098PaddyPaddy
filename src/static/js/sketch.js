@@ -166,6 +166,11 @@ function draw() {
         //background(255, 255, 255, 220);
         agentFlowLines();
     }
+    else  if ( flowLine == FlowLineEnum.resource ) {
+        //background(255, 255, 255, 220);
+        resourceFlowLines();
+    }
+
     if (actionColour == ActionColourEnum.analysis) {
         drawLegend(startX, height - startX, "Action Analysis Colours", analysisLegendContent);
     }
@@ -532,6 +537,74 @@ function agentFlowLines() {
         }
         drawAgentFlowLines(startPosition, endPosition, agentArray);
     }
+}
+
+function resourceFlowLines() {
+	var startPosition = {x: startX, y: middle};
+	var endPosition = {x: endX, y: middle};
+	var resourceArray = createResourceFlowLines();
+    if ( resourceArray.length > 0 ) {
+        textAlign(LEFT, CENTER);
+        if(actionColour != ActionColourEnum.analysis && actionColour != ActionColourEnum.agent) {
+            drawLegend(startX, height - startX, "Resources", resourceArray);
+        }
+        else {
+            drawLegend(startX + 500, height - startX, "Resources", resourceArray);
+        }
+        for (var i = 0; i < resourceArray.length; i++) {
+            var provides = resourceArray[i];
+            drawResourceFlowLines({x: provides.x, y: provides.y}, endPosition, [provides]);
+        }
+    }
+}
+
+
+// return an array of all the action in the program
+function allActions(actionsArray, primitiveActions) {
+    for (var i = 0; i < primitiveActions.length; i++) {
+        var primitive = primitiveActions[i];
+        if ( primitive.hasOwnProperty('control') ) {
+            createAgentFlowLines(actionsArray, primitive.actions);
+		}
+		else {
+            actionsArray.push(primitive);
+		}
+    }
+}
+
+// creates resouce flow lines
+//  
+function createResourceFlowLines() {
+    
+    // get all the actions 
+    var actionArray = [];
+    allActions(actionArray, program.actions);
+
+    // array of flow liens for resources
+    var resourceFlowLines = [];
+
+    // loop over each provides
+	for ( var i = 0; i < actionArray.length; i++ ) {
+		var providesAction = actionArray[i];
+        
+        // create flowLine
+        var flowLine = {name: providesAction.provides, colour: stringColour(providesAction.name), x: providesAction.xPixelPosition, y: providesAction.yPixelPosition};
+        
+        /*
+        // loop over each requires
+        for ( var j = 0; j < actionArray.length; j++ ) {
+		    var requiresAction = actions[i];
+
+            // if this action requires the resource
+            if ( providesActions.provides == requresAction.requires ) {
+                requiresAction.push(requiresAction.name);
+            }
+	    }
+        */
+        // add the flowLine 
+        resourceFlowLines.push(flowLine);
+	}
+    return resourceFlowLines;
 }
 
 function updateActions(sequence, programWidth, index) {
