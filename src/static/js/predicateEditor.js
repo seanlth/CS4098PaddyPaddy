@@ -112,11 +112,15 @@ function isValidVal(v){
 function getCurrent(){
   var success = true;
 
+  function isNumOrString(val){
+    return val[0] == '\'' || val[0] == '"' || !isNaN(val);
+  }
+
   function getConjunct(base){
     var fails = [];
     base.children('input').removeClass('invalid');
-    var conj = {};
 
+    var conj = {};
     var lhs = {};
 
     var base_inp = base.children('.base');
@@ -132,10 +136,20 @@ function getCurrent(){
     var base_inp_postDot = base_inp.siblings('.postDot').eq(0);
     if (base_inp_postDot.length > 0){
       val = base_inp_postDot.children().val();
-      if (isValidVal(val)){
-        lhs.postDot = val;
+      if (isValidVal(val) && !isNumOrString(base_inp.val())){
+        if(!isNumOrString(val))
+          lhs.postDot = val;
+        else{
+          fails.push("number or string is invalid after '.' operator");
+          success = false;
+        }
       } else {
-        fails.push("'"+val+"' is an invalid predicate value");
+        if (isNumOrString(base_inp.val())){
+          fails.push("'.' operator is invalid after number or string");
+        } else {
+          fails.push("'"+val+"' is an invalid predicate value");
+        }
+
         base_inp_postDot.children().addClass('invalid');
         success = false;
       }
@@ -159,10 +173,18 @@ function getCurrent(){
       var postOp_postDot = postOp.children('.postDot');
       if (postOp_postDot.length > 0){
         val = postOp_postDot.children().val();
-        if (isValidVal(val)){
-          rhs.postDot = val;
+        if (isValidVal(val) && !isNumOrString(post_Op.children.val())){
+          if(!isNumOrString(val)){
+            rhs.postDot = val;
+          } else {
+            fails.push("number or string is invalid after '.' operator");
+          }
         } else {
-          fails.push("'"+val+"' is an invalid predicate value");
+          if (isNumOrString(post_Op.children.val())){
+            fails.push("'.' operator is invalid after number or string")
+          } else {
+            fails.push("'"+val+"' is an invalid predicate value");
+          }
           postOp_postDot.children().addClass('invalid');
           success = false;
         }
