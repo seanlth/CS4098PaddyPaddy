@@ -16,7 +16,7 @@ import tempfile
 
 import parser
 
-DEBUG = True
+DEBUG = False
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret'
 app.config['OAUTH_CREDENTIALS'] = {
@@ -64,8 +64,12 @@ def editor(filename = ""):
         if session['tempFile'] != "":
             editor_content = open(session['tempFile']).read();
 
-    if 'filename' in request.args or filename != "":
-        filename = filename if filename else request.args['filename']
+    if 'filename' in request.args or filename != "" or 'currentFile' in session:
+        if not filename:
+            if 'filename' in request.args:
+                filename = request.args['filename']
+            else:
+                 filename = session['currentFile']
         if ('email' in session) or ('social' in session):
             if 'email' in session:
                 email = session['email']
@@ -79,7 +83,6 @@ def editor(filename = ""):
                     editor_content = f.read()
             except FileNotFoundError:
                 editor_content = "" #TODO: some kind of message here
-
 
     return render_template("editor.html", editor_content=editor_content)
 
@@ -133,16 +136,18 @@ def save():
         return redirect('/login?return_url=saveAs')
     if 'currentFile' in session:
         return saveFile(session['currentFile'])
+    if 'diagram' in request.referrer:
+        return saveAs(True)
     return saveAs()
 
 @app.route('/saveAs')
-def saveAs():
+def saveAs(diagram=False):
     if (not 'email' in session) and (not 'social' in session):
-        if 'diagram' in request.args:
+        if 'diagram' in request.args or diagram:
             return redirect('/login?return_url=saveAs&diagram=true')
         return redirect('/login?return_url=saveAs')
     else:
-        return render_template('saveFile.html')
+        return render_template('saveFile.html', diagram=diagram)
 
 @app.route('/saveAs', methods=['POST'])
 @app.route('/save', methods=['POST'])
@@ -169,11 +174,9 @@ def saveFile(fname=None):
 
             if tempFilePath:
                 shutil.copy(tempFilePath, saveFilePath)
-                if "diagram" in request.referrer or 'diagram':
-                    print("here")
+                if "diagram" in request.referrer or 'diagram' in request.args or 'diagram' in request.form:
                     return redirect('/diagram?filename=%s'%name)
                 else:
-                    print("there")
                     return redirect('/?filename=%s'%name)
 
     flash("Invalid File")
@@ -181,32 +184,42 @@ def saveFile(fname=None):
 
 @app.route("/diagram")
 def diagram():
-    if 'tempFile' in session:
-        tempFile = session['tempFile']
-        with open(tempFile) as f:
+    if 'filename' in request.args:
+        filename = request.args['filename']
+        if('email' in session) or ('social' in session):
+            if 'email' in session:
+                email = session['email']
+            elif 'social' in session:
+                email = session['social']
+            userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+            filepath = os.path.join(userpath, filename)
+            session['currentFile'] = filename
+            try:
+                with open(filepath) as f:
+                    data = f.read()
+                    parsed = parser.parse(data)
+                    return render_template("diagramEditor.html", data=json.dumps(parsed))
+            except parser.ParserException: pass
+            except FileNotFoundError:
+                editor_content = ""
+
+    elif 'tempFile' in session or 'currentFile' in session:
+        if 'tempFile' in session:
+            filepath = session['tempFile']
+        if 'currentFile' in session and ('email' in session) or ('social' in session):
+            if 'email' in session:
+                email = session['email']
+            elif 'social' in session:
+                email = session['social']
+            filename = session['currentFile']
+            userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+            filepath = os.path.join(userpath, filename)
+        with open(filepath) as f:
             data = f.read()
             try:
                 parsed = parser.parse(data) #TODO: proper error message
                 return render_template("diagramEditor.html", data=json.dumps(parsed))
             except parser.ParserException: pass
-
-    if 'filename' in request.args:
-        filename = request.args['filename']
-        if('email' in session) or ('social' in session):
-            email = session['email']
-        elif 'social' in session:
-            email = session['social']
-        userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
-        filepath = os.path.join(userpath, filename)
-        session['currentFile'] = filename
-        try:
-            with open(filepath) as f:
-                data = f.read()
-                parsed = parser.parse(data)
-                return render_template("diagramEditor.html", data=json.dumps(parsed))
-        except parser.ParserException: pass
-        except FileNotFoundError:
-            editor_content = ""
 
     return render_template("diagramEditor.html")
 
@@ -256,11 +269,14 @@ def loginButton():
             session['email'] = email
             returnUrl = session.pop('return_url', None)
             if returnUrl:
+                if 'diagram' in request.args:
+                    return redirect(returnUrl + '?diagram=true')
                 return redirect(returnUrl)
             else:
                 return redirect('/')
 
-    return "Incorrect/Invalid e-mail and/or password<br/>", 401
+    flash('Incorrect Email/Password')
+    return redirect('/login')
 
 
 @app.route("/logout")
@@ -282,6 +298,7 @@ def tmp():
 @app.route("/resetCurrent")
 def resetCurrent():
     session.pop('currentFile', None)
+    session.pop('tempFile', None)
     return ""
 @app.route('/authorize/<provider>')
 def oauth_authorize(provider):

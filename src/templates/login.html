@@ -12,6 +12,16 @@
             <input type="email" name="email" class="email" id="email" placeholder="Email Address">
             <input type="password" name="password" class="password" placeholder="Password">
             <input type="submit" name="submit" class="submit" value="LOGIN">
+            {% with messages = get_flashed_messages() %}
+              {% if messages %}
+                <ul class=flashes>
+                {% for message in messages %}
+                  <li style="color:white">{{ message }}</li>
+                {% endfor %}
+                </ul>
+              {% endif %}
+            {% endwith %}
+            {% block body %}{% endblock %}
             <div class="u-form-group">
                 <br>
                 <!-- <a href="#" class="forgot-password">Forgot password?</a> -->

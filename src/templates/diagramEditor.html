@@ -10,6 +10,12 @@
   <script src="{{url_for('static', filename='js/flowlines.js')}}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='diagramEditor.css') }}">
 
+  {% if 'currentFile' in session%}
+    <title>{{session['currentFile'][:-4]}}</title>
+  {%else%}
+    <title>Diagram Editor</title>
+  {% endif %}
+
   <body>
   <style type="text/css">
   .navbar{
@@ -81,13 +87,15 @@
               </li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            <li>
-              {% if not 'email' in session %}
-              <a href="javascript:login_hook()"><r>Login</r></a>
-              {% else %}
-              <a href="/logout?return_url=diagram"><r>Logout</r></a>
-              {% endif %}
-            </li>
+              <li>
+                {% if 'social' in session %}
+                  <a href="/logout?return_url=diagram"><r>Logout</r></a>
+                {% elif 'email' in session %}
+                    <a href="/logout?return_url=diagram"><r>Logout</r></a>
+                {% else %}
+                  <a href="javascript:login_hook()"><r>Login</r></a>
+                {% endif %}
+              </li>
           </ul>
       </div><!-- /.navbar-collapse -->
   </nav>
@@ -124,16 +132,10 @@
       <p> Script: </p>
       <textarea type="text" id="script" name="script"></textarea>
       <p align="center">
-        <button type="button" value="enter" onClick="editAction()">Done</button>
-      </p>
-      <p align="center">
-        <button type="button" value="enter" onClick="removeAction()">Remove Action</button>
-      </p>
-      <p align="center">
-        <button type="button" value="enter" onClick="cutAction()">Cut Action</button>
-      </p>
-      <p align="center">
         <button type="button" value="enter" onClick="cancel()">Cancel</button>
+        <button type="button" value="enter" onClick="removeAction()">Remove Action</button>
+        <button type="button" value="enter" onClick="cutAction()">Cut Action</button>
+        <button type="button" value="enter" onClick="editAction()">Done</button>
       </p>
       </table>
     </form>
@@ -150,16 +152,10 @@
         </p>
 	<br>
         <p align="center">
-          <button type="button" value="enter" onClick="editSequence()">Done</button>
-        </p>
-        <p align="center">
-          <button type="button" value="enter" onClick="removeSequence()">Remove</button>
-        </p>
-        <p align="center">
-          <button type="button" value="enter" onClick="cutSequence()">Cut</button>
-        </p>
-        <p align="center">
           <button type="button" value="enter" onClick="cancel()">Cancel</button>
+          <button type="button" value="enter" onClick="removeSequence()">Remove</button>
+          <button type="button" value="enter" onClick="cutSequence()">Cut</button>
+          <button type="button" value="enter" onClick="editSequence()">Done</button>
         </p>
         </table>
       </form>
@@ -269,7 +265,8 @@
         program = {name: "new_process", actions: new Array()};
         update();
         $.ajax({url:"/resetCurrent", success:function(){
-          window.location.href = "/diagram";
+            window.onbeforeunload = function () {};
+            window.location.href = "/diagram";
         }});
     }
 
