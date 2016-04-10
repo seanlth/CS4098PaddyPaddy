@@ -1670,6 +1670,10 @@ function editAction() {
       $('#name').addClass('invalid');
     } else {
       selectedAction.selected = false;
+      selectedAction.name = $('#name').val();
+      selectedAction.script = $('#script').val();
+      selectedAction.tool = $('#tool').val();
+      selectedAction.type = $('#type').val();
       $("#actionEditor").hide();
       state = StateEnum.normal;
       update();
