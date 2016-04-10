@@ -124,7 +124,16 @@ function drawAgentFlowLine(prog, agent, yOffset, colour, xStart, xEnd, y) {
     for(var i = 0; i < prog.actions.length; i++) {
         var action = prog.actions[i];
         if(!action.control) {
-            var agents = action.agent.split(/("[^"]*")|([\s,&&,==,||])+/);
+            var agents = predicate_to_string(action.agent).split(/("[^"]*")|([\s,&&,==,||])+/);
+
+            for(var j = agents.length - 1; j >= 0; j--) {
+                if(!agents[j]) {
+                    agents.splice(j, 1);
+                }
+                else if(agents[j] == "" || agents[j] == " ") {
+                    agents.splice(j, 1);
+                }
+            }
 
             var width = actionWidth / agents.length;
             var found = false;
@@ -236,8 +245,8 @@ function drawResourceFlowLine(prog, resource, yOffset, colour, xStart, xEnd, y) 
     for(var i = 0; i < prog.actions.length; i++) {
         var action = prog.actions[i];
         if(!action.control) {
-            var resources = action.requires.split(/("[^"]*")|([\s,&&,==,||])+/).concat(action.provides.split(/("[^"]*")|([\s,&&,==,||])+/));
-            
+            var resources = predicate_to_string(action.requires).split(/("[^"]*")|([\s,&&,==,||])+/).concat(predicate_to_string(action.provides).split(/("[^"]*")|([\s,&&,==,||])+/));
+
 
             var width = actionWidth / resources.length;
             var found = false;
@@ -337,5 +346,3 @@ function drawResourceFlowLines(start, end, resources) {
     strokeWeight(1);
     stroke(255);
 }
-
-

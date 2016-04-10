@@ -467,7 +467,16 @@ function addToAgentArray(agentArray, action, start, end) {
     //  Colour
     // }
 
-    var agents = action.agent.split(/("[^"]*")|([\s,&&,==,||])+/);
+    var agents = predicate_to_string(action.agent).split(/("[^"]*")|([\s,&&,==,||])+/);
+
+    for(var i = agents.length - 1; i >= 0; i--) {
+        if(!agents[i]) {
+            agents.splice(i, 1);
+        }
+        else if(agents[i] == "" || agents[i] == " ") {
+            agents.splice(i, 1);
+        }
+    }
 
     var width = actionWidth / agents.length;
 
@@ -591,10 +600,10 @@ function createResourceFlowLines() {
 	for ( var i = 0; i < actionArray.length; i++ ) {
 		var providesAction = actionArray[i];
 
-        if ( providesAction.provides != "" ) {
+        if ( predicate_to_string(providesAction.provides) != "" ) {
 
             // create flowLine
-            var flowLine = {name: providesAction.provides, colour: stringColour(providesAction.name), x: providesAction.xPixelPosition, y: providesAction.yPixelPosition};
+            var flowLine = {name: predicate_to_string(providesAction.provides), colour: stringColour(providesAction.name), x: providesAction.xPixelPosition, y: providesAction.yPixelPosition};
 
             // add the flowLine
             resourceFlowLines.push(flowLine);
@@ -1274,13 +1283,13 @@ function Action(action) {
             fill(0);
         }
         else if(actionColour == ActionColourEnum.agent) {
-            var agents = this.agent.split(/("[^"]*")|([\s,&&,==,||])+/);
+            var agents = predicate_to_string(this.agent).split(/("[^"]*")|([\s,&&,==,||])+/);
 
             for(var i = agents.length - 1; i >= 0; i--) {
                 if(!agents[i]) {
                     agents.splice(i, 1);
                 }
-                else if(agents[i] == "") {
+                else if(agents[i] == "" || agents[i] == " ") {
                     agents.splice(i, 1);
                 }
             }
