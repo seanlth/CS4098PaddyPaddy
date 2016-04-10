@@ -19,6 +19,9 @@
 
   <form class="form" method="post">
     <p3 align = "left">File extension must be .pml</p3>
+    {% if diagram %}
+    <input type="hidden" name="diagram" value ="true">
+    {% endif %}
     <input type="text" name="filename" placeholder="file name">
     <input type="submit" value="submit">
   </form>

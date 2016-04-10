@@ -16,7 +16,7 @@ import tempfile
 
 import parser
 
-DEBUG = False
+DEBUG = True
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret'
 app.config['OAUTH_CREDENTIALS'] = {
@@ -64,8 +64,12 @@ def editor(filename = ""):
         if session['tempFile'] != "":
             editor_content = open(session['tempFile']).read();
 
-    if 'filename' in request.args or filename != "":
-        filename = filename if filename else request.args['filename']
+    if 'filename' in request.args or filename != "" or 'currentFile' in session:
+        if not filename:
+            if 'filename' in request.args:
+                filename = request.args['filename']
+            else:
+                 filename = session['currentFile']
         if ('email' in session) or ('social' in session):
             if 'email' in session:
                 email = session['email']
@@ -79,7 +83,6 @@ def editor(filename = ""):
                     editor_content = f.read()
             except FileNotFoundError:
                 editor_content = "" #TODO: some kind of message here
-
 
     return render_template("editor.html", editor_content=editor_content)
 
@@ -133,16 +136,18 @@ def save():
         return redirect('/login?return_url=saveAs')
     if 'currentFile' in session:
         return saveFile(session['currentFile'])
+    if 'diagram' in request.referrer:
+        return saveAs(True)
     return saveAs()
 
 @app.route('/saveAs')
-def saveAs():
+def saveAs(diagram=False):
     if (not 'email' in session) and (not 'social' in session):
-        if 'diagram' in request.args:
+        if 'diagram' in request.args or diagram:
             return redirect('/login?return_url=saveAs&diagram=true')
         return redirect('/login?return_url=saveAs')
     else:
-        return render_template('saveFile.html')
+        return render_template('saveFile.html', diagram=diagram)
 
 @app.route('/saveAs', methods=['POST'])
 @app.route('/save', methods=['POST'])
@@ -169,8 +174,7 @@ def saveFile(fname=None):
 
             if tempFilePath:
                 shutil.copy(tempFilePath, saveFilePath)
-                print(request.referrer)
-                if "diagram" in request.referrer:
+                if "diagram" in request.referrer or 'diagram' in request.args or 'diagram' in request.form:
                     return redirect('/diagram?filename=%s'%name)
                 else:
                     return redirect('/?filename=%s'%name)
@@ -180,15 +184,6 @@ def saveFile(fname=None):
 
 @app.route("/diagram")
 def diagram():
-    if 'tempFile' in session:
-        tempFile = session['tempFile']
-        with open(tempFile) as f:
-            data = f.read()
-            try:
-                parsed = parser.parse(data) #TODO: proper error message
-                return render_template("diagramEditor.html", data=json.dumps(parsed))
-            except parser.ParserException: pass
-
     if 'filename' in request.args:
         filename = request.args['filename']
         if('email' in session) or ('social' in session):
@@ -207,6 +202,24 @@ def diagram():
             except parser.ParserException: pass
             except FileNotFoundError:
                 editor_content = ""
+
+    elif 'tempFile' in session or 'currentFile' in session:
+        if 'tempFile' in session:
+            filepath = session['tempFile']
+        if 'currentFile' in session and ('email' in session) or ('social' in session):
+            if 'email' in session:
+                email = session['email']
+            elif 'social' in session:
+                email = session['social']
+            filename = session['currentFile']
+            userpath = os.path.join(app.config['UPLOAD_FOLDER'], email)
+            filepath = os.path.join(userpath, filename)
+        with open(filepath) as f:
+            data = f.read()
+            try:
+                parsed = parser.parse(data) #TODO: proper error message
+                return render_template("diagramEditor.html", data=json.dumps(parsed))
+            except parser.ParserException: pass
 
     return render_template("diagramEditor.html")
 

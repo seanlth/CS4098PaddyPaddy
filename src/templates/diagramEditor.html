@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='diagramEditor.css') }}">
 
   {% if 'currentFile' in session%}
-    <title>{{session['currentFile']}}</title>
+    <title>{{session['currentFile'][:-4]}}</title>
   {%else%}
     <title>Diagram Editor</title>
   {% endif %}
@@ -249,7 +249,8 @@
         program = {name: "new_process", actions: new Array()};
         update();
         $.ajax({url:"/resetCurrent", success:function(){
-          window.location.href = "/diagram";
+            window.onbeforeunload = function () {};
+            window.location.href = "/diagram";
         }});
     }
 

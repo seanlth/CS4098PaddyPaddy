@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 {% if 'currentFile' in session%}
-  <title>{{session['currentFile']}}</title>
+  <title>{{session['currentFile'][:-4]}}</title>
 {%else%}
   <title>Editor</title>
 {% endif %}
