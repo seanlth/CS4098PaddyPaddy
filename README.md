@@ -8,7 +8,50 @@
 * Patrick Hayes
 * Luke Grehan
 
+## Dependencies
+* Ubuntu 14.04
 
+## Included/Installed Requirements
+* Python 3.0
+* Flask 0.10.1
+* Ace editor (https://github.com/ajaxorg/ace)
+
+## Installation
+```
+git clone https://github.com/seanlth/CS4098.git
+cd CS4098
+make install
+```
+## Starting
+
+```
+make run
+```
+
+* Open ```localhost:8000``` in a browser for editor
+* Open ```localhost:8000/login``` in a browser for login page
+* Open ```localhost:8000/signUp``` in a browser for sign up page
+* Open ```localhost:8000/diagram``` in a browser for the in-progress diagram page
+
+##Release Two
+##Features
+* On ```localhost:8000/login```
+  * Third party authentication
+* On ```localhost:8000/diagram```
+  * boxes arrows
+  * enhanced agents
+  * syntax enforcement
+  * pml generator
+  * basic pml display
+  * resource flow (under flow lines in navbar, untested because it is purely visual and transparent to the browser)
+  * analysis coloured action (under action colour in navbar, untested because it is purely visual and transparent to the browser)
+  * agent colored actions (under action colour in navbar, untested because it is purely visual and transparent to the browser)
+  * swim lanes (under flow lines in navbar, untested because it is purely visual and transparent to the browser, with your permission this is a similar layout to resource flow)
+
+##Testing run
+open two terminals to the project directory. In one, run the server as shown, in the other run "make test".
+
+##Release One below
 ## Features
 * On ```localhost:8000```
   * Syntax Highlighting
@@ -53,28 +96,3 @@
 
 4. There are also some smoke tests available by running "make test". (On clean machines, run twice as there may be errors  
    reported erroneously.)
-
-## Dependencies
-* Ubuntu 14.04
-
-## Included/Installed Requirements
-* Python 3.0
-* Flask 0.10.1
-* Ace editor (https://github.com/ajaxorg/ace)
-
-## Installation
-```
-git clone https://github.com/seanlth/CS4098.git
-cd CS4098
-make install
-```
-## Starting
-
-```
-make run
-```
-
-* Open ```localhost:8000``` in a browser for editor
-* Open ```localhost:8000/login``` in a browser for login page
-* Open ```localhost:8000/signUp``` in a browser for sign up page
-* Open ```localhost:8000/diagram``` in a browser for the in-progress diagram page

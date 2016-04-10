@@ -1,20 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
-
-
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/p5.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/addons/p5.dom.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.4.22/addons/p5.sound.min.js"></script>
   <script src="{{url_for('static', filename='js/sketch.js')}}"></script>
   <script src="{{url_for('static', filename='js/pml_generator.js')}}"></script>
+  <script src="{{url_for('static', filename='js/predicateEditor.js')}}"></script>
   <script src="{{url_for('static', filename='js/flowlines.js')}}"></script>
   <link rel="stylesheet" href="{{ url_for('static', filename='diagramEditor.css') }}">
+
+  {% if 'currentFile' in session%}
+    <title>{{session['currentFile'][:-4]}}</title>
+  {%else%}
+    <title>Diagram Editor</title>
+  {% endif %}
 
   <body>
   <style type="text/css">
   .navbar{
     background:url("static/images/dark_wall.png");
+  }
+
+  /* TODO: better styling */
+  input[class~='invalid']{
+    background-color: red;
   }
   </style>
   <nav class="navbar navbar-default" role="navigation">
@@ -32,31 +42,24 @@
                   <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">File </a>
                   <ul class="dropdown-menu">
                       <li><a href="javascript:new_hook()">New</a></li>
-                      <!-- <li><a href="javascript:open_hook()">Open</a></li>
+                      <li><a href="javascript:open_hook()">Open</a></li>
                       <li>
                         <form action="upload" method="post" enctype="multipart/form-data" id ="fileUpload">
-                          {% if not 'email' in session %}
-                            <a href="/login" style="color: #333333;">Upload</a>
+                          {% if (not 'email' in session) and (not 'social' in session) %}
+                            <a href="/login?return_url=diagram" style="color: #333333;">Upload</a>
                           {% else %}
                             <input id="upload-file" type="file" name="file" style="display: none;">
                             <script>
                               document.getElementById('upload-file').onchange = function() {
                                   document.getElementById("fileUpload").submit();
                               }
-
                             </script>
                             <a1 onclick="$('input[id=upload-file]').click();">Upload</a1>
-                            <script>
-
-                            // $('input').change(function(){
-                            //    $(this).attr('title',($(this).val()));
-                            // });
-                            </script>
                           {% endif %}
                         </form>
                       </li>
                       <li><a href="javascript:save_hook()">Save</a></li>
-                      <li><a href="javascript:saveAs_hook()">Save As</a></li> -->
+                      <li><a href="javascript:saveAs_hook()">Save As</a></li>
                       <!-- <li class="divider"></li> -->
                       <!-- <li><a href="#">Separated link</a></li> -->
                   </ul>
@@ -66,7 +69,7 @@
                   <ul class="dropdown-menu">
                       <li><a href="javascript:changeActionColour(ActionColourEnum.none)">None</a></li>
                       <li><a href="javascript:changeActionColour(ActionColourEnum.analysis)">Analysis</a></li>
-                      <!-- <li><a href="javascript:actionColour = ActionColourEnum.agent">Agent</a></li> -->
+                      <li><a href="javascript:changeActionColour(ActionColourEnum.agent)">Agent</a></li>
                   </ul>
               </li>
               <li>
@@ -76,19 +79,28 @@
               <li>
                   <a href="javascript:parse_hook()">Generate PML </a>
               </li>
-			  <li>
-                  <a href="javascript:toggle_flowlines()">Toggle Flow Lines </a>
+              <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown" aria-expanded="false">Flow Lines </a>
+                  <ul class="dropdown-menu">
+                      <li><a href="javascript:changeFlowLine(FlowLineEnum.none)">None</a></li>
+                      <li><a href="javascript:changeFlowLine(FlowLineEnum.agent)">Agent</a></li>
+                      <li><a href="javascript:changeFlowLine(FlowLineEnum.resource)">Resource</a></li>
+                  </ul>
               </li>
-
+			  <li>
+				  <a id="downloadLnk" download="diagram.jpg">Save Image </a>
+              </li>
           </ul>
           <ul class="nav navbar-nav navbar-right">
-            <li>
-              {% if not 'email' in session %}
-              <a href="/login"><r>Login</r></a>
-              {% else %}
-              <a href="/logout"><r>Logout</r></a>
-              {% endif %}
-            </li>
+              <li>
+                {% if 'social' in session %}
+                  <a href="/logout?return_url=diagram"><r>Logout</r></a>
+                {% elif 'email' in session %}
+                    <a href="/logout?return_url=diagram"><r>Logout</r></a>
+                {% else %}
+                  <a href="javascript:login_hook()"><r>Login</r></a>
+                {% endif %}
+              </li>
           </ul>
       </div><!-- /.navbar-collapse -->
   </nav>
@@ -108,9 +120,9 @@
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
   <![endif]-->
 
-  <form id="actionEditor" style="width: 300px;background-image:url('static/images/dark_wall.png'); color:#fff;">
+  <form id="actionEditor" style="background-image:url('static/images/dark_wall.png');">
     <table>
-      <p>Name: <Input type="text" name="name" id="name"/></p>
+      <p>Name: <input type="text" name="name" id="name"/></p>
       <p> Type:
         <select id="type" name="type" style="color:#000">
           <option value="none">None</option>
@@ -118,36 +130,35 @@
           <option value="executable">Executable</option>
         </select>
       </p>
-      <br>
       <p> Agent:
-        <input type="text" id="agent" name="agent"/>
+        <span id="agent" name="agent">&lt;None&gt;</span>
+        <button type="button" id="agent-edit" >edit <span class="glyphicon glyphicon-edit"></span></button>
+        <button type="button" id="agent-delete" >delete <span class="glyphicon glyphicon-remove"></span></button>
       </p>
-      <p> Script: </p>
-      <textarea id="script" name="script" style="color: #000;"></textarea>
-      <p> Tool:
-        <input type="text" id="tool" name="tool"/>
-      </p>
+
       <p> Requires:
-        <input type="text" id="requires" name="tool"/>
+        <span id="requires" name="requires">&lt;None&gt;</span>
+        <button type="button" id="requires-edit" >edit <span class="glyphicon glyphicon-edit"></span></button>
+        <button type="button" id="requires-delete" >delete <span class="glyphicon glyphicon-remove"></span></button>
       </p>
+
       <p> Provides:
-        <input type="text" id="provides" name="tool"/>
+        <span id="provides" name="provides">&lt;None&gt;</span>
+        <button type="button" id="provides-edit" >edit <span class="glyphicon glyphicon-edit"></span></button>
+        <button type="button" id="provides-delete" >delete <span class="glyphicon glyphicon-remove"></span></button>
       </p>
+      <p> Tool: <input type="text" id="tool" name="tool"></textarea> </p>
+      <p> Script: </p>
+      <textarea type="text" id="script" name="script"></textarea>
       <p align="center">
-        <button type="button" id="done_action" value="enter" onClick="editAction()">Done</button>
-      </p>
-      <p align="center">
-        <button type="button" id="remove_action" value="enter" onClick="removeAction()">Remove Action</button>
-      </p>
-      <p align="center">
-        <button type="button" id="cut_action" value="enter" onClick="cutAction()">Cut Action</button>
-      </p>
-      <p align="center">
-        <button type="button" id="cancel_action" value="enter" onClick="cancel()">Cancel</button>
+        <button type="button" value="enter" onClick="cancel()">Cancel</button>
+        <button type="button" value="enter" onClick="removeAction()">Remove Action</button>
+        <button type="button" value="enter" onClick="cutAction()">Cut Action</button>
+        <button type="button" value="enter" onClick="editAction()">Done</button>
       </p>
       </table>
     </form>
-    <form id="flowEditor" style="width: 300px;background-image:url('static/images/dark_wall.png'); color:#fff;">
+    <form id="flowEditor" style="background-image:url('static/images/dark_wall.png');">
       <table>
         <p>Name: <Input type="text" name="flowName" id="flowName"/></p>
         <p> Type:
@@ -160,35 +171,97 @@
         </p>
 	<br>
         <p align="center">
-          <button type="button" id="done_sequence" value="enter" onClick="editSequence()">Done</button>
-        </p>
-        <p align="center">
-          <button type="button" id="remove_sequence" value="enter" onClick="removeSequence()">Remove</button>
-        </p>
-        <p align="center">
-          <button type="button" id="cut_sequence" value="enter" onClick="cutSequence()">Cut</button>
-        </p>
-        <p align="center">
-          <button type="button" id="cancel_sequence" value="enter" onClick="cancel()">Cancel</button>
+          <button type="button" value="enter" onClick="cancel()">Cancel</button>
+          <button type="button" value="enter" onClick="removeSequence()">Remove</button>
+          <button type="button" value="enter" onClick="cutSequence()">Cut</button>
+          <button type="button" value="enter" onClick="editSequence()">Done</button>
         </p>
         </table>
       </form>
+    <form id="predicateEditor" style="background-image:url('static/images/dark_wall.png');">
+        current predicate:
+        <p id="current_pred">&lt;None&gt;</p>
+        <div id="base_conjunct">
+          <input type="text" class='base' />
+          <button class="addDot" id="base_addDot">+.</button>
+          <select class="comparison" id="base_operator">
+            <option>None</option>
+            <option selected>==</option>
+            <option>!=</option>
+            <option>&lt;</option>
+            <option>&gt;</option>
+            <option>&gt;=</option>
+            <option>&lt;=</option>
+          </select>
+          <button class="addOp" id="base_addOp">+op</button>
+        </div>
+
+        <div id='form'></div>
+        <p>
+          <button id='adder'> + </button>
+          <button id='finished'>Done</button>
+        </p>
+      <button type="button" value="enter" onClick="exitPredicateEditor()">Cancel</button>
+    </form>
   </body>
   <textarea id="outputPanel" disabled="disabled">Output</textarea>
   <script type="text/javascript">
     function changeActionColour(newValue) {
         actionColour = newValue;
     }
+
+    function changeFlowLine(newValue) {
+        flowLine = newValue;
+    }
+
     {% if data %}
       $(window).load(function(){
         var data = {{ data | safe }};
         drawJSON(data);
       });
     {% endif %}
+
     window.onbeforeunload = function()
     {
         return "Any progress you made on the diagram will be lost.";
     };
+
+    $(function(){
+      $("#agent-edit").on('click',    editAgent);
+      $("#requires-edit").on('click', editRequires);
+      $("#provides-edit").on('click', editProvides);
+
+      $("#agent-delete").on('click',    deleteAgent);
+      $("#requires-delete").on('click', deleteRequires);
+      $("#provides-delete").on('click', deleteProvides);
+      $("#name").on("change input paste", function (){
+          $(this).removeClass('invalid');
+      });
+    });
+
+    function pushTemp(callback){
+      var content = btoa(json_to_pml(program)); // encode editor content
+
+      $.ajax({
+          url: '/tmp',
+          data: { content: content },
+          type: 'POST',
+          success: callback,
+          error: function(error) {
+              console.log(error);
+          }
+      });
+    }
+
+	function download() {
+		toggle_editing();
+		draw();
+		var canvas = document.getElementById("canvas");
+		var dt = canvas.toDataURL('image/jpeg');
+		this.href = dt;
+		toggle_editing();
+	}
+    downloadLnk.addEventListener('click', download, false);
 
 	function toggle_flowlines() {
 		if ( drawingSwimLanes == true ) {
@@ -199,40 +272,59 @@
 		}
 	}
 
+    function toggle_editing() {
+        if(state == StateEnum.notEditing) {
+            state = StateEnum.normal;
+        }
+        else {
+            state = StateEnum.notEditing;
+        }
+    }
+
     function parse_hook() {
-      createPML();
+        createPML();
     }
 
     function new_hook() {
-      console.log("new pressed");
-      selectedIndex = [];
-      clipBoard = [];
-      program = {name: "new_process", actions: new Array()};
-      update();
-      $.ajax("/resetCurrent");
+        console.log("new pressed");
+        selectedIndex = [];
+        clipBoard = [];
+        program = {name: "new_process", actions: new Array()};
+        update();
+        $.ajax({url:"/resetCurrent", success:function(){
+            window.onbeforeunload = function () {};
+            window.location.href = "/diagram";
+        }});
     }
 
 	function save_hook(){
-      console.log("save pressed");
-      pushTemp(function(response) {
-        window.location.href = 'save'
-      });
+        console.log("save pressed");
+
+        pushTemp(function(response) {
+            window.onbeforeunload = function () {};
+            window.location.href = "save";
+        } );
     }
 
     function saveAs_hook(){
       console.log("save as pressed");
       pushTemp(function(response) {
-        window.location.href = 'saveAs'
+          window.onbeforeunload = function () {};
+          window.location.href = 'saveAs?diagram=true'
       });
     }
+
     function open_hook() {
       console.log("open pressed");
-      // document.title ="blah";
-      window.location.href = 'openFile';
+      window.location.href = 'openFile?diagram=true';
     }
-    function upload_hook() {
-      console.log("open pressed");
-      window.location.href = 'openFile';
+
+    function login_hook() {
+        console.log("login pressed");
+        pushTemp(function(response) {
+            window.onbeforeunload = function () {};
+            window.location.href = 'login?return_url=diagram'
+        });
     }
 
     function run_hook() {
@@ -247,8 +339,7 @@
                 console.log(response);
             },
             error: function(error) {
-                alert(error.responseText);
-                document.getElementById("outputPanel").innerHTML = response;
+                document.getElementById("outputPanel").innerHTML = error.responseText;
                 highlight_error(error.responseText);
             }
         });

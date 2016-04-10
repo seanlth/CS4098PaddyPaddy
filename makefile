@@ -5,7 +5,7 @@ all: run
 build: buildDeps
 
 test: env
-	env/bin/python3 src/tests.py
+	env/bin/python3 seleniumTests/test.py
 
 install: buildDeps
 	git submodule init

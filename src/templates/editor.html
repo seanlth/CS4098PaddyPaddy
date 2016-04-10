@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
 {% if 'currentFile' in session%}
-  <title>{{session['currentFile']}}</title>
+  <title>{{session['currentFile'][:-4]}}</title>
 {%else%}
   <title>Editor</title>
 {% endif %}
@@ -86,7 +86,7 @@
             {% elif 'email' in session %}
                 <a href="/logout"><r>Logout</r></a>
             {% else %}
-              <a href="/login"><r>Login</r></a>
+              <a href="javascript:login_hook()"><r>Login</r></a>
             {% endif %}
           </li>
         </ul>
@@ -139,8 +139,37 @@
 
     function parse_hook() {
       console.log("parse pressed");
-      pushTemp(function(response){
-        window.location.href = "/diagram?useParsed=True";
+
+      var program;
+      require(['static/ace-master/lib/ace/ace'], function(ace){
+          editor = ace.edit("editor");
+          program = editor.getValue();
+
+          if(program == "") {
+              window.location.href = "/diagram";
+              return;
+          }
+
+          document.getElementById("output").innerHTML = "Output";
+
+          editor.session.removeMarker(error_marker);
+          editor.session.clearAnnotations();
+
+          $.ajax({
+              url: '/',
+              data: { program: program },
+              type: 'POST',
+              success: function(response) {
+                  pushTemp(function(response){
+                    window.location.href = "/diagram?useParsed=True";
+                  });
+              },
+              error: function(error) {
+                  document.getElementById("output").innerHTML = error.responseText;
+                  console.log(error);
+                  highlight_error(error.responseText);
+              }
+          });
       });
     }
 
@@ -165,15 +194,25 @@
         window.location.href = 'saveAs'
       });
     }
+
     function open_hook() {
       console.log("open pressed");
       // document.title ="blah";
       window.location.href = 'openFile';
     }
+
     function upload_hook() {
       console.log("open pressed");
       window.location.href = 'openFile';
     }
+
+    function login_hook() {
+        console.log("login pressed");
+        pushTemp(function(response) {
+            window.location.href = 'login'
+        });
+    }
+
     function changeBindings(binding){
       var keyBindings = {
         ace: null,

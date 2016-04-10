@@ -69,11 +69,17 @@ function add_type(type) {
 // builds the action string
 function add_action(action, current_indentation) {
 	var node = "";
+
+    action.requires = predicate_to_string(action.requires);
+    action.provides = predicate_to_string(action.provides);
+    action.agent = predicate_to_string(action.agent);
+
 	if ( action.requires != "" ||
 		 action.provides != "" ||
 		 action.agent != "" ||
 		 action.tool != ""||
-		 action.script != "" ) {
+		 action.script != "" ||
+         action.type != "" ) {
 		node = current_indentation + "action " + action.name + add_type(action.type) + " { \n";
 		node += add_requirements(action.requires, current_indentation + "    ");
 		node += add_provisions(action.provides, current_indentation + "    ");
