@@ -61,9 +61,10 @@ function updateCurrent(){
 
 function setPredicate(pred){
   var base = $('#base_conjunct')
-  base.children('.base').val("");
-  base.children('.postDot').remove();
-  base.children('.postOp').remove();
+  base.find('.base').val("");
+  base.find('.postDot').remove();
+  base.find('.postOp').remove();
+  $('.hasDot').removeClass('hasDot');
 
   var selector = base.children('.comparison');
   selector.css('visibility', 'hidden');
@@ -151,7 +152,7 @@ function getCurrent(){
       var rhs = {};
       val = postOp.children().val();
       if (isValidVal(val)){
-        conj.op = postOp.siblings('select').val();
+        conj.op = postOp.siblings('.comparison').val();
         rhs.core = val;
       } else {
         alert("postOp fail");
