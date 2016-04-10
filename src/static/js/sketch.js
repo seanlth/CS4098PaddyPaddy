@@ -161,10 +161,10 @@ function draw() {
         //background(255, 255, 255, 220);
         drawAgentFlowLines();
     }
-    else if ( actionColour == ActionColourEnum.analysis) {
+    else if (actionColour == ActionColourEnum.analysis) {
         drawLegend(startX, height - startX, "Action Analysis Colours", analysisLegendContent);
     }
-    else if ( actionColour == ActionColourEnum.agent) {
+    else if (actionColour == ActionColourEnum.agent) {
         drawLegend(startX, height - startX, "Action Agent Colours", agentActionLegendContent);
     }
 }
@@ -453,32 +453,28 @@ function addToAgentArray(agentArray, action, start, end) {
 	var foundAgentArray = false;
 	var index = -1;
 
-	// search for the array with the same agent
-	for ( var i = 0; i < agentArray.length; i++ ) {
-		var array = agentArray[i];
+    // search for the array with the same agent
+    for ( var i = 0; i < agentArray.length; i++ ) {
+        var array = agentArray[i];
 
-		// found the array
-		if ( array.name == action.agent && array.y == action.yPixelPosition && array.index.length == action.index.length && compareArrays(array.index, action.index, array.index.length - 1) ) {
-			foundAgentArray = true;
-			index = i;
-			break;
-		}
-	}
+        // found the array
+        if ( array.name == action.agent) {
+            foundAgentArray = true;
+            break;
+        }
+    }
 
 	// add to or create the array
-	if ( foundAgentArray == true ) {
-		var p = {x: action.xPixelPosition, name: action.name};
-		agentArray[index].positions.push(p);
-	}
+    if ( foundAgentArray == true ) {
+        return;
+    }
 	else if ( action.agent != "" ) {
         if ( action.yPixelPosition == middle ) {
-            var p = {x: action.xPixelPosition, name: action.name};
-		    var newArray = {name: action.agent, y: action.yPixelPosition, start: startX, end: endX, positions: [p], colour: stringColour(action.agent), index: action.index.slice()};
+		    var newArray = {name: action.agent, colour: stringColour(action.agent)};
 	        agentArray.push(newArray);
         }
         else {
-            var p = {x: action.xPixelPosition, name: action.name};
-		    var newArray = {name: action.agent, y: action.yPixelPosition, start: start, end: end, positions: [p], colour: stringColour(action.agent), index: action.index.slice()};
+		    var newArray = {name: action.agent, colour: stringColour(action.agent)};
 	        agentArray.push(newArray);
         }
     }
@@ -516,7 +512,12 @@ function drawAgentFlowLines() {
 	createAgentFlowLines(agentArray, program.actions, startPosition.x, endPosition.x);
     if ( agentArray.length > 0 ) {
         textAlign(LEFT, CENTER);
-        drawLegend(startX, height - startX, "Agents", flatten(agentArray));
+        if(actionColour != ActionColourEnum.analysis && actionColour != ActionColourEnum.agent) {
+            drawLegend(startX, height - startX, "Agents", agentArray);
+        }
+        else {
+
+        }
 	    drawFlowLines(startPosition, endPosition, agentArray);
     }
     else {
@@ -1213,10 +1214,6 @@ function Action(action) {
                 }
             }
 
-            //draw box around name for legibility's sake
-            fill(255);
-            rect(x, yPixels - textSize() / 2, actionWidth, textSize());
-
             //draw outline box
             fill(0, 0, 0, 0);
             stroke(0);
@@ -1232,6 +1229,7 @@ function Action(action) {
         if ( drawingSwimLanes == false || this.agent == "" ) {
             fill(0);
             stroke(255);
+            strokeWeight(2);
             textAlign(CENTER, CENTER);
             if(this.name.length <= 17 * scaleX) {
                 text(this.name, xPixels, yPixels);
@@ -1239,6 +1237,7 @@ function Action(action) {
             else {
                 text(this.name.substring(0, 14 * scaleX) + '...', xPixels, yPixels);
             }
+            strokeWeight(1);
         }
         stroke(0);
     }

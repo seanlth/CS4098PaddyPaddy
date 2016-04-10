@@ -139,7 +139,7 @@ function drawFlowLine(prog, agent, yOffset, colour, xStart, xEnd, y) {
                     line(lastX, action.yPixelPosition + yOffset, action.xPixelPosition, action.yPixelPosition + yOffset);
                     lastX = action.xPixelPosition;
                 }
-                nodeLocations.push( {x: action.xPixelPosition, y: action.yPixelPosition + yOffset, colour: {r: colour.r, g: colour.g, b: colour.b}, name: action.name} );
+                nodeLocations.push( {x: action.xPixelPosition, y: action.yPixelPosition, yOffset: yOffset, colour: {r: colour.r, g: colour.g, b: colour.b}, name: action.name} );
             }
         }
         else {
@@ -169,9 +169,7 @@ function drawFlowLine(prog, agent, yOffset, colour, xStart, xEnd, y) {
 
 var nodeLocations;
 
-function drawFlowLines(start, end, agentFlowLines) {
-
-    var agents = flatten(agentFlowLines);
+function drawFlowLines(start, end, agents) {
 
     // var lanesPerLevel = numberOfFlowLinesPerLevel(agentFlowLines);
 	// var numberOfFlowLines = lanesPerLevel[0].count;
@@ -194,8 +192,9 @@ function drawFlowLines(start, end, agentFlowLines) {
 		textAlign(CENTER, CENTER);
 		stroke(255);
 		fill(0);
-		text(node.name, node.x, node.y - 15);
-		drawNode(node.x, node.y, 15, node.colour);
+        var textY = node.yOffset >= 0 ? node.y + node.yOffset - 15 : node.y + node.yOffset + 15;
+		text(node.name, node.x, textY);
+		drawNode(node.x, node.y + node.yOffset, 15, node.colour);
 	}
 	drawNode(end.x, end.y, 10 + agents.length * gap, c);
 
