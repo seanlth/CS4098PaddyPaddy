@@ -173,14 +173,14 @@ function getCurrent(){
       var postOp_postDot = postOp.children('.postDot');
       if (postOp_postDot.length > 0){
         val = postOp_postDot.children().val();
-        if (isValidVal(val) && !isNumOrString(post_Op.children.val())){
+        if (isValidVal(val) && !isNumOrString(postOp.children().val())){
           if(!isNumOrString(val)){
             rhs.postDot = val;
           } else {
             fails.push("number or string is invalid after '.' operator");
           }
         } else {
-          if (isNumOrString(post_Op.children.val())){
+          if (isNumOrString(postOp.children().val())){
             fails.push("'.' operator is invalid after number or string")
           } else {
             fails.push("'"+val+"' is an invalid predicate value");
@@ -223,9 +223,9 @@ function onAddDotClick(button){
   conjunct.toggleClass('hasDot');
 
   if (hasDot) {
-    button.siblings('.postDot').remove();
+    button.parent().find('.postDot').remove();
   } else {
-    button.after( $('<span class="postDot"><input type="text" class="postDotBase"/></span>') );
+    button.parent().find('.addDot').after( $('<span class="postDot"><input type="text" class="postDotBase"/></span>') );
   }
 }
 
@@ -302,6 +302,21 @@ function mkConjunct(){
               , close
               ]);
   return base;
+}
+
+function deleteAgent(){
+  $('#agent').html("&lt;None&gt;");
+  selectedAction.agent = [];
+}
+
+function deleteRequires(){
+  $('#requires').html("&lt;None&gt;");
+  selectedAction.requires = [];
+}
+
+function deleteProvides(){
+  $('#provides').html("&lt;None&gt;");
+  selectedAction.provides = [];
 }
 
 function editAgent(){
