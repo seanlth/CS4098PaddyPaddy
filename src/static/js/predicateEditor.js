@@ -173,14 +173,14 @@ function getCurrent(){
       var postOp_postDot = postOp.children('.postDot');
       if (postOp_postDot.length > 0){
         val = postOp_postDot.children().val();
-        if (isValidVal(val) && !isNumOrString(post_Op.children.val())){
+        if (isValidVal(val) && !isNumOrString(postOp.children().val())){
           if(!isNumOrString(val)){
             rhs.postDot = val;
           } else {
             fails.push("number or string is invalid after '.' operator");
           }
         } else {
-          if (isNumOrString(post_Op.children.val())){
+          if (isNumOrString(postOp.children().val())){
             fails.push("'.' operator is invalid after number or string")
           } else {
             fails.push("'"+val+"' is an invalid predicate value");
