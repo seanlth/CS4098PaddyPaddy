@@ -223,9 +223,9 @@ function onAddDotClick(button){
   conjunct.toggleClass('hasDot');
 
   if (hasDot) {
-    button.siblings('.postDot').remove();
+    button.parent().find('.postDot').remove();
   } else {
-    button.after( $('<span class="postDot"><input type="text" class="postDotBase"/></span>') );
+    button.parent().find('.addDot').after( $('<span class="postDot"><input type="text" class="postDotBase"/></span>') );
   }
 }
 
