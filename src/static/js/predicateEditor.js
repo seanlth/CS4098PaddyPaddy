@@ -1,8 +1,3 @@
-/*
-TODO:
-- better error messages
-*/
-
 function predicate_to_string(pred){
   var res = "";
   if (pred !== ""){
@@ -118,6 +113,7 @@ function getCurrent(){
   var success = true;
 
   function getConjunct(base){
+    var fails = [];
     base.children('input').removeClass('invalid');
     var conj = {};
 
@@ -128,7 +124,7 @@ function getCurrent(){
     if (isValidVal(val)){
       lhs.core = base_inp.val();
     } else {
-      alert("base fail");
+      fails.push("'"+val+"' is an invalid predicate value");
       base_inp.addClass('invalid');
       success = false;
     }
@@ -139,7 +135,7 @@ function getCurrent(){
       if (isValidVal(val)){
         lhs.postDot = val;
       } else {
-        alert("pdot fail");
+        fails.push("'"+val+"' is an invalid predicate value");
         base_inp_postDot.children().addClass('invalid');
         success = false;
       }
@@ -155,7 +151,7 @@ function getCurrent(){
         conj.op = postOp.siblings('.comparison').val();
         rhs.core = val;
       } else {
-        alert("postOp fail");
+        fails.push("'"+val+"' is an invalid predicate value");
         postOp.children().addClass('invalid');
         success = false;
       }
@@ -166,13 +162,21 @@ function getCurrent(){
         if (isValidVal(val)){
           rhs.postDot = val;
         } else {
-          alert("pdot_pop fail");
+          fails.push("'"+val+"' is an invalid predicate value");
           postOp_postDot.children().addClass('invalid');
           success = false;
         }
       }
 
       conj.rhs = rhs;
+    }
+
+    if (!success){
+      var failmessage = "";
+      for (var i in fails){
+        failmessage += fails[i] + "\n";
+      }
+      alert(failmessage);
     }
 
     return conj;

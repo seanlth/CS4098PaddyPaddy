@@ -1666,8 +1666,7 @@ function mouseDragged(event) {
 
 function editAction() {
     if (!isValidVal($('#name').val())){
-      //TODO: better error
-      alert("name fail");
+      alert("'"+ $('#name').val() +"' is not a valid action name");
       $('#name').addClass('invalid');
     } else {
       selectedAction.selected = false;
