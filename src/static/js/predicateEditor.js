@@ -304,6 +304,21 @@ function mkConjunct(){
   return base;
 }
 
+function deleteAgent(){
+  $('#agent').html("&lt;None&gt;");
+  selectedAction.agent = [];
+}
+
+function deleteRequires(){
+  $('#requires').html("&lt;None&gt;");
+  selectedAction.requires = [];
+}
+
+function deleteProvides(){
+  $('#provides').html("&lt;None&gt;");
+  selectedAction.provides = [];
+}
+
 function editAgent(){
   openPredicateEditor(selectedAction.agent, function(curr){
     $('#agent').html(predicate_to_string(curr));
