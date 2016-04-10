@@ -35,7 +35,7 @@ function numberOfFlowLanesOnLevel(lanes, yLevel) {
         if ( yLevel == lanes[j].y ) {
             return lanes[j].count;
         }
-    } 
+    }
 }
 
 function numberOfLevels(agentFlowLines) {
@@ -74,10 +74,10 @@ function previousXWithYValue(array, yValue) {
 
 function flatten(agentFlowLines) {
     var flattenedArray = [];
-        
+
     for (var i = 0; i < agentFlowLines.length; i++) {
         var flowLine = agentFlowLines[i];
-        
+
         // find a flattened flow line
         var found = false;
         for (var j = 0; j < flattenedArray.length; j++ ) {
@@ -115,117 +115,73 @@ function flatten(agentFlowLines) {
     return flattenedArray;
 }
 
-function drawFlowLines(start, end, agentFlowLines) {
-   
-    var array = flatten(agentFlowLines);
+function drawFlowLine(prog, agent, yOffset, colour, xStart, xEnd, y) {
+    var xPositions = [];
+    var yPositions = [];
+    var match = false;
+    var lastX = xStart;
 
-    var lanesPerLevel = numberOfFlowLinesPerLevel(agentFlowLines);
-	var numberOfFlowLines = lanesPerLevel[0].count;
-
-	var nodeLocations = [];
-	var gap = 10;
-
-	//var yOffset = floor(numberOfFlowLines / 2) * gap;
-    var yLevels = numberOfLevels(agentFlowLines);
-    var yOffsets = [];
-    for (var i = 0; i < yLevels.length; i++) {
-        var lanesOnLevel = numberOfFlowLanesOnLevel(lanesPerLevel, yLevels[i]);
-        yOffsets.push(-floor(lanesOnLevel / 2) * gap);
-    }
-
-    var previousXPosition = [];
-
-    for (var i = 0; i < yLevels.length; i++) {
-        previousXPosition.push({name, x: -1, y: yLevels[i]});
-    }
-
-    for ( var i = 0; i < array.length; i++ ) {
-        var flowLine = array[i];
-        var colour = flowLine.colour;
-        stroke(colour.r, colour.g, colour.b);
-        strokeWeight(2);
-        
-        var previous = {y: -1, previousX: -1}; // previous position visited 
-        // loop over each node in the line
-        for (var j = 0; j < flowLine.positions.length; j++) {
-            var position = flowLine.positions[j];
-            var xValue = position.x;
-            var yValue = position.y;
-            var yOffset = yOffsets[getYOffset(yLevels, yValue)];
-            
-            var previousXIndex = previousXWithYValue(previousXPosition, yValue);
-            var previousX = previousXPosition[previousXIndex];
-
-            if ( previousX.x == -1 ) {
-                // startingPoint on for this yValue
-                previousXPosition[previousXIndex] = position; // previous position on this yLevel
-                if (previous.y != -1) {
-                    var yOffset = yOffsets[getYOffset(yLevels, previous.y)];
-                    line(previous.x, previous.y + yOffset, xValue, previous.y + yOffset);    
-                    previousXPosition[ previousXWithYValue(previousXPosition, previous.y) ].x = xValue;
-                    previousXPosition[ previousXWithYValue(previousXPosition, previous.y) ].name = position.name;
-                }
-            }
-            else {
-                if ( previousX.name == "start" && previous.name == "end" ) {
-                    previousXPosition[ previousXWithYValue(previousXPosition, yValue) ].x = previous.x;
-                    previousXPosition[ previousXWithYValue(previousXPosition, yValue) ].name = previous.name;
-                    
-                    if ( position.name != "start" && position.name != "end" ) {
-                        nodeLocations.push( {x: xValue, y: yValue + yOffset, colour: {r: colour.r, g: colour.g, b: colour.b}, name: position.name} );
+    for(var i = 0; i < prog.actions.length; i++) {
+        var action = prog.actions[i];
+        if(!action.control) {
+            if(action.agent == agent) {
+                match = true;
+                if(prog.control) {
+                    if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
+                        line(lastX, action.yPixelPosition + yOffset, xEnd, action.yPixelPosition + yOffset);
                     }
-
-                    line(previousX.x, yValue + yOffset, xValue, yValue + yOffset);    
-                    previousXPosition[previousXIndex].x = xValue; // previous position on this yLevel
+                    else {
+                        line(lastX, action.yPixelPosition + yOffset, action.xPixelPosition, action.yPixelPosition + yOffset);
+                        lastX = action.xPixelPosition;
+                    }
                 }
                 else {
-                    if ( position.name != "start" && position.name != "end" ) {
-                        nodeLocations.push( {x: xValue, y: yValue + yOffset, colour: {r: colour.r, g: colour.g, b: colour.b}, name: position.name} );
-                    }
-
-                    line(previousX.x, yValue + yOffset, xValue, yValue + yOffset);    
-                    previousXPosition[previousXIndex] = position; // previous position on this yLevel
+                	line(lastX, action.yPixelPosition + yOffset, action.xPixelPosition, action.yPixelPosition + yOffset);
+                	lastX = action.xPixelPosition;
                 }
+                nodeLocations.push( {x: action.xPixelPosition, y: action.yPixelPosition + yOffset, colour: {r: colour.r, g: colour.g, b: colour.b}, name: action.name} );
             }
-            previous = position;
         }
-       
-        yOffsets[getYOffset(yLevels, yValue)] = yOffset + gap;
+        else {
+            if(drawFlowLine(action, agent, yOffset, colour, action.startX, action.endX, action.y)) {
+                line(lastX, y + yOffset, action.startX, y + yOffset);
+                lastX = action.endX;
+            }
+        }
     }
-    
-    /* 
-	for ( var i = 0; i < array.length; i++ ) {
-        var yOffset = yOffsets[getYOffset(yLevels, agentFlowLines[i].y)];
-		var array = agentFlowLines[i].positions;
-		var colour = agentFlowLines[i].colour;	
-		var previousXPosition = agentFlowLines[i].start;
-        var endXPosition = agentFlowLines[i].end;
-		var y = agentFlowLines[i].y;
 
-		var R = colour.r;
-		var G = colour.g;
-		var B = colour.b;
+    if(!prog.control) {
+        line(lastX, y + yOffset, xEnd, y + yOffset);
+    }
+    else if(match && prog.control != FlowControlEnum.branch && prog.control != FlowControlEnum.selection) {
+        line(lastX, y + yOffset, xEnd, y + yOffset);
+    }
 
-		stroke(R, G, B);
-		strokeWeight(2);
-		
-		var position = array[0];
-		line(previousXPosition, y + yOffset, position.x, y + yOffset);
-		nodeLocations.push( {x: position.x, y: y + yOffset, colour: {r: R, g: G, b: B}, name: position.name} );
-		previousXPosition = position.x;
+    return match;
+}
 
-		for ( var j = 1; j < array.length; j++ ) {
-			var xPosition = array[j].x;
-			line(previousXPosition, y + yOffset, xPosition, y + yOffset);
-			nodeLocations.push( {x: xPosition, y: y + yOffset, colour: {r: R, g: G, b: B}, name: array[j].name} );
-			previousXPosition = xPosition;
-		}
-		line(previousXPosition, y + yOffset, endXPosition, y + yOffset);
-		yOffsets[getYOffset(yLevels, agentFlowLines[i].y)] = yOffsets[getYOffset(yLevels, agentFlowLines[i].y)] + gap;
-	}
-    */
+var nodeLocations;
+
+function drawFlowLines(start, end, agentFlowLines) {
+
+    var agents = flatten(agentFlowLines);
+
+    // var lanesPerLevel = numberOfFlowLinesPerLevel(agentFlowLines);
+	// var numberOfFlowLines = lanesPerLevel[0].count;
+    nodeLocations = [];
+	var gap = 10;
+
+    for(var i = 0; i < agents.length; i++) {
+        var yOffset = i % 2 == 0 ? (i / 2) * gap : ((i + 1) / 2) * -gap;
+        var colour = agents[i].colour;
+        stroke(colour.r, colour.g, colour.b);
+        strokeWeight(2);
+        drawFlowLine(program, agents[i].name, yOffset, colour, startX, endX, middle);
+
+    }
+
 	var c = {r: 0, g: 0, b: 0};
-	drawNode(start.x, start.y, 15 + numberOfFlowLines * gap, c);
+	drawNode(start.x, start.y, 15 + agents.length * gap, c);
 	for ( var i = 0; i < nodeLocations.length; i++ ) {
 		var node = nodeLocations[i];
 		textAlign(CENTER, CENTER);
@@ -234,9 +190,9 @@ function drawFlowLines(start, end, agentFlowLines) {
 		text(node.name, node.x, node.y - 15);
 		drawNode(node.x, node.y, 15, node.colour);
 	}
-	drawNode(end.x, end.y, 10 + numberOfFlowLines * gap, c);
-    
-	// reset drawing variables 
+	drawNode(end.x, end.y, 10 + agents.length * gap, c);
+
+	// reset drawing variables
 	fill(0);
 	strokeWeight(1);
 	stroke(255);

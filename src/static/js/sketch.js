@@ -113,6 +113,7 @@ function drawJSON(json) {
 
 var lastZoom = false;
 function draw() {
+
     background(255);
 
     //drawAgentFlowLines();
@@ -457,7 +458,7 @@ function addToAgentArray(agentArray, action, start, end) {
 		var array = agentArray[i];
 
 		// found the array
-		if ( array.name == action.agent && array.y == action.yPixelPosition ) {
+		if ( array.name == action.agent && array.y == action.yPixelPosition && array.index.length == action.index.length && compareArrays(array.index, action.index, array.index.length - 1) ) {
 			foundAgentArray = true;
 			index = i;
 			break;
@@ -471,13 +472,13 @@ function addToAgentArray(agentArray, action, start, end) {
 	}
 	else if ( action.agent != "" ) {
         if ( action.yPixelPosition == middle ) {
-            var p = {x: action.xPixelPosition, name: action.name};  
-		    var newArray = {name: action.agent, y: action.yPixelPosition, start: startX, end: endX, positions: [p], colour: stringColour(action.agent)};
+            var p = {x: action.xPixelPosition, name: action.name};
+		    var newArray = {name: action.agent, y: action.yPixelPosition, start: startX, end: endX, positions: [p], colour: stringColour(action.agent), index: action.index.slice()};
 	        agentArray.push(newArray);
         }
         else {
-            var p = {x: action.xPixelPosition, name: action.name};  
-		    var newArray = {name: action.agent, y: action.yPixelPosition, start: start, end: end, positions: [p], colour: stringColour(action.agent)};
+            var p = {x: action.xPixelPosition, name: action.name};
+		    var newArray = {name: action.agent, y: action.yPixelPosition, start: start, end: end, positions: [p], colour: stringColour(action.agent), index: action.index.slice()};
 	        agentArray.push(newArray);
         }
     }
@@ -486,7 +487,7 @@ function addToAgentArray(agentArray, action, start, end) {
 // takes all the actions
 // returns arrays of locatiosn
 // each actions in an array share an agent
-function createAgentFlowLines(agentArray, actions, startX, endX) {
+function createAgentFlowLines(agentArray, actions, start, end) {
 
 	// should be using for-each but js is too spooky for me
 	for ( var i = 0; i < actions.length; i++ ) {
@@ -496,12 +497,12 @@ function createAgentFlowLines(agentArray, actions, startX, endX) {
 			    createAgentFlowLines(agentArray, primitive.actions, primitive.startX, primitive.endX);
             }
             else {
-                createAgentFlowLines(agentArray, primitive.actions, startX, endX);
+                createAgentFlowLines(agentArray, primitive.actions, start, end);
             }
 
 		}
 		else {
-			addToAgentArray(agentArray, primitive, startX, endX);
+			addToAgentArray(agentArray, primitive, start, end);
 		}
 	}
 }
@@ -839,11 +840,11 @@ function Node(x, y, index) {
                     var action = prog.actions.splice(this.index[this.index.length - 2], 1);
                     if(this.index[this.index.length - 1] == -1) {
                         prog.actions.splice(this.index[this.index.length - 2], 0,
-                            {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: [clipBoard.pop()].concat(action), startX: 0, endX: 0});
+                            {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: [clipBoard.pop()].concat(action), startX: 0, endX: 0, y: 0});
                     }
                     else {
                         prog.actions.splice(this.index[this.index.length - 2], 0,
-                            {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: action.concat([clipBoard.pop()]), startX: 0, endX: 0});
+                            {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: action.concat([clipBoard.pop()]), startX: 0, endX: 0, y: 0});
                     }
                 }
 
@@ -1010,6 +1011,7 @@ function compareArrays(array1, array2, length) {
 
 function Action(action) {
     this.id = numActions++;
+    this.index;
     this.x;
     this.y;
     this.xPixelPosition;
@@ -1070,6 +1072,7 @@ function Action(action) {
 
     this.update = function(index, programWidth) {
         var pos = indexToXY(index);
+        this.index = index;
         this.x = pos.x;
         this.y = pos.y;
 
@@ -1278,6 +1281,11 @@ function drawIterationLoop(prog, x, y, index, programWidth) {
     endXRectPixels = endXRectPixels;
     fill(255, 255, 255, 0);
     rect(startXRectPixels, rectPositionY - offset, endXRectPixels - startXRectPixels, rectHeight + offset * 2, 20, 20, 20, 20);
+
+    var lineDetails = drawLine(prog, x, y, programWidth);
+    prog.startX = lineDetails.startX;
+    prog.endX = lineDetails.endX;
+    prog.y = lineDetails.y;
 }
 
 function drawSequenceBox(prog, x, y, index, programWidth) {
@@ -1299,6 +1307,11 @@ function drawSequenceBox(prog, x, y, index, programWidth) {
     endXRectPixels = endXRectPixels;
     fill(255, 255, 255, 0);
     rect(startXRectPixels, rectPositionY - offset, endXRectPixels - startXRectPixels, rectHeight + offset * 2);
+
+    var lineDetails = drawLine(prog, x, y, programWidth);
+    prog.startX = lineDetails.startX;
+    prog.endX = lineDetails.endX;
+    prog.y = lineDetails.y;
 }
 
 function nestedBoxes(prog) {
@@ -1373,6 +1386,7 @@ function drawBranchBars(prog, x, y, index, programWidth) {
     rect(lineDetails.endX - 5, rectPositionY, 10, rectHeight);
     prog.startX = lineDetails.startX - 5;
     prog.endX = lineDetails.endX - 5;
+    prog.y = lineDetails.y;
 }
 
 function drawSelectionDiamond(prog, x, y, index, programWidth) {
@@ -1415,11 +1429,12 @@ function drawSelectionDiamond(prog, x, y, index, programWidth) {
     fill(255);
     rect(0, 0, 30, 30);
     resetMatrix();
-    
+
     translate(offsetX, offsetY);
 
     prog.startX = lineDetails.startX;
     prog.endX = lineDetails.endX;
+    prog.y = lineDetails.y;
 }
 
 function selectAction(actions, id){
@@ -1476,11 +1491,11 @@ function ControlFlow(firstIndex, secondIndex) {
     //selected same node twice, add iteration with new Action
     if(start[length - 1] == end[length - 1]) {
         var flowType = whatControlAction();
-        var blankControlFlow =  {name: '' + currentControlFlow+ flowType, control: currentControlFlow, actions: [new Action()], startX: 0, endX: 0};
+        var blankControlFlow =  {name: '' + currentControlFlow+ flowType, control: currentControlFlow, actions: [new Action()], startX: 0, endX: 0, y: 0};
         // if the new action is to be in a branch/selection, surround it in a sequence
         if(prog.control == FlowControlEnum.branch || prog.control == FlowControlEnum.selection) {
             array.splice(start[length - 1], 0,
-                {name: "Sequence"+sequenceNum++, control: FlowControlEnum.sequence, actions: [blankControlFlow], startX: 0, endX: 0});
+                {name: "Sequence"+sequenceNum++, control: FlowControlEnum.sequence, actions: [blankControlFlow], startX: 0, endX: 0, y: 0});
             return;
         }
 
@@ -1490,7 +1505,7 @@ function ControlFlow(firstIndex, secondIndex) {
     var controlType = whatControlAction();
     //adds a control flow to program
     array.splice(start[length - 1], end[length - 1] - start[length - 1],
-        {name: "" + currentControlFlow+ controlType, control: currentControlFlow, actions: array.slice(start[length - 1], end[length - 1]), startX: 0, endX: 0});
+        {name: "" + currentControlFlow+ controlType, control: currentControlFlow, actions: array.slice(start[length - 1], end[length - 1]), startX: 0, endX: 0, y: 0});
 }
 
 function Sequence(index, replace){
@@ -1505,12 +1520,12 @@ function Sequence(index, replace){
         if(replace) {
             var flowType = whatControlAction();
             array.splice(index[index.length - 2], 1,
-                {name: '' + currentControlFlow+ flowType, control: currentControlFlow, actions: [array[index[index.length - 2]]], startX: 0, endX: 0});
+                {name: '' + currentControlFlow+ flowType, control: currentControlFlow, actions: [array[index[index.length - 2]]], startX: 0, endX: 0, y: 0});
             return;
         }
         else {
             var controlType = whatControlAction();
-            newAction = {name: '' + currentControlFlow+ controlType, control: currentControlFlow, actions: [new Action()], startX: 0, endX: 0};
+            newAction = {name: '' + currentControlFlow+ controlType, control: currentControlFlow, actions: [new Action()], startX: 0, endX: 0, y: 0};
         }
     }
     else {
@@ -1528,7 +1543,7 @@ function Sequence(index, replace){
 
     //adds a sequence to program.actions
     array.splice(index[index.length - 2], 1,
-        {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: sequenceArray, startX: 0, endX: 0});
+        {name: 'Sequence'+sequenceNum++, control: FlowControlEnum.sequence, actions: sequenceArray, startX: 0, endX: 0, y: 0});
 }
 
 function mousePressedCanvas(event) {
