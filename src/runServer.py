@@ -16,7 +16,7 @@ import tempfile
 
 import parser
 
-DEBUG = True
+DEBUG = False
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret'
 app.config['OAUTH_CREDENTIALS'] = {
@@ -269,6 +269,8 @@ def loginButton():
             session['email'] = email
             returnUrl = session.pop('return_url', None)
             if returnUrl:
+                if 'diagram' in request.args:
+                    return redirect(returnUrl + '?diagram=true')
                 return redirect(returnUrl)
             else:
                 return redirect('/')
