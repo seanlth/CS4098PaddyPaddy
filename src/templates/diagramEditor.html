@@ -85,9 +85,9 @@
           <ul class="nav navbar-nav navbar-right">
               <li>
                 {% if 'social' in session %}
-                  <a href="/logout"><r>Logout</r></a>
+                  <a href="/logout?return_url=diagram"><r>Logout</r></a>
                 {% elif 'email' in session %}
-                    <a href="/logout"><r>Logout</r></a>
+                    <a href="/logout?return_url=diagram"><r>Logout</r></a>
                 {% else %}
                   <a href="javascript:login_hook()"><r>Login</r></a>
                 {% endif %}
