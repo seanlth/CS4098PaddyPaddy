@@ -50,6 +50,8 @@ make run
 
 ##Testing run
 open two terminals to the project directory. In one, run the server as shown, in the other run "make test".
+As noted above some features could not be automatically tested, to help with this, the test framework will stop on a diagram near the beginning so  you can view
+the action colours/flow lines by selecting them from the navbar.
 
 ##Release One below
 ## Features

@@ -130,31 +130,31 @@
           <option value="executable">Executable</option>
         </select>
       </p>
-      <p> Agent: 
-        <span id="agent" name="agent">&lt;None&gt;</span> 
+      <p> Agent:
+        <span id="agent" name="agent">&lt;None&gt;</span>
         <button type="button" id="agent-edit" >edit <span class="glyphicon glyphicon-edit"></span></button>
-        <button type="button" id="agent-delete" >delete <span class="glyphicon glyphicon-remove"></span></button> 
+        <button type="button" id="agent-delete" >delete <span class="glyphicon glyphicon-remove"></span></button>
       </p>
 
-      <p> Requires: 
-        <span id="requires" name="requires">&lt;None&gt;</span> 
+      <p> Requires:
+        <span id="requires" name="requires">&lt;None&gt;</span>
         <button type="button" id="requires-edit" >edit <span class="glyphicon glyphicon-edit"></span></button>
-        <button type="button" id="requires-delete" >delete <span class="glyphicon glyphicon-remove"></span></button> 
+        <button type="button" id="requires-delete" >delete <span class="glyphicon glyphicon-remove"></span></button>
       </p>
 
-      <p> Provides: 
-        <span id="provides" name="provides">&lt;None&gt;</span> 
+      <p> Provides:
+        <span id="provides" name="provides">&lt;None&gt;</span>
         <button type="button" id="provides-edit" >edit <span class="glyphicon glyphicon-edit"></span></button>
-        <button type="button" id="provides-delete" >delete <span class="glyphicon glyphicon-remove"></span></button> 
+        <button type="button" id="provides-delete" >delete <span class="glyphicon glyphicon-remove"></span></button>
       </p>
       <p> Tool: <input type="text" id="tool" name="tool"></textarea> </p>
       <p> Script: </p>
       <textarea type="text" id="script" name="script"></textarea>
       <p align="center">
-        <button type="button" value="enter" onClick="cancel()">Cancel</button>
-        <button type="button" value="enter" onClick="removeAction()">Remove Action</button>
-        <button type="button" value="enter" onClick="cutAction()">Cut Action</button>
-        <button type="button" value="enter" onClick="editAction()">Done</button>
+        <button type="button" value="enter" onClick="cancel()" id="cancel_action">Cancel</button>
+        <button type="button" value="enter" onClick="removeAction()" id="remove_action">Remove Action</button>
+        <button type="button" value="enter" onClick="cutAction()" id = "cut_action">Cut Action</button>
+        <button type="button" value="enter" onClick="editAction()" id="done_action">Done</button>
       </p>
       </table>
     </form>

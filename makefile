@@ -5,7 +5,7 @@ all: run
 build: buildDeps
 
 test: env
-	env/bin/python3 src/tests.py
+	env/bin/python3 seleniumTests/test.py
 
 install: buildDeps
 	git submodule init
@@ -15,6 +15,7 @@ install: buildDeps
 	env/bin/pip3 install Flask-SQLAlchemy
 	env/bin/pip3 install Flask-OAuth
 	env/bin/pip3 install rauth
+	env/bin/pip3 install selenium
 	sudo apt-get install libncurses5-dev
 	cd peos/pml/ && make && \
 	mv check/pmlcheck ../../
