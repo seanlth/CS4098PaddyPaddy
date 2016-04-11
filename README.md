@@ -48,8 +48,8 @@ make run
   * agent colored actions (under action colour in navbar, untested because it is purely visual and transparent to the browser)
   * swim lanes (under flow lines in navbar, untested because it is purely visual and transparent to the browser, with your permission this is a similar layout to resource flow)
 
-##Testing run
-open two terminals to the project directory. In one, run the server as shown, in the other run "make test".
+##Testing Release 2
+open two terminals to the project directory. In one, run the server as shown, in the other run "env/bin/python3 seleniumTests/test.py" this is because "make test" causes an error saying env/bin/python3 is already in use.
 As noted above some features could not be automatically tested, to help with this, the test framework will stop on a diagram near the beginning so  you can view
 the action colours/flow lines by selecting them from the navbar.
 
