@@ -33,13 +33,13 @@
             <p>Login with...</p>
             <div class ="social">
               <a href="{{ url_for('oauth_authorize', provider='facebook') }}">
-                <img src= "{{ url_for('static', filename = 'images/facebook.png') }}" width="50" height="50" alt="previous" title="Previous" border="0"/>
+                <img src= "{{ url_for('static', filename = 'images/facebook.png') }}" width="50" height="50" alt="previous" title="Previous" border="0" name="facebook"/>
               </a>
               <!-- <a href="/googleLogin">
                 <img src= "{{ url_for('static', filename = 'images/google.png') }}" width="50" height="50" alt="previous" title="Previous" border="0"/>
               </a> -->
               <a href="{{ url_for('oauth_authorize', provider='twitter') }}">
-                <img src= "{{ url_for('static', filename = 'images/twitter.png') }}" width="50" height="50" alt="previous" title="Previous" border="0"/>
+                <img src= "{{ url_for('static', filename = 'images/twitter.png') }}" width="50" height="50" alt="previous" title="Previous" border="0" name="twitter"/>
               </a>
             </div>
             <br><br><hr>
